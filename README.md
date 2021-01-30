@@ -17,9 +17,5 @@ This implementation of Merlin on the Mythic Framework is incomplete and is still
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Download | Not Implemented |
-| Upload | Not Implemented
 | MiniDump | Not Implemented
 | Padding | Not Implemented
-| Payload Encryption | Not Implemented
-| HTTPS Comms | Not Implemented
