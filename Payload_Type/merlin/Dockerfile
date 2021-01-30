@@ -29,4 +29,3 @@ ENV PATH="${PATH}:/go/src/bin"
 
 # Download go-donut
 RUN go get github.com/Binject/go-donut
-RUN ls -lah /go/src/bin/go-donut
