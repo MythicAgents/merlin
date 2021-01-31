@@ -13,9 +13,24 @@ Merlin documentation can be found at <https://merlin-c2.readthedocs.io/en/latest
 
 Mythic documentation can be found at <https://docs.mythic-c2.net/>
 
+## Getting Started
+
+To get started, clone the [Mythic](https://github.com/its-a-feature/Mythic/) repository, install it, and then pull down the [Merlin](https://github.com/MythicAgents/merlin) repository from the MythicAgents organization.
+
+```text
+git clone https://github.com/its-a-feature/Mythic
+cd Mythic
+sudo ./start_mythic.sh
+sudo ./install_agent_from_github.sh https://github.com/MythicAgents/merlin
+sudo ./start_payload_types.sh merlin
+```
+
+## Known Limitations
 This implementation of Merlin on the Mythic Framework is incomplete and is still in development. Here are some known limitations:
 
 | Feature | Status | Notes |
 | --- | --- | --- |
 | MiniDump | Not Implemented
 | Padding | Not Implemented
+| File Chunking | Not Implemented
+| Windows DLL | Not Implemented

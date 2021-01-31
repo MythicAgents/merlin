@@ -102,6 +102,8 @@ class Merlin(PayloadType):
 
             goCMD += "go build -o " + outputFile
             goCMD += """ -ldflags '-s -w"""
+            if self.get_parameter("os").lower() == "windows":
+                goCMD += " -H=windowsgui"
             # payloadID
             goCMD += " -X \"main.payloadID=" + f'{self.uuid}\"'
             # URL
