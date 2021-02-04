@@ -5,6 +5,9 @@ from distutils.dir_util import copy_tree
 import tempfile
 import time
 
+# Set to enable debug output to Mythic
+debug = False
+
 
 # define your payload type class here, it must extend the PayloadType class though
 class Merlin(PayloadType):
@@ -79,8 +82,6 @@ class Merlin(PayloadType):
         output = ""
         command = ""
 
-        # TODO Remove after finished troubleshooting error
-        debug = True
         goCMD = ""
         c2Params = self.c2info[0].get_parameters_dict()
 
@@ -102,7 +103,7 @@ class Merlin(PayloadType):
 
             goCMD += "go build -o " + outputFile
             goCMD += """ -ldflags '-s -w"""
-            if self.get_parameter("os").lower() == "windows":
+            if self.get_parameter("os").lower() == "windows" and (self.get_parameter("debug").lower() == "false" or self.get_parameter("verbose").lower() == "false"):
                 goCMD += " -H=windowsgui"
             # payloadID
             goCMD += " -X \"main.payloadID=" + f'{self.uuid}\"'
@@ -157,6 +158,7 @@ class Merlin(PayloadType):
                 output += f"[STDERR]\n{stderr.decode()}"
             if debug:
                 output += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngoCMD: {goCMD}, "
+                resp.message = output
             # Return compiled agent
             if os.path.exists(merlinPath + "/" + outputFile):
                 resp.payload = open(merlinPath + "/" + outputFile, "rb").read()

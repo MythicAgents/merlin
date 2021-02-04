@@ -10,21 +10,15 @@ from MythicResponseRPC import *
 debug = False
 
 
-class ExecutePEArguments(TaskArguments):
+class CreateProcessArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "executable": CommandParameter(
-                name="executable",
+            "shellcode": CommandParameter(
+                name="shellcode",
                 type=ParameterType.File,
-                description="The Windows executable (PE file) you want to run",
+                description="The shellcode file you want to execute in the spawnto process",
                 required=True,
-            ),
-            "arguments": CommandParameter(
-                name="executable arguments",
-                type=ParameterType.String,
-                description="Arguments to execute the assembly with",
-                required=False,
             ),
             "spawnto": CommandParameter(
                 name="spawnto",
@@ -47,11 +41,12 @@ class ExecutePEArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
 
 
-class ExecutePECommand(CommandBase):
-    cmd = "execute-pe"
+class CreateProcessCommand(CommandBase):
+    cmd = "create-process"
     needs_admin = False
-    help_cmd = "execute-pe"
-    description = "Convert a Windows PE into shellcode with Donut, execute it in the spawnto process, and return the output"
+    help_cmd = "create-process"
+    description = "This command will create a process from the spawnto argument and inject/execute the provided " \
+                  "shellcode and uses anonymous pipes to collect STDOUT/STDERR"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -60,7 +55,7 @@ class ExecutePECommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = "@Ne0nd0g"
-    argument_class = ExecutePEArguments
+    argument_class = CreateProcessArguments
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
@@ -69,9 +64,9 @@ class ExecutePECommand(CommandBase):
 
         # 1. Shellcode
         # 2. SpawnTo Executable
-        # 3. SpawnTo Arguments (must include even if empty string)
+        # 3. SpawnTo Arguments
         args = [
-            donut(task.args.get_arg("executable"), task.args.get_arg("arguments")),
+            base64.b64encode(task.args.get_arg("shellcode")).decode("utf-8"),
             task.args.get_arg("spawnto"),
             task.args.get_arg("spawntoargs")
         ]
@@ -83,8 +78,7 @@ class ExecutePECommand(CommandBase):
         }
 
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg("executable")
-        task.args.remove_arg("arguments")
+        task.args.remove_arg("shellcode")
         task.args.remove_arg("spawnto")
         task.args.remove_arg("spawntoargs")
 
@@ -95,36 +89,3 @@ class ExecutePECommand(CommandBase):
 
     async def process_response(self, response: AgentResponse):
         pass
-
-
-def donut(executable, arguments):
-    donut_args = ['go-donut', '--in', 'input.exe', '--exit', '2']
-    if arguments:
-        donut_args.append('--params')
-        donut_args.append(arguments)
-
-    # Write file to location in container
-    with open('input.exe', 'wb') as w:
-        w.write(executable)
-
-    result = subprocess.run(
-        donut_args,
-        stdout=subprocess.PIPE
-    )
-
-    donut_bytes = bytes
-    # Read Donut output
-    with open('loader.bin', 'rb') as output:
-        donut_bytes = output.read()
-
-    # Close files
-    w.close()
-    output.close()
-
-    # Remove files
-    os.remove("input.exe")
-    os.remove("loader.bin")
-
-    # Return Donut shellcode Base64 encoded
-    return base64.b64encode(donut_bytes).decode("utf-8")
-

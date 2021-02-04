@@ -31,6 +31,8 @@ github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210116182820-a38bea46d161 h1:3f6RQy0So
 github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210116182820-a38bea46d161/go.mod h1:iuWxLgcgbUv8zuKukOFipJyjl3KY4zo+wr/RFBFsGtM=
 github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210130193238-41d122be56c2 h1:Ug6fXeb0WLMPdhii47x3+lkm7YbmqHg7wMHiT+qAxN0=
 github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210130193238-41d122be56c2/go.mod h1:iuWxLgcgbUv8zuKukOFipJyjl3KY4zo+wr/RFBFsGtM=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210201123659-528064a0888c h1:jpR/c+TNUInkvrOEpE9t8qp/j+E77Fr0O6VBaorIABw=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210201123659-528064a0888c/go.mod h1:iuWxLgcgbUv8zuKukOFipJyjl3KY4zo+wr/RFBFsGtM=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=

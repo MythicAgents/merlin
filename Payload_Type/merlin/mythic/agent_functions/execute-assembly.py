@@ -8,6 +8,7 @@ from MythicResponseRPC import *
 # Set to enable debug output to Mythic
 debug = False
 
+
 class ExecuteAssemblyArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
@@ -55,7 +56,6 @@ class ExecuteAssemblyArguments(TaskArguments):
                     self.add_arg("spawntoargs", args[3], ParameterType.String)
 
 
-
 class ExecuteAssemblyCommand(CommandBase):
     cmd = "execute-assembly"
     needs_admin = False
@@ -76,18 +76,14 @@ class ExecuteAssemblyCommand(CommandBase):
         # Merlin jobs.MODULE
         task.args.add_arg("type", 16, ParameterType.Number)
 
-        # Arguments
-        # Shellcode bytes goes in the first spot
-        # SpawnTo filepath goes in the second spot
-        # SpawnTo arguments, if any, go in the third spot
-        args = [donut(task.args.get_arg("assembly"), task.args.get_arg("arguments")), task.args.get_arg("spawnto")]
-        arguments = task.args.get_arg("spawnto")
-        if arguments:
-            args.append(arguments)
-
         # 1. Shellcode
         # 2. SpawnTo Executable
-        # 3. SpawnTo Arguments
+        # 3. SpawnTo Arguments (must include even if empty string)
+        args = [
+            donut(task.args.get_arg("assembly"), task.args.get_arg("arguments")),
+            task.args.get_arg("spawnto"),
+            task.args.get_arg("spawntoargs")
+        ]
 
         # Merlin jobs.Command message type
         command = {
