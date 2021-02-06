@@ -24,6 +24,18 @@ RUN git clone https://github.com/cobbr/SharpGen
 WORKDIR /opt/SharpGen
 RUN dotnet build -c release
 
+# Download sRDI
+WORKDIR /opt/
+RUN mkdir sRDI
+WORKDIR /opt/sRDI/
+RUN wget https://raw.githubusercontent.com/monoxgas/sRDI/master/Python/ShellcodeRDI.py
+RUN wget https://raw.githubusercontent.com/monoxgas/sRDI/master/Python/ConvertToShellcode.py
+
+# Download Mimikatz
+WORKDIR /opt/
+RUN wget https://github.com/gentilkiwi/mimikatz/releases/latest/download/mimikatz_trunk.zip
+RUN unzip mimikatz_trunk.zip -d mimikatz
+
 # Update PATH
 ENV PATH="${PATH}:/go/src/bin"
 
