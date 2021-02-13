@@ -46,7 +46,7 @@ class Merlin(PayloadType):
             name="arch",
             description="What architecture will the agent be executed on?",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["amd64", "386", "arm", "mips", "ketchup"],
+            choices=["amd64", "386", "arm", "mips"],
             required=False,
         ),
         "maxretry": BuildParameter(
@@ -103,7 +103,7 @@ class Merlin(PayloadType):
 
             goCMD += "go build -o " + outputFile
             goCMD += """ -ldflags '-s -w"""
-            if self.get_parameter("os").lower() == "windows" and (self.get_parameter("debug").lower() == "false" or self.get_parameter("verbose").lower() == "false"):
+            if self.get_parameter("os").lower() == "windows" and (self.get_parameter("debug").lower() == "false" and self.get_parameter("verbose").lower() == "false"):
                 goCMD += " -H=windowsgui"
             # payloadID
             goCMD += " -X \"main.payloadID=" + f'{self.uuid}\"'
