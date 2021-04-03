@@ -1,9 +1,9 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import os
 import json
 import subprocess
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -126,14 +126,14 @@ class DonutArguments(TaskArguments):
             "spawnto": CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
-                description="the child process that will be started to execute the assembly in",
+                description="The child process to inject and execute the donut generated shellcode",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
                 required=True,
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
-                description="argument to create the spawnto process with, if any",
+                description="Arguments to create the spawnto process with, if any",
                 required=False,
             ),
             "verbose": CommandParameter(
@@ -167,7 +167,11 @@ class DonutCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = DonutArguments
-    attackmapping = []
+    attackmapping = ["1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if debug:

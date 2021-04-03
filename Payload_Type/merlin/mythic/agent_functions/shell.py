@@ -1,7 +1,7 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -15,7 +15,7 @@ class ShellArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 description="Commandline string or arguments to run in the shell",
-                required=False,
+                required=True,
             ),
         }
 
@@ -41,7 +41,7 @@ class ShellCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ShellArguments
-    attackmapping = []
+    attackmapping = ["T1059"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
 

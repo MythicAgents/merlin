@@ -1,10 +1,10 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
 import os
 import json
 import subprocess
 
-from MythicResponseRPC import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -23,7 +23,7 @@ class CreateProcessArguments(TaskArguments):
             "spawnto": CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
-                description="the child process that will be started to execute the assembly in",
+                description="The child process that will be started to execute the shellcode in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
                 required=True
             ),
@@ -45,8 +45,8 @@ class CreateProcessCommand(CommandBase):
     cmd = "create-process"
     needs_admin = False
     help_cmd = "create-process"
-    description = "This command will create a process from the spawnto argument and inject/execute the provided " \
-                  "shellcode and uses anonymous pipes to collect STDOUT/STDERR"
+    description = "Uses process hollowing to create a child process from the spawnto argument, allocate the provided " \
+                  "shellcode into it, execute it, and use anonymous pipes to collect STDOUT/STDERR"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -56,7 +56,11 @@ class CreateProcessCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = CreateProcessArguments
-    attackmapping = []
+    attackmapping = ["T1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.MODULE

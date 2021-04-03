@@ -1,9 +1,10 @@
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
+
 
 class DownloadArguments(TaskArguments):
     def __init__(self, command_line):
@@ -29,7 +30,7 @@ class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
     help_cmd = "download"
-    description = "Download a file from the host where the agent is running"
+    description = "Downloads a file from the host where the agent is running"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -39,7 +40,7 @@ class DownloadCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = DownloadArguments
-    attackmapping = []
+    attackmapping = ["T1560.003", "T1041"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.CONTROL

@@ -1,6 +1,6 @@
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -13,7 +13,7 @@ class KillDateArguments(TaskArguments):
             "date": CommandParameter(
                 name="date",
                 type=ParameterType.String,
-                description="The date, as an Unix epoch timestamp, that the agent should quit running",
+                description="The date, as a Unix epoch timestamp, that the agent should quit running",
                 required=True,
             ),
         }
@@ -30,7 +30,8 @@ class KillDateCommand(CommandBase):
     cmd = "killdate"
     needs_admin = False
     help_cmd = "killdate"
-    description = "The date, as an Unix epoch timestamp, that the agent should quit running.\r\nVisit: https://www.epochconverter.com/"
+    description = "The date, as a Unix epoch timestamp, that the agent should quit running." \
+                  "\r\nVisit: https://www.epochconverter.com/"
     version = 1
     is_exit = False
     is_file_browse = False

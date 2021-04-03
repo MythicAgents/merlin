@@ -1,6 +1,6 @@
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
 import json
-from MythicResponseRPC import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False

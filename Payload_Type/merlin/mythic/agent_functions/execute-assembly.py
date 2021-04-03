@@ -1,9 +1,9 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import os
 import json
 import subprocess
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -22,20 +22,20 @@ class ExecuteAssemblyArguments(TaskArguments):
             "arguments": CommandParameter(
                 name="assembly arguments",
                 type=ParameterType.String,
-                description="Arguments to execute the assembly with",
+                description="Arguments to execute the .NET assembly with",
                 required=False,
             ),
             "spawnto": CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
-                description="the child process that will be started to execute the assembly in",
+                description="The child process that will be started to execute the assembly in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
                 required=True,
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
-                description="argument to create the spawnto process with, if any",
+                description="Argument to create the spawnto process with, if any",
                 required=False,
             ),
         }
@@ -60,7 +60,7 @@ class ExecuteAssemblyCommand(CommandBase):
     cmd = "execute-assembly"
     needs_admin = False
     help_cmd = "execute-assembly"
-    description = "Convert a .NET assembly in shellcode with Donut, execute it in the spawnto process, and return the output"
+    description = "Convert a .NET assembly into shellcode with Donut, execute it in the spawnto process, and return the output"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -70,7 +70,11 @@ class ExecuteAssemblyCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteAssemblyArguments
-    attackmapping = []
+    attackmapping = ["1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.MODULE

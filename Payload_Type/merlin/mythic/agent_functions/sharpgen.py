@@ -1,9 +1,9 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import os
 import json
 import subprocess
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -17,7 +17,8 @@ class SharpGenArguments(TaskArguments):
                 name="code",
                 type=ParameterType.String,
                 description="The CSharp code you want to execute",
-                default_value="Console.WriteLine(Mimikatz.LogonPasswords());"
+                default_value="Console.WriteLine(Mimikatz.LogonPasswords());",
+                required=True
             ),
             "spawnto": CommandParameter(
                 name="spawnto",
@@ -29,7 +30,7 @@ class SharpGenArguments(TaskArguments):
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
-                description="argument to create the spawnto process with, if any",
+                description="Argument to create the spawnto process with, if any",
                 required=False,
             ),
             "verbose": CommandParameter(
@@ -62,7 +63,11 @@ class SharpGenCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = SharpGenArguments
-    attackmapping = []
+    attackmapping = ["T1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.MODULE

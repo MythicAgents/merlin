@@ -1,7 +1,7 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -52,7 +52,11 @@ class ExecuteShellcodeCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteShellcodeArguments
-    attackmapping = []
+    attackmapping = ["1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.SHELLCODE

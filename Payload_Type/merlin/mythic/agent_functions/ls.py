@@ -1,6 +1,6 @@
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -13,7 +13,7 @@ class LSArguments(TaskArguments):
             "path": CommandParameter(
                 name="path",
                 type=ParameterType.String,
-                description="The directory path to change to",
+                description="The directory path to list the contents of",
                 default_value=".",
                 required=False,
             ),
@@ -44,7 +44,7 @@ class LSCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = LSArguments
-    attackmapping = []
+    attackmapping = ["T1083"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.NATIVE

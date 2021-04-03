@@ -1,6 +1,6 @@
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -13,7 +13,7 @@ class RetryArguments(TaskArguments):
             "maxretry": CommandParameter(
                 name="maxretry",
                 type=ParameterType.String,
-                description="The maximum amount of time the Agent can fail to check in before it quits running",
+                description="The maximum amount of times the Agent can fail to check in before it quits running",
                 value="7",
                 required=True,
             ),

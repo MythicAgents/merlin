@@ -1,9 +1,9 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicResponseRPC import *
 import os
 import json
 import subprocess
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -71,7 +71,7 @@ class SRDIArguments(TaskArguments):
             "spawnto": CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
-                description="the child process that will be started to execute the shellcode in. "
+                description="The child process that will be started to execute the shellcode in. "
                             "Only used with the createprocess method",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
                 required=True
@@ -79,7 +79,7 @@ class SRDIArguments(TaskArguments):
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
-                description="argument to create the spawnto process with, if any. "
+                description="Argument to create the spawnto process with, if any. "
                             "Only used with the createprocess method",
                 required=False,
             ),
@@ -110,7 +110,11 @@ class SRDICommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = SRDIArguments
-    attackmapping = []
+    attackmapping = ["T1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if debug:

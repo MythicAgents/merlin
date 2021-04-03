@@ -1,4 +1,5 @@
-from PayloadBuilder import *
+from mythic_payloadtype_container.PayloadBuilder import *
+from mythic_payloadtype_container.MythicCommandBase import *
 import asyncio
 import os
 from distutils.dir_util import copy_tree
@@ -72,7 +73,7 @@ class Merlin(PayloadType):
         )
     }
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["HTTP"]
+    c2_profiles = ["http"]
 
     # after your class has been instantiated by the mythic_service in this docker container and all required build parameters have values
     # then this function is called to actually build the payload
@@ -110,9 +111,13 @@ class Merlin(PayloadType):
             # URL
             goCMD += f' -X \"main.url={c2Params["callback_host"]}:{c2Params["callback_port"]}/{c2Params["post_uri"]}\"'
             # Pre-Shared Key (PSK)
-            goCMD += f' -X \"main.psk={c2Params["AESPSK"]}\"'
-            # HTTP User-Agent
-            goCMD += f' -X \"main.useragent={c2Params["USER_AGENT"]}\"'
+            goCMD += f' -X \"main.psk={c2Params["AESPSK"]["enc_key"]}\"'
+            # HTTP Headers
+            for header in c2Params["headers"]:
+                if header["key"] == "User-Agent":
+                    goCMD += f' -X \"main.useragent={header["value"]}\"'
+                elif header["key"] == "Host":
+                    goCMD += f' -X \"main.host={header["value"]}\"'
             # Sleep
             goCMD += f' -X \"main.sleep={c2Params["callback_interval"]}s\"'
             # Skew
@@ -132,9 +137,6 @@ class Merlin(PayloadType):
             # Proxy
             if c2Params["proxy_host"]:
                 goCMD += f' -X \"main.proxy={c2Params["proxy_host"]}:{c2Params["proxy_port"]}\"'
-            # HTTP Host Header
-            if c2Params["domain_front"]:
-                goCMD += f' -X \"main.host={c2Params["domain_front"]}\"'
             # JA3 String
             if self.get_parameter("ja3"):
                 goCMD += f' -X \"main.ja3={self.get_parameter("ja3")}\"'

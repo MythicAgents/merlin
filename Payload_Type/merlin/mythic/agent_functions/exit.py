@@ -1,5 +1,5 @@
 
-from CommandBase import *
+from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
 
@@ -16,7 +16,7 @@ class ExitCommand(CommandBase):
     cmd = "exit"
     needs_admin = False
     help_cmd = "exit"
-    description = "instruct the agent to quit running and exit"
+    description = "Instruct the agent to quit running and exit"
     version = 1
     is_exit = True
     is_file_browse = False
