@@ -60,7 +60,7 @@ class ExecutePECommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecutePEArguments
-    attackmapping = ["1055"]
+    attackmapping = ["T1055"]
     attributes = CommandAttributes(
         spawn_and_injectable=False,
         supported_os=[SupportedOS.Windows]
@@ -84,6 +84,9 @@ class ExecutePECommand(CommandBase):
             "command": "createprocess",
             "args": args,
         }
+
+        task.display_params = f'{json.loads(task.original_params)["executable"]} {task.args.get_arg("arguments")}\n ' \
+                              f'spawnto: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
 
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("executable")

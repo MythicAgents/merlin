@@ -171,8 +171,13 @@ class SRDICommand(CommandBase):
                 "bytes": results[0],
             }
 
+            task.display_params = f'{json.loads(task.original_params)["dll"]}\n' \
+                                  f'spawnto: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}\n' \
+                                  f'Method: {task.args.get_arg("method")}'
+
             if task.args.get_arg("pid"):
                 command["pid"] = task.args.get_arg("pid")
+                task.display_params += f'\n{task.args.get_arg("pid")}'
 
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("dll")

@@ -17,6 +17,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/CUCyber/ja3transport v0.0.0-20191126031250-d2ab5557668f/go.mod h1:NuQSs6CGlG1KjU6fHNtyCNfo9clInPTtGNIAkoRIHfM=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
 github.com/NYTimes/gziphandler v1.1.1/go.mod h1:n/CVRwUEOgIxrgPvAQhUUr9oeUtvrhMomdKFjzJNB0c=
+github.com/Ne0nd0g/go-clr v0.0.0-20210328123835-a2bef244455b/go.mod h1:iUEm79gVJA0wfFpVGjNjb4/qEMHqrfcXexjJsUBmJUM=
+github.com/Ne0nd0g/go-clr v1.0.1/go.mod h1:iUEm79gVJA0wfFpVGjNjb4/qEMHqrfcXexjJsUBmJUM=
 github.com/Ne0nd0g/ja3transport v0.0.0-20200203013011-c1231edba652 h1:N6TM81IXEi7qLGbZtJLypkJwHZ458al5ow1JKOLbRPM=
 github.com/Ne0nd0g/ja3transport v0.0.0-20200203013011-c1231edba652/go.mod h1:wxn6ch+dbwLI8e+ndsotd9vb+Txzk5JM0OTdzMNq1K0=
 github.com/Ne0nd0g/ja3transport v0.0.0-20200203013218-e81e31892d84 h1:CxXYecCuU2X84NOiFGrs2Vp3d9Z31lkDxw/q9Mdijbg=
@@ -35,6 +37,17 @@ github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210201123659-528064a0888c h1:jpR/c+TNU
 github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210201123659-528064a0888c/go.mod h1:iuWxLgcgbUv8zuKukOFipJyjl3KY4zo+wr/RFBFsGtM=
 github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210213133529-43cecfe46eb7 h1:z4kVM9plbTPXVmFZZw6nrO1M/z9HAG0LNW1/C5ZIENo=
 github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210213133529-43cecfe46eb7/go.mod h1:iuWxLgcgbUv8zuKukOFipJyjl3KY4zo+wr/RFBFsGtM=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210331122745-26aef7b5c022 h1:gbG+9YZbnh+rdhvN6pe78wIhK1pnqEuDVUO9cNdnqA0=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210331122745-26aef7b5c022/go.mod h1:djB1q6YrWwp5d/SgSrH5QPQ1A4Sz3pDd1ZIYf/hGeR4=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210405122221-00eddd164b44 h1:uy0K15DO88LlVe1RTPD28RUWk2dN5etqSPVG7xwC6hw=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210405122221-00eddd164b44/go.mod h1:djB1q6YrWwp5d/SgSrH5QPQ1A4Sz3pDd1ZIYf/hGeR4=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210406114057-f64f3554a0ae h1:SNmAASmeUGcuysXjZBa96NBruzQf7ozvUwcrCwMQtSY=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210406114057-f64f3554a0ae/go.mod h1:djB1q6YrWwp5d/SgSrH5QPQ1A4Sz3pDd1ZIYf/hGeR4=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210407185653-34c8cc96efe9 h1:zaUBIqvNq/ZBPRYM6vuwyzBEn5lBrEOQVgYQM6oXCsM=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210407185653-34c8cc96efe9/go.mod h1:djB1q6YrWwp5d/SgSrH5QPQ1A4Sz3pDd1ZIYf/hGeR4=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210408212613-0153cb6b31e2 h1:kQtwzxsVDfYnW2R5gujkAX96X0cHio8bW4dqIHeF3d0=
+github.com/Ne0nd0g/merlin v0.9.0-beta.0.20210408212613-0153cb6b31e2/go.mod h1:FCrnguZwVtQ5qGvpb6RsomeVKXEkSV6DMITWph02tp8=
+github.com/Ne0nd0g/merlin v0.10.0-beta/go.mod h1:iuWxLgcgbUv8zuKukOFipJyjl3KY4zo+wr/RFBFsGtM=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/goquery v1.5.0/go.mod h1:qD2PgZ9lccMbQlc7eEOjaeRlFQON7xY8kdmcsrnKqMg=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
@@ -186,6 +199,7 @@ github.com/google/pprof v0.0.0-20181206194817-3ea8567a2e57/go.mod h1:zfwlbNMJ+OI
 github.com/google/renameio v0.1.0/go.mod h1:KWCgfxg9yswjAJkECMjeO8J8rahYeXnNhOm40UhjYkI=
 github.com/google/uuid v1.0.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/uuid v1.1.3/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/google/uuid v1.2.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/googleapis/gax-go v2.0.0+incompatible/go.mod h1:SFVmujtThgffbyetf+mdk2eWhX2bMyUtNHzFKcPA9HY=
 github.com/googleapis/gax-go/v2 v2.0.3/go.mod h1:LLvjysVCY1JZeum8Z6l8qUty8fiNwE08qbEPm1M08qg=
 github.com/googleapis/gax-go/v2 v2.0.4/go.mod h1:0Wqv26UfaUD9n4G6kQubkQ+KchISgw+vpHVxEJEs9eg=
@@ -632,6 +646,7 @@ golang.org/x/sys v0.0.0-20200106162015-b016eb3dc98e/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20200116001909-b77594299b42/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae h1:/WDfKMnPU+m5M4xB+6x4kaepxRw6jWvR5iDRdvjHgy8=
 golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200323222414-85ca7c5b95cd/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200615200032-f1bc736245b1/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
@@ -640,6 +655,7 @@ golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f h1:+Nyd8tzPX9R7BWHguqsrbFdRx
 golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68 h1:nxC68pudNYkKU6jWhgrqdreuFiOQWj1Fs7T3VrH4Pjw=
 golang.org/x/sys v0.0.0-20201119102817-f84b799fce68/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/term v0.0.0-20201117132131-f5c789dd3221/go.mod h1:Nr5EML6q2oocZ2LXRh80K7BxOlk5/8JxuGnuhpl+muw=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
@@ -649,6 +665,7 @@ golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2/go.mod h1:NqM8EUOU14njkJ3
 golang.org/x/text v0.3.2/go.mod h1:bEr9sfX3Q8Zfm5fL9x+3itogRgK3+ptLWKqgva+5dAk=
 golang.org/x/text v0.3.3 h1:cokOdA+Jmi5PJGXLlLllQSgYigAEfHXJAERHVMaCc2k=
 golang.org/x/text v0.3.3/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+golang.org/x/text v0.3.6/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
 golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2/go.mod h1:tRJNPiyCQ0inRvYxbN9jk5I+vvW/OXSQhTDSoE431IQ=
 golang.org/x/time v0.0.0-20181108054448-85acf8d2951c/go.mod h1:tRJNPiyCQ0inRvYxbN9jk5I+vvW/OXSQhTDSoE431IQ=
 golang.org/x/time v0.0.0-20190308202827-9d24e82272b4/go.mod h1:tRJNPiyCQ0inRvYxbN9jk5I+vvW/OXSQhTDSoE431IQ=

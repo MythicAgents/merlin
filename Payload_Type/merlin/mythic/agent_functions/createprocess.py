@@ -81,6 +81,11 @@ class CreateProcessCommand(CommandBase):
             "args": args,
         }
 
+        task.display_params = f'{json.loads(task.original_params)["shellcode"]}' \
+                              f'\nShellcode size: {len(args[0])}\n' \
+                              f'spawnto: {task.args.get_arg("spawnto")} ' \
+                              f'{task.args.get_arg("spawntoargs")}'
+
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("shellcode")
         task.args.remove_arg("spawnto")

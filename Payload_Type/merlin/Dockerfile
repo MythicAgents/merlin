@@ -8,7 +8,7 @@ RUN python3 -m pip install mythic_payloadtype_container==0.0.38
 # Update APT
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y apt-transport-https gpg git
+RUN apt-get install -y apt-transport-https gpg git vim python3-requests
 
 # Install Microsoft package signing key
 RUN wget --quiet -O - https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg

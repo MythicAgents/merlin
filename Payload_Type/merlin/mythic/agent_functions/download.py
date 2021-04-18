@@ -40,7 +40,7 @@ class DownloadCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = DownloadArguments
-    attackmapping = ["T1560.003", "T1041"]
+    attackmapping = ["T1560", "T1041"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.CONTROL
@@ -51,6 +51,8 @@ class DownloadCommand(CommandBase):
             "dest": task.args.get_arg("file"),
             "download": False,  # False when the agent is uploading a file to server
         }
+
+        task.display_params = f'{task.args.get_arg("file")}'
 
         task.args.add_arg("payload", json.dumps(transfer), ParameterType.String)
         task.args.remove_arg("file")

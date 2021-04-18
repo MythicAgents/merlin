@@ -52,7 +52,7 @@ class ExecuteShellcodeCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteShellcodeArguments
-    attackmapping = ["1055"]
+    attackmapping = ["T1055"]
     attributes = CommandAttributes(
         spawn_and_injectable=False,
         supported_os=[SupportedOS.Windows]
@@ -68,8 +68,12 @@ class ExecuteShellcodeCommand(CommandBase):
             "bytes": base64.b64encode(task.args.get_arg("shellcode")).decode("utf-8"),
         }
 
+        task.display_params = f'{json.loads(task.original_params)["shellcode"]}\n' \
+                              f'Method: {task.args.get_arg("method")}\n'
+
         if task.args.get_arg("pid"):
             command["pid"] = task.args.get_arg("pid")
+            task.display_params += f'PID: {task.args.get_arg("pid")}'
 
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("method")

@@ -1,21 +1,26 @@
-
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
 import json
+from mythic_payloadtype_container.MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
 
 
-class ShellArguments(TaskArguments):
+class MemfdArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
+            "executable": CommandParameter(
+                name="executable",
+                type=ParameterType.File,
+                description="The Linux executable (PE file) you want to run",
+                required=True,
+            ),
             "arguments": CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
-                description="Commandline string or arguments to run in the shell",
-                required=True,
+                description="Arguments to start the executable with",
+                required=False,
             ),
         }
 
@@ -24,14 +29,15 @@ class ShellArguments(TaskArguments):
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
             else:
-                self.add_arg("arguments", self.command_line)
+                self.add_arg("path", str.split(self.command_line)[0])
 
 
-class ShellCommand(CommandBase):
-    cmd = "shell"
+class MemfdCommand(CommandBase):
+    cmd = "memfd"
     needs_admin = False
-    help_cmd = "shell"
-    description = "Execute the commandline string or arguments in the operating system's default shell"
+    help_cmd = "memfd"
+    description = "Load a Linux executable file into memory (RAM) as an anonymous file using the memfd_create API " \
+                  "call, execute it, and returns the results."
     version = 1
     is_exit = False
     is_file_browse = False
@@ -40,14 +46,24 @@ class ShellCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = "@Ne0nd0g"
-    argument_class = ShellArguments
-    attackmapping = ["T1059"]
+    argument_class = MemfdArguments
+    attackmapping = ["T1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Linux]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        # Merlin jobs.MODULE
+        task.args.add_arg("type", 16, ParameterType.Number)
 
-        # Executable Arguments
-        args = []
-        # TODO Handle argument parsing when quotes and escapes are used
+        # Arguments
+        # 1. Base64 of Executable
+        # 2+ Executable Arguments
+        args = [
+            base64.b64encode(task.args.get_arg("executable")).decode("utf-8"),
+        ]
+
         arguments = task.args.get_arg("arguments").split()
         if len(arguments) == 1:
             args.append(arguments[0])
@@ -57,17 +73,14 @@ class ShellCommand(CommandBase):
 
         # Merlin jobs.Command message type
         command = {
-            "command": "shell",
+            "command": self.cmd,
             "args": args,
         }
 
-        task.args.add_arg("type", 10, ParameterType.Number)  # jobs.CMD = 10
+        task.display_params = f'{json.loads(task.original_params)["executable"]} {task.args.get_arg("arguments")}'
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-
-        task.display_params = f'{task.args.get_arg("arguments")}'
-
-        # Remove everything except the Merlin data
-        task.args.remove_arg("arguments")
+        task.args.remove_arg("executable")
+        task.args.remove_arg("args")
 
         if debug:
             await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')

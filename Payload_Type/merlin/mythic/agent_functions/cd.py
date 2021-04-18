@@ -59,6 +59,8 @@ class CDCommand(CommandBase):
             "args": args,
         }
 
+        task.display_params = f'{task.args.get_arg("path")}'
+
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("path")
 

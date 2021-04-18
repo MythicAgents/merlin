@@ -1,27 +1,28 @@
+
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicFileRPC import *
 import json
 
 # Set to enable debug output to Mythic
 debug = False
 
 
-class RunArguments(TaskArguments):
+class InvokeAssemblyArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
+            "assembly": CommandParameter(
+                name="assembly",
+                type=ParameterType.String,
+                description="Name of the previously loaded assembly to execute",
+                required=True,
+            ),
             "arguments": CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
-                description="Arguments to start the executable with",
+                description="Arguments to invoke (execute) the assembly",
                 required=False,
-            ),
-            "executable": CommandParameter(
-                name="executable",
-                type=ParameterType.String,
-                description="The executable program to start",
-                value="whoami",
-                required=True,
             ),
         }
 
@@ -31,15 +32,16 @@ class RunArguments(TaskArguments):
                 self.load_args_from_json_string(self.command_line)
             else:
                 args = str.split(self.command_line)
-                self.add_arg("executable", args[0])
+                self.add_arg("assembly", args[0])
                 self.add_arg("arguments", " ".join(args[1:]))
 
 
-class RunCommand(CommandBase):
-    cmd = "run"
+class LoadAssemblyCommand(CommandBase):
+    cmd = "invoke-assembly"
     needs_admin = False
-    help_cmd = "run"
-    description = "Run the executable with the provided arguments and return the results"
+    help_cmd = "invoke-assembly"
+    description = "Invoke (execute) a .NET assembly that was previously loaded into the Agent's process using the" \
+                  " load-assembly command. Use the list-assemblies command to view loaded assemblies"
     version = 1
     is_exit = False
     is_file_browse = False
@@ -48,14 +50,25 @@ class RunCommand(CommandBase):
     is_remove_file = False
     is_upload_file = False
     author = "@Ne0nd0g"
-    argument_class = RunArguments
-    attackmapping = ["T1106"]
+    argument_class = InvokeAssemblyArguments
+    attackmapping = []
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        # Merlin jobs.MODULE
+        task.args.add_arg("type", 16, ParameterType.Number)
 
-        # Executable Arguments
-        args = []
-        # TODO Handle argument parsing when quotes and escapes are used
+        # Arguments
+        # 1. Assembly Name
+        # 2. Arguments
+        args = [
+            self.cmd,
+            task.args.get_arg("assembly"),
+        ]
+
         arguments = task.args.get_arg("arguments").split()
         if len(arguments) == 1:
             args.append(arguments[0])
@@ -65,17 +78,14 @@ class RunCommand(CommandBase):
 
         # Merlin jobs.Command message type
         command = {
-            "command": task.args.get_arg("executable"),
+            "command": "clr",
             "args": args,
         }
 
-        task.args.add_arg("type", 10, ParameterType.Number)  # jobs.CMD = 10
+        task.display_params = f'{task.args.get_arg("assembly")} {task.args.get_arg("arguments")}'
+
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-
-        task.display_params = f'{task.args.get_arg("executable")} {task.args.get_arg("arguments")}'
-
-        # Remove everything except the Merlin data
-        task.args.remove_arg("executable")
+        task.args.remove_arg("assembly")
         task.args.remove_arg("arguments")
 
         if debug:

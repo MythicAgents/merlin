@@ -44,21 +44,17 @@ class SleepCommand(CommandBase):
         # Merlin jobs.CONTROL
         task.args.add_arg("type", 11, ParameterType.Number)
 
-        # Arguments
-        a = "time"
-        args = []
-        arguments = task.args.get_arg(a)
-        if arguments:
-            args.append(arguments)
-
         # Merlin jobs.Command message type
         command = {
             "command": self.cmd,
-            "args": args,
+            "args": [task.args.get_arg("time")],
         }
 
+        task.display_params = task.args.get_arg("time")
+
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg(a)
+        task.args.remove_arg("time")
+
         return task
 
     async def process_response(self, response: AgentResponse):

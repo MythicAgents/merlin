@@ -66,7 +66,7 @@ class MimikatzCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = MimikatzArguments
-    attackmapping = ["S0002"]
+    attackmapping = ["T1055"]
     attributes = CommandAttributes(
         spawn_and_injectable=False,
         supported_os=[SupportedOS.Windows]
@@ -96,6 +96,9 @@ class MimikatzCommand(CommandBase):
             "command": "createprocess",
             "args": args,
         }
+
+        task.display_params = f'{task.args.get_arg("commandline")}\n' \
+                              f'spawnto: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
 
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("commandline")

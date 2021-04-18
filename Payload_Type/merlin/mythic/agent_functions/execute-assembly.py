@@ -1,6 +1,7 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicFileRPC import *
 import os
 import json
 import subprocess
@@ -17,7 +18,7 @@ class ExecuteAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.File,
                 description="The .NET assembly you want to execute",
-                required=True,
+                required=False,
             ),
             "arguments": CommandParameter(
                 name="assembly arguments",
@@ -44,10 +45,11 @@ class ExecuteAssemblyArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
+                self.add_arg("assembly_name", None, ParameterType.String)
             else:
                 args = str.split(self.command_line)
                 if len(args) > 0:
-                    self.add_arg("assembly", args[0], ParameterType.File)
+                    self.add_arg("assembly_name", args[0], ParameterType.String)
                 if len(args) > 1:
                     self.add_arg("arguments", args[1], ParameterType.String)
                 if len(args) > 2:
@@ -70,7 +72,7 @@ class ExecuteAssemblyCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteAssemblyArguments
-    attackmapping = ["1055"]
+    attackmapping = ["T1055"]
     attributes = CommandAttributes(
         spawn_and_injectable=False,
         supported_os=[SupportedOS.Windows]
@@ -80,11 +82,45 @@ class ExecuteAssemblyCommand(CommandBase):
         # Merlin jobs.MODULE
         task.args.add_arg("type", 16, ParameterType.Number)
 
+        if task.args.get_arg("assembly") is not None:
+            donut_assembly = task.args.get_arg("assembly")
+            resp = await MythicFileRPC(task).get_file_by_name(json.loads(task.original_params)["assembly"])
+            # Register the file with Mythic if it can't be found
+            if resp.status == MythicStatus.Error:
+                file_resp = await MythicFileRPC(task).register_file(
+                    file=donut_assembly,
+                    saved_file_name=json.loads(task.original_params)["assembly"],
+                    delete_after_fetch=False,
+                )
+                if file_resp.status != MythicStatus.Success:
+                    raise ValueError(
+                        f'Failed to register file with Mythic: {file_resp.error_message}'
+                    )
+                else:
+                    await MythicResponseRPC(task).user_output(f'Registered {file_resp.filename} '
+                                                              f'SHA1: {file_resp.sha1} with Mythic')
+        # See if the file has previously been registered with Mythic
+        elif task.args.get_arg("assembly_name") is not None:
+            resp = await MythicFileRPC(task).get_file_by_name(task.args.get_arg("assembly_name"))
+            # Register the file
+            if resp.status == MythicStatus.Success:
+                donut_assembly = resp.contents
+                await MythicResponseRPC(task).user_output(f'Using previously registered file {resp.filename}'
+                                                          f' SHA1: {resp.sha1}')
+            else:
+                raise ValueError(
+                    f'Failed to find file: {str.split(task.args.command_line)[0]}'
+                )
+        else:
+            raise ValueError(
+                f'A file or the name of a previously registered file was not provided'
+            )
+
         # 1. Shellcode
         # 2. SpawnTo Executable
         # 3. SpawnTo Arguments (must include even if empty string)
         args = [
-            donut(task.args.get_arg("assembly"), task.args.get_arg("arguments")),
+            donut(donut_assembly, task.args.get_arg("arguments")),
             task.args.get_arg("spawnto"),
             task.args.get_arg("spawntoargs")
         ]
@@ -94,6 +130,9 @@ class ExecuteAssemblyCommand(CommandBase):
             "command": "createprocess",
             "args": args,
         }
+
+        task.display_params = f'{json.loads(task.original_params)["assembly"]} {task.args.get_arg("arguments")}\n ' \
+                              f'spawnto: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
 
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("assembly")

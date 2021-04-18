@@ -59,9 +59,11 @@ class UploadCommand(CommandBase):
             "download": True,  # False when the agent is uploading a file to server
         }
 
+        task.display_params = f'{json.loads(task.original_params)["file"]}\nDestination: {task.args.get_arg("path")}'
+
         task.args.add_arg("payload", json.dumps(transfer), ParameterType.String)
-        # task.args.remove_arg("file")
-        # task.args.remove_arg("path")
+        task.args.remove_arg("file")
+        task.args.remove_arg("path")
 
         if debug:
             await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')

@@ -43,21 +43,17 @@ class SkewCommand(CommandBase):
         # Merlin jobs.CONTROL
         task.args.add_arg("type", 11, ParameterType.Number)
 
-        # Arguments
-        a = "amount"
-        args = []
-        arguments = task.args.get_arg(a)
-        if arguments:
-            args.append(arguments)
-
         # Merlin jobs.Command message type
         command = {
             "command": self.cmd,
-            "args": args,
+            "args": [task.args.get_arg("amount")],
         }
 
+        task.display_params = f'{task.args.get_arg("amount")}'
+
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg(a)
+        task.args.remove_arg("amount")
+
         return task
 
     async def process_response(self, response: AgentResponse):

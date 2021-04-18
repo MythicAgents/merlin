@@ -60,6 +60,7 @@ class JA3Command(CommandBase):
             "args": args,
         }
 
+        task.display_params = f'{task.args.get_arg("ja3string")}'
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("ja3string")
 
