@@ -2,7 +2,6 @@ from PayloadBuilder import *
 import asyncio
 import os
 from distutils.dir_util import copy_tree
-import tempfile
 import time
 
 # Set to enable debug output to Mythic
@@ -80,70 +79,66 @@ class Merlin(PayloadType):
         # this function gets called to create an instance of your payload
         resp = BuildResponse(status=BuildStatus.Error)
         output = ""
-        command = ""
 
-        goCMD = ""
-        c2Params = self.c2info[0].get_parameters_dict()
+        go_cmd = ""
+        c2_params = self.c2info[0].get_parameters_dict()
 
         # Merlin specific build code
         try:
-            agent_build_path = tempfile.TemporaryDirectory(suffix=self.uuid).name
-            merlinPath = "/go/src/github.com/Ne0nd0g/merlin-mythic-agent/"
-            outputFile = "merlin"
+            merlin_path = "/root/go/src/github.com/Ne0nd0g/merlin-mythic-agent/"
+            output_file = "merlin"
 
-            # shutil to copy payload files over
-            copy_tree(self.agent_code_path, merlinPath)
+            # Move source code to GOPATH
+            copy_tree(self.agent_code_path, merlin_path)
+            command = "cd " + merlin_path + ";"
 
-            command = "cd " + merlinPath + ";"
-
-            # Fix GOPATH 
-            command += "export GOPATH=/go/src;"
+            # Set Operating System and Architecture
             command += "export GOOS=" + self.get_parameter("os").lower() + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
-            goCMD += "go build -o " + outputFile
-            goCMD += """ -ldflags '-s -w"""
+            go_cmd += "go build -o " + output_file
+            go_cmd += """ -ldflags '-s -w"""
             if self.get_parameter("os").lower() == "windows" and (self.get_parameter("debug").lower() == "false" and self.get_parameter("verbose").lower() == "false"):
-                goCMD += " -H=windowsgui"
+                go_cmd += " -H=windowsgui"
             # payloadID
-            goCMD += " -X \"main.payloadID=" + f'{self.uuid}\"'
+            go_cmd += " -X \"main.payloadID=" + f'{self.uuid}\"'
             # URL
-            goCMD += f' -X \"main.url={c2Params["callback_host"]}:{c2Params["callback_port"]}/{c2Params["post_uri"]}\"'
+            go_cmd += f' -X \"main.url={c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}\"'
             # Pre-Shared Key (PSK)
-            goCMD += f' -X \"main.psk={c2Params["AESPSK"]}\"'
+            go_cmd += f' -X \"main.psk={c2_params["AESPSK"]}\"'
             # HTTP User-Agent
-            goCMD += f' -X \"main.useragent={c2Params["USER_AGENT"]}\"'
+            go_cmd += f' -X \"main.useragent={c2_params["USER_AGENT"]}\"'
             # Sleep
-            goCMD += f' -X \"main.sleep={c2Params["callback_interval"]}s\"'
+            go_cmd += f' -X \"main.sleep={c2_params["callback_interval"]}s\"'
             # Skew
-            skew = int(c2Params["callback_interval"]) * 1000
-            goCMD += f' -X \"main.skew={skew}\"'
+            skew = int(c2_params["callback_interval"]) * 1000
+            go_cmd += f' -X \"main.skew={skew}\"'
             # Kill Date
-            killdate = str(int(time.mktime(time.strptime(c2Params["killdate"], "%Y-%m-%d"))))
-            goCMD += f' -X \"main.killdate={killdate}\"'
+            killdate = str(int(time.mktime(time.strptime(c2_params["killdate"], "%Y-%m-%d"))))
+            go_cmd += f' -X \"main.killdate={killdate}\"'
             # Max Retry
-            goCMD += f' -X \"main.maxretry={self.get_parameter("maxretry")}\"'
+            go_cmd += f' -X \"main.maxretry={self.get_parameter("maxretry")}\"'
             # Padding
-            goCMD += f' -X \"main.padding={self.get_parameter("padding")}\"'
+            go_cmd += f' -X \"main.padding={self.get_parameter("padding")}\"'
             # Verbose
-            goCMD += f' -X \"main.verbose={self.get_parameter("verbose")}\"'
+            go_cmd += f' -X \"main.verbose={self.get_parameter("verbose")}\"'
             # Debug
-            goCMD += f' -X \"main.debug={self.get_parameter("debug")}\"'
+            go_cmd += f' -X \"main.debug={self.get_parameter("debug")}\"'
             # Proxy
-            if c2Params["proxy_host"]:
-                goCMD += f' -X \"main.proxy={c2Params["proxy_host"]}:{c2Params["proxy_port"]}\"'
+            if c2_params["proxy_host"]:
+                go_cmd += f' -X \"main.proxy={c2_params["proxy_host"]}:{c2_params["proxy_port"]}\"'
             # HTTP Host Header
-            if c2Params["domain_front"]:
-                goCMD += f' -X \"main.host={c2Params["domain_front"]}\"'
+            if c2_params["domain_front"]:
+                go_cmd += f' -X \"main.host={c2_params["domain_front"]}\"'
             # JA3 String
             if self.get_parameter("ja3"):
-                goCMD += f' -X \"main.ja3={self.get_parameter("ja3")}\"'
+                go_cmd += f' -X \"main.ja3={self.get_parameter("ja3")}\"'
 
             # Everything else
-            goCMD += " -buildid=\' main.go"
+            go_cmd += " -buildid=\' main.go"
 
             # Build the agent
-            command += goCMD
+            command += go_cmd
 
             proc = await asyncio.create_subprocess_shell(
                 command,
@@ -157,13 +152,13 @@ class Merlin(PayloadType):
             if stderr:
                 output += f"[STDERR]\n{stderr.decode()}"
             if debug:
-                output += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngoCMD: {goCMD}, "
+                output += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngo_cmd: {go_cmd}, "
                 resp.message = output
             # Return compiled agent
-            if os.path.exists(merlinPath + "/" + outputFile):
-                resp.payload = open(merlinPath + "/" + outputFile, "rb").read()
+            if os.path.exists(merlin_path + "/" + output_file):
+                resp.payload = open(merlin_path + "/" + output_file, "rb").read()
                 resp.message = "\r\nThe Merlin agent was successfully built"
-                resp.message += f'\r\nGo build command: {goCMD}'
+                resp.message += f'\r\nGo build command: {go_cmd}'
                 resp.status = BuildStatus.Success
             else:
                 # something went wrong, return our errors

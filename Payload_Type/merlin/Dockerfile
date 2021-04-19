@@ -1,10 +1,21 @@
 # pull in the appropriate language's payload container from itsafeaturemythic on dockerhub
-From itsafeaturemythic/xgolang_payload:0.0.7
+FROM python:3.8-slim-buster
 
 # Update APT
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y apt-transport-https gpg git
+RUN apt-get install -y apt-transport-https gpg git wget unzip
+
+# It is WAY easier to install Go on the Python container instead of install Python 3.8 on the Golang 1.16 container
+# Install Go
+WORKDIR /opt/
+RUN wget https://golang.org/dl/go1.16.3.linux-amd64.tar.gz
+RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.3.linux-amd64.tar.gz
+RUN rm /opt/go1.16.3.linux-amd64.tar.gz
+ENV PATH="${PATH}:/usr/local/go/bin"
+
+# Configure Mythic Packages
+RUN pip install aio_pika mythic-payloadtype-container
 
 # Install Microsoft package signing key
 RUN wget --quiet -O - https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
@@ -35,9 +46,12 @@ RUN wget https://raw.githubusercontent.com/monoxgas/sRDI/master/Python/ConvertTo
 WORKDIR /opt/
 RUN wget https://github.com/gentilkiwi/mimikatz/releases/latest/download/mimikatz_trunk.zip
 RUN unzip mimikatz_trunk.zip -d mimikatz
+RUN rm /opt/mimikatz_trunk.zip
 
 # Update PATH
 ENV PATH="${PATH}:/go/src/bin"
 
 # Download go-donut
 RUN go get github.com/Binject/go-donut
+
+ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]

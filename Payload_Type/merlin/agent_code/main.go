@@ -28,10 +28,9 @@ import (
 	"github.com/fatih/color"
 
 	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/agent"
-	"github.com/Ne0nd0g/merlin/pkg/agent/clients/mythic"
-	"github.com/Ne0nd0g/merlin/pkg/agent/core"
-
+	"github.com/Ne0nd0g/merlin-agent/agent"
+	"github.com/Ne0nd0g/merlin-agent/clients/mythic"
+	"github.com/Ne0nd0g/merlin-agent/core"
 )
 
 // TODO Update pkg/agent/core.[build, verbose, debug]
@@ -101,13 +100,9 @@ func main(){
 		if core.Verbose {
 			color.Red(err.Error())
 		}
+		os.Exit(1)
 	}
 
 	// Start the agent
-	err = a.Run()
-	if err != nil {
-		if core.Verbose {
-			color.Red(err.Error())
-		}
-	}
+	a.Run()
 }
