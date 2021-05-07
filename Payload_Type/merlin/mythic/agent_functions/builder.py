@@ -2,7 +2,6 @@ from mythic_payloadtype_container.PayloadBuilder import *
 from mythic_payloadtype_container.MythicCommandBase import *
 import asyncio
 import os
-from distutils.dir_util import copy_tree
 import time
 
 # Set to enable debug output to Mythic
@@ -18,7 +17,8 @@ class Merlin(PayloadType):
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types
     note = """A port of Merlin from https://www.github.com/Ne0nd0g/merlin to Mythic"""
-    supports_dynamic_loading = False  # setting this to True allows users to only select a subset of commands when generating a payload
+    # setting this to True allows users to only select a subset of commands when generating a payload
+    supports_dynamic_loading = False
     build_parameters = {
         #  these are all the build parameters that will be presented to the user when creating your payload
         "verbose": BuildParameter(
@@ -76,22 +76,15 @@ class Merlin(PayloadType):
 
     async def build(self) -> BuildResponse:
         resp = BuildResponse(status=BuildStatus.Error)
-
         go_cmd = ""
         c2_params = self.c2info[0].get_parameters_dict()
 
         # Merlin specific build code
         try:
-            merlin_path = "/go/src/github.com/Ne0nd0g/merlin-mythic-agent/"
             output_file = "merlin"
 
-            # shutil to copy payload files over
-            copy_tree(self.agent_code_path, merlin_path)
-
-            command = "cd " + merlin_path + ";"
-
             # Fix GOPATH 
-            command += "export GOPATH=/go/src;"
+            command = "export GOPATH=/go/src;"
             command += "export GOOS=" + self.get_parameter("os").lower() + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
@@ -146,26 +139,25 @@ class Merlin(PayloadType):
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                cwd=self.agent_code_path,
             )
 
             stdout, stderr = await proc.communicate()
 
-            if os.path.exists(merlin_path + "/" + output_file):
-                resp.payload = open(merlin_path + "/" + output_file, "rb").read()
-                resp.message = "\r\nThe Merlin agent was successfully built"
-                resp.message += f'\r\nGo build command: {go_cmd}\r\n'
+            if os.path.exists(self.agent_code_path + "/" + output_file):
+                resp.payload = open(self.agent_code_path + "/" + output_file, "rb").read()
+                resp.build_message += "\r\nThe Merlin agent was successfully built!"
+                resp.build_stdout += f'\r\nGo build command: {go_cmd}\r\n'
                 if stdout:
-                    resp.message = f'{stdout.decode()}'
+                    resp.build_stdout += f'{stdout.decode()}'
                 if stderr:
-                    resp.build_error = f'{stderr.decode()}'
+                    resp.build_stderr += f'{stderr.decode()}'
                 resp.status = BuildStatus.Success
             else:
                 if stderr:
-                    resp.build_error = f'{stderr.decode()}'
-                resp.payload = None
+                    resp.build_stderr = f'{stderr.decode()}'
             if debug:
-                resp.message += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngo_cmd: {go_cmd}, "
+                resp.build_stdout += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngo_cmd: {go_cmd}, "
         except Exception as e:
-            resp.message = "[ERROR]" + str(e)
-            resp.payload = None
+            resp.build_message = "[ERROR]" + str(e)
         return resp
