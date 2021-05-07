@@ -18,6 +18,7 @@ class SharpGenArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The CSharp code you want to execute",
                 default_value="Console.WriteLine(Mimikatz.LogonPasswords());",
+                ui_position=0,
                 required=True
             ),
             "spawnto": CommandParameter(
@@ -25,18 +26,21 @@ class SharpGenArguments(TaskArguments):
                 type=ParameterType.String,
                 description="the child process that will be started to execute the assembly in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=1,
                 required=True
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any",
+                ui_position=2,
                 required=False,
             ),
             "verbose": CommandParameter(
                 name="verbose",
                 description="Show verbose output from SharpGen and Donut",
                 type=ParameterType.Boolean,
+                ui_position=3,
                 required=False,
             ),
         }

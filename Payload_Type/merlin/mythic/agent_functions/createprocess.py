@@ -1,10 +1,8 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-import os
-import json
-import subprocess
-
 from mythic_payloadtype_container.MythicResponseRPC import *
+import json
+
 
 # Set to enable debug output to Mythic
 debug = False
@@ -18,6 +16,7 @@ class CreateProcessArguments(TaskArguments):
                 name="shellcode",
                 type=ParameterType.File,
                 description="The shellcode file you want to execute in the spawnto process",
+                ui_position=0,
                 required=True,
             ),
             "spawnto": CommandParameter(
@@ -25,12 +24,14 @@ class CreateProcessArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The child process that will be started to execute the shellcode in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=1,
                 required=True
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="argument to create the spawnto process with, if any",
+                ui_position=2,
                 required=False,
             ),
         }

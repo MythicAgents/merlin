@@ -16,12 +16,14 @@ class InvokeAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.String,
                 description="Name of the previously loaded assembly to execute",
+                ui_position=0,
                 required=True,
             ),
             "arguments": CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to invoke (execute) the assembly",
+                ui_position=1,
                 required=False,
             ),
         }

@@ -14,12 +14,14 @@ class MemfdArguments(TaskArguments):
                 name="executable",
                 type=ParameterType.File,
                 description="The Linux executable (PE file) you want to run",
+                ui_position=0,
                 required=True,
             ),
             "arguments": CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to start the executable with",
+                ui_position=1,
                 required=False,
             ),
         }

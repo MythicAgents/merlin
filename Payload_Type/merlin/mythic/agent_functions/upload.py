@@ -14,12 +14,14 @@ class UploadArguments(TaskArguments):
                 name="path",
                 type=ParameterType.String,
                 description="The file path on the host where the agent is running that the file will be written to",
+                ui_position=1,
                 required=True,
             ),
             "file": CommandParameter(
                 name="file",
                 type=ParameterType.File,
                 description="The file to upload to the host where the agent is running",
+                ui_position=0,
                 required=True,
             )
         }

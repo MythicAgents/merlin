@@ -17,12 +17,14 @@ class ExecutePEArguments(TaskArguments):
                 name="executable",
                 type=ParameterType.File,
                 description="The Windows executable (PE file) you want to run",
+                ui_position=0,
                 required=True,
             ),
             "arguments": CommandParameter(
                 name="executable arguments",
                 type=ParameterType.String,
                 description="Arguments to execute the assembly with",
+                ui_position=1,
                 required=False,
             ),
             "spawnto": CommandParameter(
@@ -30,12 +32,14 @@ class ExecutePEArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The child process that will be started to execute the PE in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=2,
                 required=True
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any",
+                ui_position=3,
                 required=False,
             ),
         }

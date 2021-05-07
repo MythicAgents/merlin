@@ -15,6 +15,7 @@ class ExecuteShellcodeArguments(TaskArguments):
                 name="shellcode",
                 type=ParameterType.File,
                 description="The binary file that contains the shellcode",
+                ui_position=0,
                 required=True,
             ),
             "method": CommandParameter(
@@ -22,12 +23,14 @@ class ExecuteShellcodeArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 choices=["self", "remote", "RtlCreateUserThread", "userapc"],
                 description="The shellcode injection method to use",
+                ui_position=1,
                 required=True
             ),
             "pid": CommandParameter(
                 name="pid",
                 type=ParameterType.Number,
                 description="The Process ID (PID) to inject the shellcode into. Not used with the 'self' method",
+                ui_position=2,
                 required=False
             ),
         }

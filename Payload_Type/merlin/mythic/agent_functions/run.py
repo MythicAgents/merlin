@@ -14,6 +14,7 @@ class RunArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to start the executable with",
+                ui_position=1,
                 required=False,
             ),
             "executable": CommandParameter(
@@ -21,6 +22,7 @@ class RunArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The executable program to start",
                 value="whoami",
+                ui_position=0,
                 required=True,
             ),
         }

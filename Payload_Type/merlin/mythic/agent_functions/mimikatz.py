@@ -18,6 +18,7 @@ class MimikatzArguments(TaskArguments):
                 type=ParameterType.String,
                 description="Mimikatz commandline arguments",
                 default_value="token::whoami coffee",
+                ui_position=0,
                 required=True,
             ),
             "spawnto": CommandParameter(
@@ -25,18 +26,21 @@ class MimikatzArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The child process that will be started to execute Mimikatz in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=1,
                 required=True,
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="argument to create the spawnto process with, if any",
+                ui_position=2,
                 required=False,
             ),
             "verbose": CommandParameter(
                 name="verbose",
                 description="Show verbose output from Donut",
                 type=ParameterType.Boolean,
+                ui_position=3,
                 required=False,
             ),
         }

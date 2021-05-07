@@ -17,42 +17,49 @@ class SRDIArguments(TaskArguments):
                 name="dll",
                 type=ParameterType.File,
                 description="DLL to convert to shellcode",
+                ui_position=0,
                 required=True,
             ),
             "function-name": CommandParameter(
                 name="function-name",
                 type=ParameterType.String,
                 description="The function to call after DllMain",
+                ui_position=1,
                 required=False,
             ),
             "user-data": CommandParameter(
                 name="user-data",
                 type=ParameterType.String,
                 description="Data to pass to the target function",
+                ui_position=2,
                 required=False,
             ),
             "clear-header": CommandParameter(
                 name="clear-header",
                 type=ParameterType.Boolean,
                 description="Clear the PE header on load",
+                ui_position=3,
                 required=False,
             ),
             "obfuscate-imports": CommandParameter(
                 name="obfuscate-imports",
                 description="Randomize import dependency load order",
                 type=ParameterType.Boolean,
+                ui_position=4,
                 required=False,
             ),
             "import-delay": CommandParameter(
                 name="import-delay",
                 description="Number of seconds to pause between loading imports",
                 type=ParameterType.Number,
+                ui_position=5,
                 required=False,
             ),
             "verbose": CommandParameter(
                 name="verbose",
                 description="Show verbose output from sRDI",
                 type=ParameterType.Boolean,
+                ui_position=6,
                 required=False,
             ),
             "method": CommandParameter(
@@ -60,12 +67,14 @@ class SRDIArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 choices=["createprocess", "self", "remote", "RtlCreateUserThread", "userapc"],
                 description="The shellcode injection method to use. Use createprocess if you want output back",
+                ui_position=7,
                 required=True
             ),
             "pid": CommandParameter(
                 name="pid",
                 type=ParameterType.Number,
                 description="The Process ID (PID) to inject the shellcode into. Not used with the 'self' method",
+                ui_position=8,
                 required=False
             ),
             "spawnto": CommandParameter(
@@ -74,6 +83,7 @@ class SRDIArguments(TaskArguments):
                 description="The child process that will be started to execute the shellcode in. "
                             "Only used with the createprocess method",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=9,
                 required=True
             ),
             "spawntoargs": CommandParameter(
@@ -81,6 +91,7 @@ class SRDIArguments(TaskArguments):
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any. "
                             "Only used with the createprocess method",
+                ui_position=10,
                 required=False,
             ),
         }

@@ -18,12 +18,14 @@ class ExecuteAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.File,
                 description="The .NET assembly you want to execute",
+                ui_position=0,
                 required=False,
             ),
             "arguments": CommandParameter(
                 name="assembly arguments",
                 type=ParameterType.String,
                 description="Arguments to execute the .NET assembly with",
+                ui_position=1,
                 required=False,
             ),
             "spawnto": CommandParameter(
@@ -31,12 +33,14 @@ class ExecuteAssemblyArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The child process that will be started to execute the assembly in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=2,
                 required=True,
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any",
+                ui_position=3,
                 required=False,
             ),
         }
