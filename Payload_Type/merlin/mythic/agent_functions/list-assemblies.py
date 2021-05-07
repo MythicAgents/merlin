@@ -22,12 +22,6 @@ class LoadAssemblyCommand(CommandBase):
     help_cmd = "list-assemblies"
     description = "List the .NET assemblies that have been loaded in the default AppDomain in the Agent's process."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ListAssembliesArguments
     attackmapping = []

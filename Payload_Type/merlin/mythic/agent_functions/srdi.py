@@ -113,12 +113,6 @@ class SRDICommand(CommandBase):
                   "TLS callbacks, and sanity checks. It can be thought of as a shellcode PE loader strapped to a " \
                   "packed DLL. https://github.com/monoxgas/sRDI."
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = SRDIArguments
     attackmapping = ["T1055"]

@@ -49,12 +49,6 @@ class CreateProcessCommand(CommandBase):
     description = "Uses process hollowing to create a child process from the spawnto argument, allocate the provided " \
                   "shellcode into it, execute it, and use anonymous pipes to collect STDOUT/STDERR"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = CreateProcessArguments
     attackmapping = ["T1055"]

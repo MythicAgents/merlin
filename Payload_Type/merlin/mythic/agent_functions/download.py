@@ -32,6 +32,7 @@ class DownloadCommand(CommandBase):
     help_cmd = "download"
     description = "Downloads a file from the host where the agent is running"
     version = 1
+    supported_ui_features = ["file_browser:download"]
     is_exit = False
     is_file_browse = False
     is_process_list = False

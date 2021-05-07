@@ -33,12 +33,6 @@ class ShellCommand(CommandBase):
     help_cmd = "shell"
     description = "Execute the commandline string or arguments in the operating system's default shell"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ShellArguments
     attackmapping = ["T1059"]

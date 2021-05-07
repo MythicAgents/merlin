@@ -62,12 +62,6 @@ class MimikatzCommand(CommandBase):
     help_cmd = "mimikatz"
     description = "Converts mimikatz.exe into shellcode with Donut, executes it in the spawnto process, and returns output"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = MimikatzArguments
     attackmapping = ["T1055"]

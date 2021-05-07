@@ -178,12 +178,6 @@ class DonutCommand(CommandBase):
     description = "Convert a VBS/JS or PE/.NET EXE/DLL to shellcode.\n\t\tOnly the finest artisanal donuts are made" \
                   " of shells.\r\nUses the go-donut project at https://github.com/Binject/go-donut"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = DonutArguments
     attackmapping = ["T1055"]

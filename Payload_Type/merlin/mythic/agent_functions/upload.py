@@ -40,12 +40,7 @@ class UploadCommand(CommandBase):
     help_cmd = "upload"
     description = "Upload a file to the host where the agent is running"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = True
+    supported_ui_features = ["file_browser:upload"]
     author = "@Ne0nd0g"
     argument_class = UploadArguments
     attackmapping = []

@@ -33,12 +33,6 @@ class KillDateCommand(CommandBase):
     description = "The date, as a Unix epoch timestamp, that the agent should quit running." \
                   "\r\nVisit: https://www.epochconverter.com/"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = KillDateArguments
     attackmapping = []

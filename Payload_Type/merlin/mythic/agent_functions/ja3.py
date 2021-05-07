@@ -34,12 +34,6 @@ class JA3Command(CommandBase):
     description = "Instruct the agent to use a client derived from the input JA3 string to communicate with the " \
                   "server.\r\nWARNING: Make sure the server can support the client configuration"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = JA3Arguments
     attackmapping = []

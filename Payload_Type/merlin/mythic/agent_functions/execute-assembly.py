@@ -68,12 +68,6 @@ class ExecuteAssemblyCommand(CommandBase):
     help_cmd = "execute-assembly"
     description = "Convert a .NET assembly into shellcode with Donut, execute it in the spawnto process, and return the output"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteAssemblyArguments
     attackmapping = ["T1055"]
