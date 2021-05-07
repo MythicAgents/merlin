@@ -20,7 +20,7 @@ RUN pip install aio_pika mythic-payloadtype-container
 # Install Microsoft package signing key
 RUN wget --quiet -O - https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
 RUN mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
-RUN wget --quiet https://packages.microsoft.com/config/debian/9/prod.list
+RUN wget --quiet https://packages.microsoft.com/config/debian/10/prod.list
 RUN mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
 RUN chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
 RUN chown root:root /etc/apt/sources.list.d/microsoft-prod.list
