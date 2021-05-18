@@ -1,9 +1,6 @@
-
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
-from mythic_payloadtype_container.MythicFileRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-
 
 # Set to enable debug output to Mythic
 debug = False
@@ -54,21 +51,27 @@ class LoadAssemblyCommand(CommandBase):
 
         if task.args.get_arg("assembly") is None:
             # the user supplied an assembly name instead of uploading one, see if we can find it
-            resp = await MythicFileRPC(task).get_file_by_name(task.args.command_line)
+            resp = await MythicRPC().execute("get_file",
+                                             task_id=task.id,
+                                             filename=task.args.command_line,
+                                             get_contents=True,
+                                             )
             if resp.status == MythicStatus.Success:
-                args.append(base64.b64encode(resp.contents).decode("utf-8"))
-                args.append(resp.filename)
+                meta = resp.response[0]
+                args.append(base64.b64encode(meta["contents"].decode("utf-8")))
+                args.append(meta["filename"])
             else:
                 raise ValueError(
                     "Failed to find file:  {}".format(task.args.command_line)
                 )
         else:
             filename = json.loads(task.original_params)["assembly"]
-            resp = await MythicFileRPC(task).register_file(
-                file=task.args.get_arg("assembly"),
-                saved_file_name=filename,
-                delete_after_fetch=False,
-            )
+            resp = await MythicRPC().execute("create_file",
+                                             task_id=task.id,
+                                             file=task.args.get_arg("assembly"),
+                                             saved_file_name=filename,
+                                             delete_after_fetch=False,
+                                             )
             if resp.status != MythicStatus.Success:
                 raise ValueError(
                     "Failed to register file with Mythic: {}".format(resp.error_message)
@@ -86,8 +89,8 @@ class LoadAssemblyCommand(CommandBase):
         task.args.remove_arg("assembly")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Filename: {len(args)}')
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Filename: {len(args)}')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         task.display_params = json.loads(task.original_params)["assembly"]
         return task

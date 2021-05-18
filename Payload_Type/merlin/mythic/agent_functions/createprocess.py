@@ -1,6 +1,6 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
 
 
@@ -87,7 +87,7 @@ class CreateProcessCommand(CommandBase):
         task.args.remove_arg("spawntoargs")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

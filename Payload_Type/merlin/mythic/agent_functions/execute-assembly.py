@@ -1,7 +1,6 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
-from mythic_payloadtype_container.MythicFileRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import os
 import json
 import subprocess
@@ -82,29 +81,37 @@ class ExecuteAssemblyCommand(CommandBase):
 
         if task.args.get_arg("assembly") is not None:
             donut_assembly = task.args.get_arg("assembly")
-            resp = await MythicFileRPC(task).get_file_by_name(json.loads(task.original_params)["assembly"])
+            resp = await MythicRPC().execute("get_file", task_id=task.id, filename=json.loads(task.original_params)["assembly"])
             # Register the file with Mythic if it can't be found
             if resp.status == MythicStatus.Error:
-                file_resp = await MythicFileRPC(task).register_file(
-                    file=donut_assembly,
-                    saved_file_name=json.loads(task.original_params)["assembly"],
-                    delete_after_fetch=False,
-                )
+                file_resp = await MythicRPC().execute("create_file",
+                                                      task_id=task.id,
+                                                      file=donut_assembly,
+                                                      saved_file_name=json.loads(task.original_params)["assembly"],
+                                                      delete_after_fetch=False,
+                                                      )
                 if file_resp.status != MythicStatus.Success:
                     raise ValueError(
-                        f'Failed to register file with Mythic: {file_resp.error_message}'
+                        f'Failed to register file with Mythic: {file_resp.error}'
                     )
                 else:
-                    await MythicResponseRPC(task).user_output(f'Registered {file_resp.filename} '
-                                                              f'SHA1: {file_resp.sha1} with Mythic')
+                    meta = json.loads(file_resp.response)
+                    await MythicRPC().execute("create_output", task_id=task.id,
+                                              output=f'Registered {meta["filename"]} '
+                                                     f'SHA1: {meta["sha1"]} with Mythic')
         # See if the file has previously been registered with Mythic
         elif task.args.get_arg("assembly_name") is not None:
-            resp = await MythicFileRPC(task).get_file_by_name(task.args.get_arg("assembly_name"))
+            resp = await MythicRPC().execute("get_file", task_id=task.id,
+                                             filename=task.args.get_arg("assembly_name"),
+                                             get_contents=True,
+                                             )
             # Register the file
             if resp.status == MythicStatus.Success:
-                donut_assembly = resp.contents
-                await MythicResponseRPC(task).user_output(f'Using previously registered file {resp.filename}'
-                                                          f' SHA1: {resp.sha1}')
+                meta = resp.response[0]
+                donut_assembly = meta["contents"]
+                await MythicRPC().execute("create_output", task_id=task.id,
+                                          output=f'Using previously registered file {meta["filename"]} '
+                                                 f'SHA1: {meta["sha1"]}')
             else:
                 raise ValueError(
                     f'Failed to find file: {str.split(task.args.command_line)[0]}'
@@ -139,7 +146,7 @@ class ExecuteAssemblyCommand(CommandBase):
         task.args.remove_arg("spawntoargs")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

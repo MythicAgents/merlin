@@ -1,6 +1,6 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import os
 import json
 import subprocess
@@ -54,7 +54,8 @@ class ExecutePECommand(CommandBase):
     cmd = "execute-pe"
     needs_admin = False
     help_cmd = "execute-pe"
-    description = "Convert a Windows PE into shellcode with Donut, execute it in the spawnto process, and return the output"
+    description = "Convert a Windows PE into shellcode with Donut, " \
+                  "execute it in the spawnto process, and return the output"
     version = 1
     author = "@Ne0nd0g"
     argument_class = ExecutePEArguments
@@ -93,7 +94,7 @@ class ExecutePECommand(CommandBase):
         task.args.remove_arg("spawntoargs")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

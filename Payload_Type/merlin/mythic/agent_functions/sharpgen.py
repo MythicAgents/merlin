@@ -1,6 +1,6 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import os
 import json
 import subprocess
@@ -72,15 +72,27 @@ class SharpGenCommand(CommandBase):
         task.args.add_arg("type", 16, ParameterType.Number)
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Calling sharpgen() with\r\n{task.args.get_arg("code")}')
+            await MythicRPC().execute(
+                "create_output",
+                task_id=task.id,
+                output=f'[DEBUG]Calling sharpgen() with\r\n{task.args.get_arg("code")}'
+            )
         sharpgen_results = sharpgen(task.args.get_arg("code"))
 
         if "CompilationErrors" in sharpgen_results[1]:
-            await MythicResponseRPC(task).user_output(f'There was an error creating the SharpGen payload:\r\n{sharpgen_results[1]}')
+            await MythicRPC().execute(
+                "create_output",
+                task_id=task.id,
+                output=f'There was an error creating the SharpGen payload:\r\n{sharpgen_results[1]}'
+            )
             task.set_status(MythicStatus.Error)
             return task
         if task.args.get_arg("verbose"):
-            await MythicResponseRPC(task).user_output(f'Verbose output:\r\n{sharpgen_results[1]}\r\n')
+            await MythicRPC().execute(
+                "create_output",
+                task_id=task.id,
+                output=f'Verbose output:\r\n{sharpgen_results[1]}\r\n'
+            )
 
         # 1. Shellcode
         # 2. SpawnTo Executable
@@ -104,7 +116,7 @@ class SharpGenCommand(CommandBase):
         task.args.remove_arg("spawntoargs")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

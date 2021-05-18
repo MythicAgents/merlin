@@ -1,6 +1,6 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import os
 import json
 import subprocess
@@ -188,7 +188,7 @@ class DonutCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Starting create_tasking()')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()')
 
         donut_args = {"module": task.args.get_arg("module")}
         donut_args["url"] = task.args.get_arg("url")
@@ -209,11 +209,12 @@ class DonutCommand(CommandBase):
         donut_args["verbose"] = task.args.get_arg("verbose")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Calling donut()')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Calling donut()')
         donut_results = donut(task.args.get_arg("input"), donut_args)
 
         if task.args.get_arg("verbose"):
-            await MythicResponseRPC(task).user_output(f'[DONUT]Donut verbose output:\r\n{donut_results[1]}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id,
+                                      output=f'[DONUT]Donut verbose output:\r\n{donut_results[1]}\r\n')
 
         # Merlin jobs.MODULE
         task.args.add_arg("type", 16, ParameterType.Number)
@@ -240,7 +241,7 @@ class DonutCommand(CommandBase):
             task.args.remove_arg(arg)
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
         return task
 
     async def process_response(self, response: AgentResponse):

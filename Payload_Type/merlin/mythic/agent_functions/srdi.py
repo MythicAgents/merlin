@@ -1,6 +1,6 @@
 
 from mythic_payloadtype_container.MythicCommandBase import *
-from mythic_payloadtype_container.MythicResponseRPC import *
+from mythic_payloadtype_container.MythicRPC import *
 import os
 import json
 import subprocess
@@ -123,7 +123,7 @@ class SRDICommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Starting create_tasking()')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()')
 
         srdi_args = []
         if task.args.get_arg("function-name"):
@@ -146,11 +146,15 @@ class SRDICommand(CommandBase):
             task.args.remove_arg("import-delay")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Calling srdi()')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Calling srdi()')
         results = srdi(task.args.get_arg("dll"), srdi_args)
 
         if task.args.get_arg("verbose"):
-            await MythicResponseRPC(task).user_output(f'[sRDI]Verbose output:\r\n{results[1]}\r\n')
+            await MythicRPC().execute(
+                "create_output",
+                task_id=task.id,
+                output=f'[sRDI]Verbose output:\r\n{results[1]}\r\n'
+            )
 
         command = {}
         if task.args.get_arg("method") == "createprocess":
@@ -193,7 +197,7 @@ class SRDICommand(CommandBase):
         task.args.remove_arg("spawntoargs")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
         return task
 
     async def process_response(self, response: AgentResponse):
