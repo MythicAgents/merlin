@@ -5,7 +5,7 @@ import os
 import time
 
 # Set to enable debug output to Mythic
-debug = False
+debug = True
 
 
 # define your payload type class here, it must extend the PayloadType class though
@@ -144,8 +144,8 @@ class Merlin(PayloadType):
 
             stdout, stderr = await proc.communicate()
 
-            if os.path.exists(self.agent_code_path + "/" + output_file):
-                resp.payload = open(self.agent_code_path + "/" + output_file, "rb").read()
+            if os.path.exists(str(self.agent_code_path.joinpath(output_file))):
+                resp.payload = open(str(self.agent_code_path.joinpath(output_file)), "rb").read()
                 resp.build_message += "\r\nThe Merlin agent was successfully built!"
                 resp.build_stdout += f'\r\nGo build command: {go_cmd}\r\n'
                 if stdout:
