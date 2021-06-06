@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -44,8 +46,7 @@ class DownloadCommand(CommandBase):
     attackmapping = ["T1560", "T1041"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 14, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("file")}'
 
         # Merlin jobs.Command message type
         transfer = {
@@ -53,8 +54,7 @@ class DownloadCommand(CommandBase):
             "download": False,  # False when the agent is uploading a file to server
         }
 
-        task.display_params = f'{task.args.get_arg("file")}'
-
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(transfer), ParameterType.String)
         task.args.remove_arg("file")
 

@@ -1,9 +1,8 @@
 
+from merlin import donut, MerlinJob, get_or_register_file
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
-import os
 import json
-import subprocess
 
 # Set to enable debug output to Mythic
 debug = False
@@ -93,7 +92,7 @@ class DonutArguments(TaskArguments):
                 required=False,
             ),
             "input": CommandParameter(
-                name="input file",
+                name="input",
                 type=ParameterType.File,
                 description=".NET assembly, EXE, DLL, VBS, JS or XSL file to execute in-memory",
                 ui_position=10,
@@ -187,37 +186,48 @@ class DonutCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        task.display_params = f'{json.loads(task.original_params)["input"]} {task.args.get_arg("params")}\n ' \
+                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
+
         if debug:
             await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()')
 
-        donut_args = {"module": task.args.get_arg("module")}
-        donut_args["url"] = task.args.get_arg("url")
-        donut_args["entropy"] = task.args.get_arg("entropy")
-        donut_args["arch"] = task.args.get_arg("arch")
-        donut_args["bypass"] = task.args.get_arg("bypass")
-        donut_args["oep"] = task.args.get_arg("entrypoint")
-        donut_args["exit"] = task.args.get_arg("exit")
-        donut_args["class"] = task.args.get_arg("class")
-        donut_args["domain"] = task.args.get_arg("domain")
-        donut_args["method"] = task.args.get_arg("method")
-        donut_args["params"] = task.args.get_arg("params")
-        donut_args["unicode"] = task.args.get_arg("unicode")
-        donut_args["runtime"] = task.args.get_arg("runtime")
-        donut_args["thread"] = task.args.get_arg("thread")
-        donut_args["compress"] = task.args.get_arg("compress")
-        donut_args["entrypoint"] = task.args.get_arg("entrypoint")
-        donut_args["verbose"] = task.args.get_arg("verbose")
+        donut_args = {
+            "module": task.args.get_arg("module"),
+            "url": task.args.get_arg("url"),
+            "entropy": task.args.get_arg("entropy"),
+            "arch": task.args.get_arg("arch"),
+            "bypass": task.args.get_arg("bypass"),
+            "oep": task.args.get_arg("entrypoint"),
+            "exit": task.args.get_arg("exit"),
+            "class": task.args.get_arg("class"),
+            "domain": task.args.get_arg("domain"),
+            "method": task.args.get_arg("method"),
+            "params": task.args.get_arg("params"),
+            "unicode": task.args.get_arg("unicode"),
+            "runtime": task.args.get_arg("runtime"),
+            "thread": task.args.get_arg("thread"),
+            "compress": task.args.get_arg("compress"),
+            "entrypoint": task.args.get_arg("entrypoint"),
+            "verbose": task.args.get_arg("verbose")
+        }
+
+        input_bytes = await get_or_register_file(
+            task,
+            json.loads(task.original_params)["input"],
+            task.args.get_arg("input")
+        )
 
         if debug:
             await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Calling donut()')
-        donut_results = donut(task.args.get_arg("input"), donut_args)
+
+        donut_results = donut(input_bytes, donut_args)
 
         if task.args.get_arg("verbose"):
             await MythicRPC().execute("create_output", task_id=task.id,
                                       output=f'[DONUT]Donut verbose output:\r\n{donut_results[1]}\r\n')
 
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        task.stdout = f'[DONUT]Donut verbose output:\r\n{donut_results[1]}\r\n'
 
         # 1. Shellcode
         # 2. SpawnTo Executable
@@ -230,9 +240,7 @@ class DonutCommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{json.loads(task.original_params)["input"]} {task.args.get_arg("params")}\n ' \
-                              f'spawnto: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
-
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("input")
         task.args.remove_arg("spawnto")
@@ -246,38 +254,3 @@ class DonutCommand(CommandBase):
 
     async def process_response(self, response: AgentResponse):
         pass
-
-
-def donut(assembly, arguments):
-
-    donut_args = ['go-donut', '--in', 'input.exe']
-
-    for arg, value in arguments.items():
-        if value:
-            if arg.lower() in ["verbose", "thread", "unicode"]:
-                donut_args.append("--"+arg)
-            else:
-                donut_args.append("--" + arg)
-                donut_args.append(value)
-
-    # Write file to location in container
-    with open('input.exe', 'wb') as w:
-        w.write(assembly)
-
-    result = subprocess.getoutput(" ".join(donut_args))
-
-    donut_bytes = bytes
-    # Read Donut output
-    with open('loader.bin', 'rb') as output:
-        donut_bytes = output.read()
-
-    # Close files
-    w.close()
-    output.close()
-
-    # Remove files
-    os.remove("input.exe")
-    os.remove("loader.bin")
-
-    # Return Donut shellcode Base64 encoded
-    return [base64.b64encode(donut_bytes).decode("utf-8"), f'Commandline: {" ".join(donut_args)}\r\n' + result]

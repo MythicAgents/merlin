@@ -1,4 +1,5 @@
 
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -58,9 +59,10 @@ class CreateProcessCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
-
+        task.display_params = f'{json.loads(task.original_params)["shellcode"]}' \
+                              f'\nShellcode size: {task.args.get_arg("shellcode")}\n' \
+                              f'SpawnTo: {task.args.get_arg("spawnto")} ' \
+                              f'{task.args.get_arg("spawntoargs")}'
         # 1. Shellcode
         # 2. SpawnTo Executable
         # 3. SpawnTo Arguments
@@ -76,11 +78,7 @@ class CreateProcessCommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{json.loads(task.original_params)["shellcode"]}' \
-                              f'\nShellcode size: {len(args[0])}\n' \
-                              f'spawnto: {task.args.get_arg("spawnto")} ' \
-                              f'{task.args.get_arg("spawntoargs")}'
-
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("shellcode")
         task.args.remove_arg("spawnto")

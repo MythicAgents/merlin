@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob, get_or_register_file
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -22,7 +24,7 @@ class UploadArguments(TaskArguments):
                 type=ParameterType.File,
                 description="The file to upload to the host where the agent is running",
                 ui_position=0,
-                required=True,
+                required=False,
             )
         }
 
@@ -31,7 +33,15 @@ class UploadArguments(TaskArguments):
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
             else:
-                self.add_arg("path", str.split(self.command_line)[0])
+                # This allows an operator to specify the name of an a file that was previously registered with Mythic
+                # in place of providing the actual file
+                args = str.split(self.command_line)
+                if len(args) > 0:
+                    self.add_arg("file_name", args[0], ParameterType.String)
+                if len(args) > 1:
+                    self.add_arg("path", args[1], ParameterType.String)
+                else:
+                    raise Exception('A file path was not provided as the second argument')
 
 
 class UploadCommand(CommandBase):
@@ -46,18 +56,30 @@ class UploadCommand(CommandBase):
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 14, ParameterType.Number)
+        # Determine if a file or a file name was provided
+        if task.args.get_arg("file") is None:
+            # A file WAS NOT provided
+            if task.args.has_arg("file_name"):
+                file_name = task.args.get_arg("file_name")
+                file_bytes = None
+            else:
+                raise Exception(f'A file or the name of a file was not provided')
+        else:
+            file_name = json.loads(task.original_params)["file"]
+            file_bytes = task.args.get_arg("file")
+
+        file = await get_or_register_file(task, file_name, file_bytes)
 
         # Merlin jobs.Command message type
         transfer = {
             "dest": task.args.get_arg("path"),
-            "blob": base64.b64encode(task.args.get_arg("file")).decode("utf-8"),
-            "download": True,  # False when the agent is uploading a file to server
+            "blob": base64.b64encode(file).decode("utf-8"),
+            "download": True,  # False when the agent is uploading a file to C2 server
         }
 
-        task.display_params = f'{json.loads(task.original_params)["file"]}\nDestination: {task.args.get_arg("path")}'
+        task.display_params = f'{file_name}\nDestination: {task.args.get_arg("path")}'
 
+        task.args.add_arg("type", MerlinJob.FILE_TRANSFER, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(transfer), ParameterType.String)
         task.args.remove_arg("file")
         task.args.remove_arg("path")

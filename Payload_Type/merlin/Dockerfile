@@ -49,7 +49,7 @@ RUN unzip mimikatz_trunk.zip -d mimikatz
 RUN rm /opt/mimikatz_trunk.zip
 
 # Update PATH
-ENV PATH="${PATH}:/go/src/bin"
+ENV PATH="${PATH}:/root/go/bin"
 
 # Download go-donut
 RUN go get github.com/Binject/go-donut

@@ -1,7 +1,9 @@
 
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
+import shlex
 
 # Set to enable debug output to Mythic
 debug = False
@@ -38,29 +40,16 @@ class ShellCommand(CommandBase):
     attackmapping = ["T1059"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-
-        # Executable Arguments
-        args = []
-        # TODO Handle argument parsing when quotes and escapes are used
-        arguments = task.args.get_arg("arguments").split()
-        if len(arguments) == 1:
-            args.append(arguments[0])
-        elif len(arguments) > 1:
-            for arg in arguments:
-                args.append(arg)
+        task.display_params = f'{task.args.get_arg("arguments")}'
 
         # Merlin jobs.Command message type
         command = {
             "command": "shell",
-            "args": args,
+            "args": shlex.split(task.args.get_arg("arguments")),
         }
 
-        task.args.add_arg("type", 10, ParameterType.Number)  # jobs.CMD = 10
+        task.args.add_arg("type", MerlinJob.CMD, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-
-        task.display_params = f'{task.args.get_arg("arguments")}'
-
-        # Remove everything except the Merlin data
         task.args.remove_arg("arguments")
 
         if debug:

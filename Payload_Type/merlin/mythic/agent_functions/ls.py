@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -41,8 +43,7 @@ class LSCommand(CommandBase):
     attackmapping = ["T1083"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.NATIVE
-        task.args.add_arg("type", 13, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("path")}'
 
         # Arguments
         args = []
@@ -56,7 +57,7 @@ class LSCommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{task.args.get_arg("path")}'
+        task.args.add_arg("type", MerlinJob.NATIVE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("path")
 

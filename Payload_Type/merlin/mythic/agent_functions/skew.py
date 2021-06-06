@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
@@ -34,8 +36,7 @@ class SkewCommand(CommandBase):
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("amount")}'
 
         # Merlin jobs.Command message type
         command = {
@@ -43,8 +44,7 @@ class SkewCommand(CommandBase):
             "args": [task.args.get_arg("amount")],
         }
 
-        task.display_params = f'{task.args.get_arg("amount")}'
-
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("amount")
 

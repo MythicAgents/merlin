@@ -1,4 +1,5 @@
 
+from merlin import MerlinJob, get_or_register_file
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import os
@@ -55,13 +56,6 @@ class SRDIArguments(TaskArguments):
                 ui_position=5,
                 required=False,
             ),
-            "verbose": CommandParameter(
-                name="verbose",
-                description="Show verbose output from sRDI",
-                type=ParameterType.Boolean,
-                ui_position=6,
-                required=False,
-            ),
             "method": CommandParameter(
                 name="method",
                 type=ParameterType.ChooseOne,
@@ -84,7 +78,7 @@ class SRDIArguments(TaskArguments):
                             "Only used with the createprocess method",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
                 ui_position=9,
-                required=True
+                required=False,
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
@@ -122,6 +116,8 @@ class SRDICommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        task.display_params = f'{json.loads(task.original_params)["dll"]} '
+
         if debug:
             await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()')
 
@@ -145,21 +141,16 @@ class SRDICommand(CommandBase):
             srdi_args.append(task.args.get_arg("import-delay"))
             task.args.remove_arg("import-delay")
 
+        dll = await get_or_register_file(task, json.loads(task.original_params)["dll"], task.args.get_arg("dll"))
+
         if debug:
             await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Calling srdi()')
-        results = srdi(task.args.get_arg("dll"), srdi_args)
-
-        if task.args.get_arg("verbose"):
-            await MythicRPC().execute(
-                "create_output",
-                task_id=task.id,
-                output=f'[sRDI]Verbose output:\r\n{results[1]}\r\n'
-            )
+        srdi_shellcode, srdi_result = srdi(dll, srdi_args)
+        task.stdout += f'\n{srdi_result}'
 
         command = {}
         if task.args.get_arg("method") == "createprocess":
-            # Merlin jobs.MODULE
-            task.args.add_arg("type", 16, ParameterType.Number)
+            task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
 
             # 1. Shellcode
             # 2. SpawnTo Executable
@@ -168,16 +159,16 @@ class SRDICommand(CommandBase):
             # Merlin jobs.Command message type
             command = {
                 "command": "createprocess",
-                "args": [results[0], task.args.get_arg("spawnto"), task.args.get_arg("spawntoargs")],
+                "args": [srdi_shellcode, task.args.get_arg("spawnto"), task.args.get_arg("spawntoargs")],
             }
+            task.display_params += f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
         else:
-            # Merlin jobs.SHELLCODE
-            task.args.add_arg("type", 12, ParameterType.Number)
+            task.args.add_arg("type", MerlinJob.SHELLCODE, ParameterType.Number)
 
             # Merlin jobs.Command message type
             command = {
                 "method": task.args.get_arg("method").lower(),
-                "bytes": results[0],
+                "bytes": srdi_shellcode,
             }
 
             task.display_params = f'{json.loads(task.original_params)["dll"]}\n' \
@@ -205,17 +196,34 @@ class SRDICommand(CommandBase):
 
 
 def srdi(dll, arguments):
+    """Leverages the sRDI project to convert a Windows DLL into a reflective DLL as shellcode.
 
+    The sRDI Python script must be previously installed at the fixed locations used in this function.
+    sRDI Project: https://github.com/monoxgas/sRDI
+
+    Parameters
+    ----------
+    dll : bytes
+        The input Windows DLL that will be convert into shellcode
+    arguments : list
+        A list of arguments that will be passed to the Windows DLL
+
+    Returns
+    -------
+    str
+        The sRDI reflective DLL shellcode bytes as a Base64 string
+    str
+        The executed sRDI command line string followed by sRDI's STDOUT/STDERR text
+    """
     srdi_args = ['python3', '/opt/sRDI/ConvertToShellcode.py', 'srdi.dll'] + arguments
 
     # Write file to location in container
     with open('srdi.dll', 'wb') as w:
         w.write(dll)
 
-    result = subprocess.run(srdi_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = subprocess.getoutput(" ".join(srdi_args))
 
-    srdi_bytes = bytes
-    # Read srdi output
+    # Read sRDI output
     with open('srdi.bin', 'rb') as output:
         srdi_bytes = output.read()
 
@@ -227,5 +235,4 @@ def srdi(dll, arguments):
     os.remove("srdi.dll")
     os.remove("srdi.bin")
 
-    # Return Donut shellcode Base64 encoded
-    return [base64.b64encode(srdi_bytes).decode("utf-8"), f'Commandline: {" ".join(srdi_args)}\r\n' + result.stdout.decode("utf-8")]
+    return base64.b64encode(srdi_bytes).decode("utf-8"), f'[sRDI]\nCommandline: {" ".join(srdi_args)}\n{result}'

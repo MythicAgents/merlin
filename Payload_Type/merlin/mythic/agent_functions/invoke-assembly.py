@@ -1,4 +1,5 @@
 
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -53,10 +54,8 @@ class LoadAssemblyCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("assembly")} {task.args.get_arg("arguments")}'
 
-        # Arguments
         # 1. Assembly Name
         # 2. Arguments
         args = [
@@ -77,8 +76,7 @@ class LoadAssemblyCommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{task.args.get_arg("assembly")} {task.args.get_arg("arguments")}'
-
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("assembly")
         task.args.remove_arg("arguments")

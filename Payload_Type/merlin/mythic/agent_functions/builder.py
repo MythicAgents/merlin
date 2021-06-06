@@ -5,7 +5,7 @@ import os
 import time
 
 # Set to enable debug output to Mythic
-debug = True
+debug = False
 
 
 # define your payload type class here, it must extend the PayloadType class though

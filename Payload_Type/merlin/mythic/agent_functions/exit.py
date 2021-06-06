@@ -1,4 +1,5 @@
 
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
@@ -29,7 +30,7 @@ class ExitCommand(CommandBase):
             "command": "kill",
         }
 
-        task.args.add_arg("type", 11, ParameterType.Number) # jobs.CONTROL
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         return task
 

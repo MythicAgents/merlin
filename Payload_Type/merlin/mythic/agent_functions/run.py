@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -48,6 +50,7 @@ class RunCommand(CommandBase):
     attackmapping = ["T1106"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        task.display_params = f'{task.args.get_arg("executable")} {task.args.get_arg("arguments")}'
 
         # Executable Arguments
         args = []
@@ -65,12 +68,8 @@ class RunCommand(CommandBase):
             "args": args,
         }
 
-        task.args.add_arg("type", 10, ParameterType.Number)  # jobs.CMD = 10
+        task.args.add_arg("type", MerlinJob.CMD, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-
-        task.display_params = f'{task.args.get_arg("executable")} {task.args.get_arg("arguments")}'
-
-        # Remove everything except the Merlin data
         task.args.remove_arg("executable")
         task.args.remove_arg("arguments")
 

@@ -1,4 +1,5 @@
 
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -56,8 +57,8 @@ class ExecuteShellcodeCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.SHELLCODE
-        task.args.add_arg("type", 12, ParameterType.Number)
+        task.display_params = f'{json.loads(task.original_params)["shellcode"]}\n' \
+                              f'Method: {task.args.get_arg("method")}\n'
 
         # Merlin jobs.Command message type
         command = {
@@ -65,13 +66,11 @@ class ExecuteShellcodeCommand(CommandBase):
             "bytes": base64.b64encode(task.args.get_arg("shellcode")).decode("utf-8"),
         }
 
-        task.display_params = f'{json.loads(task.original_params)["shellcode"]}\n' \
-                              f'Method: {task.args.get_arg("method")}\n'
-
         if task.args.get_arg("pid"):
             command["pid"] = task.args.get_arg("pid")
             task.display_params += f'PID: {task.args.get_arg("pid")}'
 
+        task.args.add_arg("type", MerlinJob.SHELLCODE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("method")
         task.args.remove_arg("shellcode")

@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -38,8 +40,7 @@ class KillDateCommand(CommandBase):
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("date")}'
 
         # Merlin jobs.Command message type
         command = {
@@ -47,7 +48,7 @@ class KillDateCommand(CommandBase):
             "args": [task.args.get_arg("date")],
         }
 
-        task.display_params = f'{task.args.get_arg("date")}'
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("date")
 

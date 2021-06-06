@@ -1,9 +1,11 @@
 
+from merlin import MerlinJob, donut
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import os
 import json
 import subprocess
+import shlex
 
 # Set to enable debug output to Mythic
 debug = False
@@ -36,28 +38,28 @@ class SharpGenArguments(TaskArguments):
                 ui_position=2,
                 required=False,
             ),
-            "verbose": CommandParameter(
-                name="verbose",
-                description="Show verbose output from SharpGen and Donut",
-                type=ParameterType.Boolean,
-                ui_position=3,
-                required=False,
-            ),
         }
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("code", self.command_line, ParameterType.String)
 
 
 class SharpGenCommand(CommandBase):
     cmd = "sharpgen"
     needs_admin = False
     help_cmd = "sharpgen"
-    description = "Use the SharpGen project to compile and execute a .NET core assembly from input CSharp code.\r\n" \
-                  "SharpGen blog post: https://cobbr.io/SharpGen.html\r\n" \
-                  "SharpSploit Quick Command Reference: https://github.com/cobbr/SharpSploit/blob/master/SharpSploit/SharpSploit%20-%20Quick%20Command%20Reference.md"
+    description = "Use the SharpGen project to compile and execute a .NET core assembly from input CSharp code.\n" \
+                  "You must use the dialog box if you want to specify the SpawnTo.\n" \
+                  "SharpGen has built-in SharpSploit functionality!\n\n" \
+                  "SharpGen blog post: https://cobbr.io/SharpGen.html\n" \
+                  "SharpSploit Quick Command Reference: " \
+                  "https://github.com/cobbr/SharpSploit/blob/master/SharpSploit/" \
+                  "SharpSploit%20-%20Quick%20Command%20Reference.md\n" \
+
     version = 1
     author = "@Ne0nd0g"
     argument_class = SharpGenArguments
@@ -68,8 +70,8 @@ class SharpGenCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("code")}\n ' \
+                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
 
         if debug:
             await MythicRPC().execute(
@@ -77,28 +79,24 @@ class SharpGenCommand(CommandBase):
                 task_id=task.id,
                 output=f'[DEBUG]Calling sharpgen() with\r\n{task.args.get_arg("code")}'
             )
-        sharpgen_results = sharpgen(task.args.get_arg("code"))
 
-        if "CompilationErrors" in sharpgen_results[1]:
-            await MythicRPC().execute(
-                "create_output",
-                task_id=task.id,
-                output=f'There was an error creating the SharpGen payload:\r\n{sharpgen_results[1]}'
-            )
-            task.set_status(MythicStatus.Error)
-            return task
-        if task.args.get_arg("verbose"):
-            await MythicRPC().execute(
-                "create_output",
-                task_id=task.id,
-                output=f'Verbose output:\r\n{sharpgen_results[1]}\r\n'
-            )
+        sharpgen_assembly, sharpgen_result = sharpgen(task.args.get_arg("code"))
+        task.stdout += f'\n{sharpgen_result}'
+
+        # Donut
+        donut_args = {
+            "params": task.args.get_arg("arguments"),
+            "exit": "2",
+            "verbose": True,
+        }
+        donut_shellcode, donut_result = donut(sharpgen_assembly, donut_args)
+        task.stdout += f'\n{donut_result}'
 
         # 1. Shellcode
         # 2. SpawnTo Executable
         # 3. SpawnTo Arguments (must include even if empty string)
         args = [
-            sharpgen_results[0],
+            donut_shellcode,
             task.args.get_arg("spawnto"),
             task.args.get_arg("spawntoargs")
         ]
@@ -109,6 +107,7 @@ class SharpGenCommand(CommandBase):
             "args": args,
         }
 
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("code")
         task.args.remove_arg("arguments")
@@ -124,54 +123,40 @@ class SharpGenCommand(CommandBase):
         pass
 
 
-def donut(assembly, arguments):
-    donut_args = ['go-donut', '--verbose', '--in', 'input.exe', '--exit', '2']
-    if arguments:
-        donut_args.append('--params')
-        donut_args.append(arguments)
-
-    # Write file to location in container
-    with open('input.exe', 'wb') as w:
-        w.write(assembly)
-
-    result = subprocess.getoutput(" ".join(donut_args))
-
-    donut_bytes = bytes
-    # Read Donut output
-    with open('loader.bin', 'rb') as output:
-        donut_bytes = output.read()
-
-    # Close files
-    w.close()
-    output.close()
-
-    # Remove files
-    os.remove("input.exe")
-    os.remove("loader.bin")
-
-    # Return Donut shellcode Base64 encoded
-    return base64.b64encode(donut_bytes).decode("utf-8"), f'[DONUT]\r\nCommandline: {" ".join(donut_args)}\r\n{result}'
-
-
 def sharpgen(code):
-    sharpgen_args = ['dotnet', '/opt/SharpGen/bin/release/netcoreapp2.1/SharpGen.dll', '-f', 'sharpgen.exe', code]
+    """Leverages the SharpGen project to compile arbitrary .NET 2.1 Core code into an assembly.
 
-    result = subprocess.run(sharpgen_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    sharpgen_bytes = bytes
-    if "CompilationErrors" in result.stdout.decode("utf-8"):
-        return sharpgen_bytes, result.stdout.decode("utf-8"), result.stderr.decode("utf-8")
+    This facilitates using C# "like" a scripting language because it is compiled when finished being written.
+    Both SharpGen and .NET Core 2.1 must be previously installed at the fixed locations used in this function.
+    SharpGen Project: https://github.com/cobbr/SharpGen
 
-    # Read SharpGen output file
+    Parameters
+    ----------
+    code : string
+        The .NET 2.1 code to be compiled
+
+    Returns
+    -------
+    bytes
+        The compiled code as a .NET 2.1 Core assembly
+    str
+        The executed SharpGen command line string followed by SharpGen's STDOUT/STDERR text
+    """
+
+    sharpgen_args = ['dotnet', '/opt/SharpGen/bin/release/netcoreapp2.1/SharpGen.dll', '-f', 'sharpgen.exe',
+                     shlex.quote(code)]
+
+    result = subprocess.getoutput(" ".join(sharpgen_args))
+
+    if "CompilationErrors" in result:
+        raise Exception(f'There was an error compiling the code with SharpGen:\n{result}')
+
     with open('/opt/SharpGen/Output/sharpgen.exe', 'rb') as output:
         sharpgen_bytes = output.read()
-
-    # Close file
     output.close()
-
-    # Remove file
     os.remove("/opt/SharpGen/Output/sharpgen.exe")
 
-    donut_results = donut(sharpgen_bytes, "")
-
-    return donut_results[0], f'[SharpGen]\r\nCommandline: {" ".join(sharpgen_args)}\r\n{result.stdout.decode("utf-8")}\r\n{donut_results[1]}', ""
+    return sharpgen_bytes, f'[SharpGen]\r\n' \
+                           f'Commandline: {" ".join(sharpgen_args)}\r\n' \
+                           f'{result}'
 

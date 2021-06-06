@@ -1,3 +1,5 @@
+
+from merlin import MerlinJob
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -39,8 +41,7 @@ class JA3Command(CommandBase):
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("ja3string")}'
 
         # Arguments
         args = []
@@ -54,7 +55,7 @@ class JA3Command(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{task.args.get_arg("ja3string")}'
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("ja3string")
 

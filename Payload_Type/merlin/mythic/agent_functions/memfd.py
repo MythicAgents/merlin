@@ -1,6 +1,9 @@
+
+from merlin import MerlinJob, get_or_register_file
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
+import shlex
 
 # Set to enable debug output to Mythic
 debug = False
@@ -15,7 +18,7 @@ class MemfdArguments(TaskArguments):
                 type=ParameterType.File,
                 description="The Linux executable (PE file) you want to run",
                 ui_position=0,
-                required=True,
+                required=False,
             ),
             "arguments": CommandParameter(
                 name="arguments",
@@ -31,7 +34,13 @@ class MemfdArguments(TaskArguments):
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
             else:
-                self.add_arg("path", str.split(self.command_line)[0])
+                # This allows an operator to specify the name of an a file that was previously registered with Mythic
+                # in place of providing the actual file
+                args = shlex.split(self.command_line)
+                if len(args) > 0:
+                    self.add_arg("executable_name", args[0], ParameterType.String)
+                if len(args) > 1:
+                    self.add_arg("arguments", args[1], ParameterType.String)
 
 
 class MemfdCommand(CommandBase):
@@ -50,14 +59,27 @@ class MemfdCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        # Determine if a file or a file name was provided
+        if task.args.get_arg("executable") is None:
+            # A file WAS NOT provided
+            if task.args.has_arg("executable_name"):
+                executable_name = task.args.get_arg("executable_name")
+                executable_bytes = None
+            else:
+                raise Exception(f'A file or the name of a file was not provided')
+        else:
+            executable_name = json.loads(task.original_params)["executable"]
+            executable_bytes = task.args.get_arg("executable")
+
+        task.display_params = f'{executable_name} {task.args.get_arg("arguments")}'
+
+        executable = await get_or_register_file(task, executable_name, executable_bytes)
 
         # Arguments
         # 1. Base64 of Executable
         # 2+ Executable Arguments
         args = [
-            base64.b64encode(task.args.get_arg("executable")).decode("utf-8"),
+            base64.b64encode(executable).decode("utf-8"),
         ]
 
         arguments = task.args.get_arg("arguments").split()
@@ -73,7 +95,7 @@ class MemfdCommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{json.loads(task.original_params)["executable"]} {task.args.get_arg("arguments")}'
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("executable")
         task.args.remove_arg("args")
