@@ -15,7 +15,7 @@ RUN rm /opt/go1.16.5.linux-amd64.tar.gz
 ENV PATH="${PATH}:/usr/local/go/bin"
 
 # Configure Mythic Packages
-RUN pip install aio_pika mythic-payloadtype-container==0.0.43 dynaconf==3.1.4
+RUN pip install aio_pika mythic-payloadtype-container==0.0.44 dynaconf==3.1.4
 
 # Install Microsoft package signing key
 RUN wget --quiet -O - https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
