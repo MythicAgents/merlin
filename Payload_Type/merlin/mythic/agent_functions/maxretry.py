@@ -1,6 +1,8 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -13,7 +15,7 @@ class RetryArguments(TaskArguments):
             "maxretry": CommandParameter(
                 name="maxretry",
                 type=ParameterType.String,
-                description="The maximum amount of time the Agent can fail to check in before it quits running",
+                description="The maximum amount of times the Agent can fail to check in before it quits running",
                 value="7",
                 required=True,
             ),
@@ -33,38 +35,25 @@ class RetryCommand(CommandBase):
     help_cmd = "maxretry"
     description = "The maximum amount of time the Agent can fail to check in before it quits running"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = RetryArguments
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
-
-        # Arguments
-        a = "maxretry"
-        args = []
-        arguments = task.args.get_arg(a)
-        if arguments:
-            args.append(arguments)
+        task.display_params = f'{task.args.get_arg("maxretry")}'
 
         # Merlin jobs.Command message type
         command = {
             "command": self.cmd,
-            "args": args,
+            "args": [task.args.get_arg("maxretry")],
         }
 
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg(a)
+        task.args.remove_arg("maxretry")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

@@ -1,6 +1,8 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -14,6 +16,7 @@ class RunArguments(TaskArguments):
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to start the executable with",
+                ui_position=1,
                 required=False,
             ),
             "executable": CommandParameter(
@@ -21,6 +24,7 @@ class RunArguments(TaskArguments):
                 type=ParameterType.String,
                 description="The executable program to start",
                 value="whoami",
+                ui_position=0,
                 required=True,
             ),
         }
@@ -41,17 +45,12 @@ class RunCommand(CommandBase):
     help_cmd = "run"
     description = "Run the executable with the provided arguments and return the results"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = RunArguments
-    attackmapping = []
+    attackmapping = ["T1106"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        task.display_params = f'{task.args.get_arg("executable")} {task.args.get_arg("arguments")}'
 
         # Executable Arguments
         args = []
@@ -69,15 +68,13 @@ class RunCommand(CommandBase):
             "args": args,
         }
 
-        task.args.add_arg("type", 10, ParameterType.Number)  # jobs.CMD = 10
+        task.args.add_arg("type", MerlinJob.CMD, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        
-        # Remove everything except the Merlin data
         task.args.remove_arg("executable")
         task.args.remove_arg("arguments")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

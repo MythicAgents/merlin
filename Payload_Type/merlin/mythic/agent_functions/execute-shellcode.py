@@ -1,7 +1,8 @@
 
-from CommandBase import *
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -15,6 +16,7 @@ class ExecuteShellcodeArguments(TaskArguments):
                 name="shellcode",
                 type=ParameterType.File,
                 description="The binary file that contains the shellcode",
+                ui_position=0,
                 required=True,
             ),
             "method": CommandParameter(
@@ -22,12 +24,14 @@ class ExecuteShellcodeArguments(TaskArguments):
                 type=ParameterType.ChooseOne,
                 choices=["self", "remote", "RtlCreateUserThread", "userapc"],
                 description="The shellcode injection method to use",
+                ui_position=1,
                 required=True
             ),
             "pid": CommandParameter(
                 name="pid",
                 type=ParameterType.Number,
                 description="The Process ID (PID) to inject the shellcode into. Not used with the 'self' method",
+                ui_position=2,
                 required=False
             ),
         }
@@ -44,19 +48,17 @@ class ExecuteShellcodeCommand(CommandBase):
     help_cmd = "execute-shellcode"
     description = "Execute the provided shellcode using the selected method. No output is captured or returned"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteShellcodeArguments
-    attackmapping = []
+    attackmapping = ["T1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.SHELLCODE
-        task.args.add_arg("type", 12, ParameterType.Number)
+        task.display_params = f'{json.loads(task.original_params)["shellcode"]}\n' \
+                              f'Method: {task.args.get_arg("method")}\n'
 
         # Merlin jobs.Command message type
         command = {
@@ -66,14 +68,16 @@ class ExecuteShellcodeCommand(CommandBase):
 
         if task.args.get_arg("pid"):
             command["pid"] = task.args.get_arg("pid")
+            task.display_params += f'PID: {task.args.get_arg("pid")}'
 
+        task.args.add_arg("type", MerlinJob.SHELLCODE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("method")
         task.args.remove_arg("shellcode")
         task.args.remove_arg("pid")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

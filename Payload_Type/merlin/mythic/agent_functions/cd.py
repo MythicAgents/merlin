@@ -1,6 +1,8 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -33,37 +35,25 @@ class CDCommand(CommandBase):
     help_cmd = "cd"
     description = "Change the agent's current working directory"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = CDArguments
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.NATIVE
-        task.args.add_arg("type", 13, ParameterType.Number)
-
-        # Arguments
-        args = []
-        arguments = task.args.get_arg("path")
-        if arguments:
-            args.append(arguments)
+        task.display_params = task.args.get_arg("path")
 
         # Merlin jobs.Command message type
         command = {
             "command": self.cmd,
-            "args": args,
+            "args": [task.args.get_arg("path")],
         }
 
+        task.args.add_arg("type", MerlinJob.NATIVE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("path")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

@@ -18,8 +18,8 @@ github.com/Ne0nd0g/ja3transport v0.0.0-20200203013218-e81e31892d84 h1:CxXYecCuU2
 github.com/Ne0nd0g/ja3transport v0.0.0-20200203013218-e81e31892d84/go.mod h1:wxn6ch+dbwLI8e+ndsotd9vb+Txzk5JM0OTdzMNq1K0=
 github.com/Ne0nd0g/merlin v1.0.0 h1:HP5tg3hzloyqpyGvt6eKaHsKeF0LDhpc7G2H7CiVzjY=
 github.com/Ne0nd0g/merlin v1.0.0/go.mod h1:HF+uAtX71thajV4bc4UGlAVme9wE5fov1pzUG8ySB7E=
-github.com/Ne0nd0g/merlin-agent v1.0.0 h1:rPXtsVoN9NiAT4WMrSZCQQDRye/GKtyoS6wWq054rc4=
-github.com/Ne0nd0g/merlin-agent v1.0.0/go.mod h1:rqo1kGDNqlLiW39XB7LxkQkUlxRENaVzZwUPWK1fxak=
+github.com/Ne0nd0g/merlin-agent v1.0.2 h1:hQzxasLopiE67Q+37HCsaSyifC9jmUTSUU/MTb/qfb4=
+github.com/Ne0nd0g/merlin-agent v1.0.2/go.mod h1:rqo1kGDNqlLiW39XB7LxkQkUlxRENaVzZwUPWK1fxak=
 github.com/anmitsu/go-shlex v0.0.0-20161002113705-648efa622239/go.mod h1:2FmKhYUyUczH0OGQWaF5ceTx0UBShxjsH6f8oGKYe2c=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=

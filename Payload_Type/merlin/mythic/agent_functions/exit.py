@@ -1,5 +1,6 @@
 
-from CommandBase import *
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
 
@@ -16,14 +17,9 @@ class ExitCommand(CommandBase):
     cmd = "exit"
     needs_admin = False
     help_cmd = "exit"
-    description = "instruct the agent to quit running and exit"
+    description = "Instruct the agent to quit running and exit"
     version = 1
-    is_exit = True
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
+    supported_ui_features = ["callback_table:exit"]
     author = "@Ne0nd0g"
     argument_class = ExitArguments
     attackmapping = []
@@ -34,7 +30,7 @@ class ExitCommand(CommandBase):
             "command": "kill",
         }
 
-        task.args.add_arg("type", 11, ParameterType.Number) # jobs.CONTROL
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         return task
 

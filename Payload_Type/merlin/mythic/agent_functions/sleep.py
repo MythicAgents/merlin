@@ -1,4 +1,6 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
 import json
 
 
@@ -30,35 +32,23 @@ class SleepCommand(CommandBase):
     help_cmd = "sleep"
     description = "Change the amount of time the agent will sleep between checkins"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = SleepArguments
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
-
-        # Arguments
-        a = "time"
-        args = []
-        arguments = task.args.get_arg(a)
-        if arguments:
-            args.append(arguments)
+        task.display_params = task.args.get_arg("time")
 
         # Merlin jobs.Command message type
         command = {
             "command": self.cmd,
-            "args": args,
+            "args": [task.args.get_arg("time")],
         }
 
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg(a)
+        task.args.remove_arg("time")
+
         return task
 
     async def process_response(self, response: AgentResponse):

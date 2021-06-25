@@ -1,7 +1,8 @@
-from PayloadBuilder import *
+
+from mythic_payloadtype_container.PayloadBuilder import *
+from mythic_payloadtype_container.MythicCommandBase import *
 import asyncio
 import os
-from distutils.dir_util import copy_tree
 import time
 
 # Set to enable debug output to Mythic
@@ -17,7 +18,8 @@ class Merlin(PayloadType):
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types
     note = """A port of Merlin from https://www.github.com/Ne0nd0g/merlin to Mythic"""
-    supports_dynamic_loading = False  # setting this to True allows users to only select a subset of commands when generating a payload
+    # setting this to True allows users to only select a subset of commands when generating a payload
+    supports_dynamic_loading = False
     build_parameters = {
         #  these are all the build parameters that will be presented to the user when creating your payload
         "verbose": BuildParameter(
@@ -71,43 +73,41 @@ class Merlin(PayloadType):
         )
     }
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["HTTP"]
+    c2_profiles = ["http"]
 
-    # after your class has been instantiated by the mythic_service in this docker container and all required build parameters have values
-    # then this function is called to actually build the payload
     async def build(self) -> BuildResponse:
-        # this function gets called to create an instance of your payload
         resp = BuildResponse(status=BuildStatus.Error)
-        output = ""
-
         go_cmd = ""
         c2_params = self.c2info[0].get_parameters_dict()
 
         # Merlin specific build code
         try:
-            merlin_path = "/root/go/src/github.com/Ne0nd0g/merlin-mythic-agent/"
             output_file = "merlin"
 
-            # Move source code to GOPATH
-            copy_tree(self.agent_code_path, merlin_path)
-            command = "cd " + merlin_path + ";"
-
-            # Set Operating System and Architecture
+            # Fix GOPATH 
+            command = "export GOPATH=/go/src;"
             command += "export GOOS=" + self.get_parameter("os").lower() + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
             go_cmd += "go build -o " + output_file
             go_cmd += """ -ldflags '-s -w"""
-            if self.get_parameter("os").lower() == "windows" and (self.get_parameter("debug").lower() == "false" and self.get_parameter("verbose").lower() == "false"):
+
+            if self.get_parameter("os").lower() == "windows" \
+                    and (self.get_parameter("debug").lower() == "false"
+                         and self.get_parameter("verbose").lower() == "false"):
                 go_cmd += " -H=windowsgui"
             # payloadID
             go_cmd += " -X \"main.payloadID=" + f'{self.uuid}\"'
             # URL
             go_cmd += f' -X \"main.url={c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}\"'
             # Pre-Shared Key (PSK)
-            go_cmd += f' -X \"main.psk={c2_params["AESPSK"]}\"'
-            # HTTP User-Agent
-            go_cmd += f' -X \"main.useragent={c2_params["USER_AGENT"]}\"'
+            go_cmd += f' -X \"main.psk={c2_params["AESPSK"]["enc_key"]}\"'
+            # HTTP Headers
+            for header in c2_params["headers"]:
+                if header["key"] == "User-Agent":
+                    go_cmd += f' -X \"main.useragent={header["value"]}\"'
+                elif header["key"] == "Host":
+                    go_cmd += f' -X \"main.host={header["value"]}\"'
             # Sleep
             go_cmd += f' -X \"main.sleep={c2_params["callback_interval"]}s\"'
             # Skew
@@ -127,9 +127,6 @@ class Merlin(PayloadType):
             # Proxy
             if c2_params["proxy_host"]:
                 go_cmd += f' -X \"main.proxy={c2_params["proxy_host"]}:{c2_params["proxy_port"]}\"'
-            # HTTP Host Header
-            if c2_params["domain_front"]:
-                go_cmd += f' -X \"main.host={c2_params["domain_front"]}\"'
             # JA3 String
             if self.get_parameter("ja3"):
                 go_cmd += f' -X \"main.ja3={self.get_parameter("ja3")}\"'
@@ -144,26 +141,24 @@ class Merlin(PayloadType):
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                cwd=self.agent_code_path,
             )
 
             stdout, stderr = await proc.communicate()
-            if stdout:
-                output += f"[STDOUT]\n{stdout.decode()}"
-            if stderr:
-                output += f"[STDERR]\n{stderr.decode()}"
-            if debug:
-                output += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngo_cmd: {go_cmd}, "
-                resp.message = output
-            # Return compiled agent
-            if os.path.exists(merlin_path + "/" + output_file):
-                resp.payload = open(merlin_path + "/" + output_file, "rb").read()
-                resp.message = "\r\nThe Merlin agent was successfully built"
-                resp.message += f'\r\nGo build command: {go_cmd}'
+            if os.path.exists(str(self.agent_code_path.joinpath(output_file))):
+                resp.payload = open(str(self.agent_code_path.joinpath(output_file)), "rb").read()
+                resp.build_message += "\r\nThe Merlin agent was successfully built!"
+                resp.build_stdout += f'\r\nGo build command: {go_cmd}\r\n'
+                if stdout:
+                    resp.build_stdout += f'{stdout.decode()}'
+                if stderr:
+                    resp.build_stderr += f'{stderr.decode()}'
                 resp.status = BuildStatus.Success
             else:
-                # something went wrong, return our errors
-                resp.message = output
+                if stderr:
+                    resp.build_stderr = f'{stderr.decode()}'
+            if debug:
+                resp.build_stdout += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngo_cmd: {go_cmd}, "
         except Exception as e:
-            resp.message = "[ERROR]" + str(e)
-
+            resp.build_message = "[ERROR]" + str(e)
         return resp

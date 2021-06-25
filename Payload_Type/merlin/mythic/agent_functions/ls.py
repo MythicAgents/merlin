@@ -1,6 +1,8 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -13,7 +15,7 @@ class LSArguments(TaskArguments):
             "path": CommandParameter(
                 name="path",
                 type=ParameterType.String,
-                description="The directory path to change to",
+                description="The directory path to list the contents of",
                 default_value=".",
                 required=False,
             ),
@@ -36,19 +38,12 @@ class LSCommand(CommandBase):
     help_cmd = "ls"
     description = "Use Golang native commands to list a directory's contents"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = LSArguments
-    attackmapping = []
+    attackmapping = ["T1083"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.NATIVE
-        task.args.add_arg("type", 13, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("path")}'
 
         # Arguments
         args = []
@@ -62,11 +57,12 @@ class LSCommand(CommandBase):
             "args": args,
         }
 
+        task.args.add_arg("type", MerlinJob.NATIVE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("path")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

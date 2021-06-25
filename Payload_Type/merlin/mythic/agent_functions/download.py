@@ -1,9 +1,12 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
+
 
 class DownloadArguments(TaskArguments):
     def __init__(self, command_line):
@@ -29,8 +32,9 @@ class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
     help_cmd = "download"
-    description = "Download a file from the host where the agent is running"
+    description = "Downloads a file from the host where the agent is running"
     version = 1
+    supported_ui_features = ["file_browser:download"]
     is_exit = False
     is_file_browse = False
     is_process_list = False
@@ -39,11 +43,10 @@ class DownloadCommand(CommandBase):
     is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = DownloadArguments
-    attackmapping = []
+    attackmapping = ["T1560", "T1041"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 14, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("file")}'
 
         # Merlin jobs.Command message type
         transfer = {
@@ -51,11 +54,12 @@ class DownloadCommand(CommandBase):
             "download": False,  # False when the agent is uploading a file to server
         }
 
+        task.args.add_arg("type", MerlinJob.FILE_TRANSFER, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(transfer), ParameterType.String)
         task.args.remove_arg("file")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

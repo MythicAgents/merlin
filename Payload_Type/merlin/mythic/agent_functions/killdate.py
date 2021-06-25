@@ -1,6 +1,8 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -13,7 +15,7 @@ class KillDateArguments(TaskArguments):
             "date": CommandParameter(
                 name="date",
                 type=ParameterType.String,
-                description="The date, as an Unix epoch timestamp, that the agent should quit running",
+                description="The date, as a Unix epoch timestamp, that the agent should quit running",
                 required=True,
             ),
         }
@@ -30,40 +32,28 @@ class KillDateCommand(CommandBase):
     cmd = "killdate"
     needs_admin = False
     help_cmd = "killdate"
-    description = "The date, as an Unix epoch timestamp, that the agent should quit running.\r\nVisit: https://www.epochconverter.com/"
+    description = "The date, as a Unix epoch timestamp, that the agent should quit running." \
+                  "\r\nVisit: https://www.epochconverter.com/"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = KillDateArguments
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
-
-        # Arguments
-        a = "date"
-        args = []
-        arguments = task.args.get_arg(a)
-        if arguments:
-            args.append(arguments)
+        task.display_params = f'{task.args.get_arg("date")}'
 
         # Merlin jobs.Command message type
         command = {
             "command": self.cmd,
-            "args": args,
+            "args": [task.args.get_arg("date")],
         }
 
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg(a)
+        task.args.remove_arg("date")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

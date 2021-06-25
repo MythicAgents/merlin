@@ -1,6 +1,8 @@
-from CommandBase import *
+
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -34,19 +36,12 @@ class JA3Command(CommandBase):
     description = "Instruct the agent to use a client derived from the input JA3 string to communicate with the " \
                   "server.\r\nWARNING: Make sure the server can support the client configuration"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = JA3Arguments
     attackmapping = []
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.CONTROL
-        task.args.add_arg("type", 11, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("ja3string")}'
 
         # Arguments
         args = []
@@ -60,11 +55,12 @@ class JA3Command(CommandBase):
             "args": args,
         }
 
+        task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("ja3string")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

@@ -1,6 +1,7 @@
-from CommandBase import *
+
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-from MythicResponseRPC import *
 
 # Set to enable debug output to Mythic
 debug = False
@@ -21,12 +22,6 @@ class PWDCommand(CommandBase):
     help_cmd = "pwd"
     description = "Print the Agent's current working directory"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = PWDArguments
     attackmapping = []
@@ -43,7 +38,7 @@ class PWDCommand(CommandBase):
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

@@ -1,7 +1,7 @@
 
-from CommandBase import *
-from MythicResponseRPC import *
-from MythicFileRPC import *
+from merlin import MerlinJob
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
 
 # Set to enable debug output to Mythic
@@ -16,12 +16,14 @@ class InvokeAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.String,
                 description="Name of the previously loaded assembly to execute",
+                ui_position=0,
                 required=True,
             ),
             "arguments": CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to invoke (execute) the assembly",
+                ui_position=1,
                 required=False,
             ),
         }
@@ -43,21 +45,17 @@ class LoadAssemblyCommand(CommandBase):
     description = "Invoke (execute) a .NET assembly that was previously loaded into the Agent's process using the" \
                   " load-assembly command. Use the list-assemblies command to view loaded assemblies"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = InvokeAssemblyArguments
     attackmapping = []
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        task.display_params = f'{task.args.get_arg("assembly")} {task.args.get_arg("arguments")}'
 
-        # Arguments
         # 1. Assembly Name
         # 2. Arguments
         args = [
@@ -78,14 +76,13 @@ class LoadAssemblyCommand(CommandBase):
             "args": args,
         }
 
-        task.display_params = f'{task.args.get_arg("assembly")} {task.args.get_arg("arguments")}'
-
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("assembly")
         task.args.remove_arg("arguments")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 

@@ -1,9 +1,9 @@
 
-from CommandBase import *
-import os
+from merlin import *
+from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import json
-import subprocess
-from MythicResponseRPC import *
+import shlex
 
 # Set to enable debug output to Mythic
 debug = False
@@ -17,25 +17,29 @@ class ExecuteAssemblyArguments(TaskArguments):
                 name="assembly",
                 type=ParameterType.File,
                 description="The .NET assembly you want to execute",
-                required=True,
+                ui_position=0,
+                required=False,
             ),
             "arguments": CommandParameter(
-                name="assembly arguments",
+                name="arguments",
                 type=ParameterType.String,
-                description="Arguments to execute the assembly with",
+                description="Arguments to execute the .NET assembly with",
+                ui_position=1,
                 required=False,
             ),
             "spawnto": CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
-                description="the child process that will be started to execute the assembly in",
+                description="The child process that will be started to execute the assembly in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
+                ui_position=2,
                 required=True,
             ),
             "spawntoargs": CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
-                description="argument to create the spawnto process with, if any",
+                description="Argument to create the spawnto process with, if any",
+                ui_position=3,
                 required=False,
             ),
         }
@@ -45,9 +49,11 @@ class ExecuteAssemblyArguments(TaskArguments):
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
             else:
-                args = str.split(self.command_line)
+                # This allows an operator to specify the name of an a file that was previously registered with Mythic
+                # in place of providing the actual file
+                args = shlex.split(self.command_line)
                 if len(args) > 0:
-                    self.add_arg("assembly", args[0], ParameterType.File)
+                    self.add_arg("assembly_name", args[0], ParameterType.String)
                 if len(args) > 1:
                     self.add_arg("arguments", args[1], ParameterType.String)
                 if len(args) > 2:
@@ -60,27 +66,58 @@ class ExecuteAssemblyCommand(CommandBase):
     cmd = "execute-assembly"
     needs_admin = False
     help_cmd = "execute-assembly"
-    description = "Convert a .NET assembly in shellcode with Donut, execute it in the spawnto process, and return the output"
+    description = "Convert a .NET assembly into shellcode with Donut, execute it in the spawnto process, and return the output"
     version = 1
-    is_exit = False
-    is_file_browse = False
-    is_process_list = False
-    is_download_file = False
-    is_remove_file = False
-    is_upload_file = False
     author = "@Ne0nd0g"
     argument_class = ExecuteAssemblyArguments
-    attackmapping = []
+    attackmapping = ["T1055"]
+    attributes = CommandAttributes(
+        spawn_and_injectable=False,
+        supported_os=[SupportedOS.Windows]
+    )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        # Merlin jobs.MODULE
-        task.args.add_arg("type", 16, ParameterType.Number)
+        if debug:
+            await MythicRPC().execute(
+                "create_output",
+                task_id=task.id,
+                output=f'\n[DEBUG]Task:\n{task}',
+            )
+        # Use Cases
+        # 1. User provides an assembly that has NOT been previously registered
+        # 2. User provides an assembly that HAS been previously registered
+        # 3. User provides a file name of an assembly that has NOT been previously registered
+        # 4. User provides a file name of an assembly that HAS been previously registered
+        # 5. If a file was provided instead of a filename, use the provided file
+
+        # Determine if a file or a file name was provided
+        if task.args.get_arg("assembly") is None:
+            # A file WAS NOT provided
+            if task.args.has_arg("assembly_name"):
+                assembly_name = task.args.get_arg("assembly_name")
+                assembly_bytes = None
+            else:
+                raise Exception(f'A file or the name of a file was not provided')
+        else:
+            assembly_name = json.loads(task.original_params)["assembly"]
+            assembly_bytes = task.args.get_arg("assembly")
+
+        assembly = await get_or_register_file(task, assembly_name, assembly_bytes)
+
+        # Donut
+        donut_args = {
+            "params": task.args.get_arg("arguments"),
+            "exit": "2",
+            "verbose": True,
+        }
+        donut_shellcode, donut_result = donut(assembly, donut_args)
+        task.stdout += f'\n{donut_result}'
 
         # 1. Shellcode
         # 2. SpawnTo Executable
         # 3. SpawnTo Arguments (must include even if empty string)
         args = [
-            donut(task.args.get_arg("assembly"), task.args.get_arg("arguments")),
+            donut_shellcode,
             task.args.get_arg("spawnto"),
             task.args.get_arg("spawntoargs")
         ]
@@ -91,49 +128,21 @@ class ExecuteAssemblyCommand(CommandBase):
             "args": args,
         }
 
+        task.display_params = f'{assembly_name} {task.args.get_arg("arguments")}\n ' \
+                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
+
+        task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("assembly")
+        task.args.remove_arg("assembly_name")
         task.args.remove_arg("arguments")
         task.args.remove_arg("spawnto")
         task.args.remove_arg("spawntoargs")
 
         if debug:
-            await MythicResponseRPC(task).user_output(f'[DEBUG]Returned task:\r\n{task}\r\n')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
 
         return task
 
     async def process_response(self, response: AgentResponse):
         pass
-
-
-def donut(assembly, arguments):
-    donut_args = ['go-donut', '--in', 'input.exe', '--exit', '2']
-    if arguments:
-        donut_args.append('--params')
-        donut_args.append(arguments)
-
-    # Write file to location in container
-    with open('input.exe', 'wb') as w:
-        w.write(assembly)
-
-    result = subprocess.run(
-        donut_args,
-        stdout=subprocess.PIPE
-    )
-
-    donut_bytes = bytes
-    # Read Donut output
-    with open('loader.bin', 'rb') as output:
-        donut_bytes = output.read()
-
-    # Close files
-    w.close()
-    output.close()
-
-    # Remove files
-    os.remove("input.exe")
-    os.remove("loader.bin")
-
-    # Return Donut shellcode Base64 encoded
-    return base64.b64encode(donut_bytes).decode("utf-8")
-
