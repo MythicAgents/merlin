@@ -40,7 +40,7 @@ class MemfdArguments(TaskArguments):
                 if len(args) > 0:
                     self.add_arg("executable_name", args[0], ParameterType.String)
                 if len(args) > 1:
-                    self.add_arg("arguments", args[1], ParameterType.String)
+                    self.add_arg("arguments", " ".join(args[1:]), ParameterType.String)
 
 
 class MemfdCommand(CommandBase):
@@ -71,7 +71,10 @@ class MemfdCommand(CommandBase):
             executable_name = json.loads(task.original_params)["executable"]
             executable_bytes = task.args.get_arg("executable")
 
-        task.display_params = f'{executable_name} {task.args.get_arg("arguments")}'
+        if task.args.get_arg("arguments") is not None:
+            task.display_params = f'{executable_name} {task.args.get_arg("arguments")}'
+        else:
+            task.display_params = f'{executable_name}'
 
         executable = await get_or_register_file(task, executable_name, executable_bytes)
 
@@ -82,11 +85,8 @@ class MemfdCommand(CommandBase):
             base64.b64encode(executable).decode("utf-8"),
         ]
 
-        arguments = task.args.get_arg("arguments").split()
-        if len(arguments) == 1:
-            args.append(arguments[0])
-        elif len(arguments) > 1:
-            for arg in arguments:
+        if task.args.get_arg("arguments") is not None:
+            for arg in task.args.get_arg("arguments").split():
                 args.append(arg)
 
         # Merlin jobs.Command message type
@@ -98,7 +98,7 @@ class MemfdCommand(CommandBase):
         task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
         task.args.remove_arg("executable")
-        task.args.remove_arg("args")
+        task.args.remove_arg("arguments")
 
         if debug:
             await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Returned task:\r\n{task}\r\n')
