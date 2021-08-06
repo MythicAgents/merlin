@@ -4,6 +4,7 @@ from mythic_payloadtype_container.MythicCommandBase import *
 import asyncio
 import os
 import time
+import secrets
 
 # Set to enable debug output to Mythic
 debug = False
@@ -70,7 +71,15 @@ class Merlin(PayloadType):
             parameter_type=BuildParameterType.String,
             default_value="",
             required=False,
-        )
+        ),
+        "garble": BuildParameter(
+            name="garble",
+            description="Use Garble to obfuscate the output Go executable. WARNING - This significantly slows the agent build time",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["false", "true"],
+            default_value="false",
+            required=False,
+        ),
     }
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http"]
@@ -89,8 +98,10 @@ class Merlin(PayloadType):
             command += "export GOOS=" + self.get_parameter("os").lower() + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
-            go_cmd += "go build -o " + output_file
-            go_cmd += """ -ldflags '-s -w"""
+            if self.get_parameter("garble").lower() == "true":
+                go_cmd = f'garble -tiny -literals -seed {secrets.token_hex(32)} build -o {output_file} -ldflags \''
+            else:
+                go_cmd = f'go build -o {output_file} -ldflags \'-s -w'
 
             if self.get_parameter("os").lower() == "windows" \
                     and (self.get_parameter("debug").lower() == "false"
