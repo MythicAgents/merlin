@@ -56,5 +56,6 @@ RUN go get github.com/Binject/go-donut
 
 # Download Garble
 RUN go get mvdan.cc/garble
+RUN apt-get install -y gcc
 
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]

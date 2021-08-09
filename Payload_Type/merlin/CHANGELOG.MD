@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Added support for Garble to obfuscate payloads
+- Added the following commands
+  - `env` - to interact with environment variables
+  - `ifconfig` - to view network interface configuration
+  - `killprocess` - to kill a running process
+  - `netstat` - view network connections (Windows)
+  - `pipes` - retrieve a list of named pipes (Windows)
+  - `ps` - retrieve a list of running processes (Windows)
+  - `sdelete` - securely delete a file
+  - `timestomp` - copy one file's timestamp to another
+  - `uptime` - retrieve the amount of time the host has been up (Windows)
 
 ### Changed 
 
