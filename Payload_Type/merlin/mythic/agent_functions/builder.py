@@ -4,6 +4,7 @@ from mythic_payloadtype_container.MythicCommandBase import *
 import asyncio
 import os
 import time
+import secrets
 
 # Set to enable debug output to Mythic
 debug = False
@@ -70,34 +71,95 @@ class Merlin(PayloadType):
             parameter_type=BuildParameterType.String,
             default_value="",
             required=False,
-        )
+        ),
+        "garble": BuildParameter(
+            name="garble",
+            description="Use Garble to obfuscate the output Go executable. WARNING - This significantly slows the agent build time",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["false", "true"],
+            default_value="false",
+            required=False,
+        ),
     }
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http"]
 
     async def build(self) -> BuildResponse:
         resp = BuildResponse(status=BuildStatus.Error)
-        go_cmd = ""
         c2_params = self.c2info[0].get_parameters_dict()
 
         # Merlin specific build code
         try:
             output_file = "merlin"
 
+            # Remove old binary if it exists
+            if os.path.exists(str(self.agent_code_path.joinpath(output_file))):
+                os.remove(str(self.agent_code_path.joinpath(output_file)))
+
             # Fix GOPATH 
             command = "export GOPATH=/go/src;"
             command += "export GOOS=" + self.get_parameter("os").lower() + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
-            go_cmd += "go build -o " + output_file
-            go_cmd += """ -ldflags '-s -w"""
+            if self.get_parameter("garble").lower() == "true":
+                # Can't garble or include in GOPRIVATE: go.dedis.ch/kyber,golang.org/x/sys
+                # Can't use Garble because it doesn't handle ldflags for -X parameters
+                # https://github.com/burrowers/garble/issues/323
+                # Currently the only option is to open the file and replace the strings to prevent using ldflags
+                command += "export GOPRIVATE=github.com,gopkg.in,golang.org/x/net,golang.org/x/text;"
+                command += "export CGO_ENABLED=0;"
+                go_cmd = f'garble -tiny -literals -seed {secrets.token_hex(32)} build -o {output_file} -ldflags \''
+
+                # For the record, I'm not a fan of doing things this way. Temporary until Garble can handle ldflags
+                merlin = open(str(self.agent_code_path.joinpath("main.go")), "rt")
+                data = merlin.read()
+                # payloadID
+                data = data.replace('var payloadID = ""', f'var payloadID = "{self.uuid}"')
+                # URL
+                data = data.replace('var url = "https://127.0.0.1:443"', f'var url = "{c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}"')
+                # Pre-Shared Key (PSK)
+                data = data.replace('var psk string', f'var psk = "{c2_params["AESPSK"]["enc_key"]}"')
+                # HTTP Headers
+                for header in c2_params["headers"]:
+                    if header["key"] == "User-Agent":
+                        data = data.replace('var useragent = "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.85 Safari/537.36"', f'var useragent = "{header["value"]}"')
+                    elif header["key"] == "Host":
+                        data = data.replace('var host string', f'var host = "{header["value"]}"')
+                # Sleep
+                data = data.replace('var sleep = "30s"', f'var sleep = "{c2_params["callback_interval"]}s"')
+                # skew
+                data = data.replace('var skew = "3000"', f'var skew = "{int(c2_params["callback_interval"]) * 1000}"')
+                # Kill Date
+                data = data.replace('var killdate = "0"', f'var killdate = "{str(int(time.mktime(time.strptime(c2_params["killdate"], "%Y-%m-%d"))))}"')
+                # Max Retry
+                data = data.replace('var maxretry = "7"', f'var maxretry = "{self.get_parameter("maxretry")}"')
+                # Padding
+                data = data.replace('var padding = "4096"', f'var padding = "{self.get_parameter("padding")}"')
+                # Verbose
+                data = data.replace('var verbose = "false"', f'var verbose = "{self.get_parameter("verbose")}"')
+                # Debug
+                data = data.replace('var debug = "false"', f'var debug = "{self.get_parameter("debug")}"')
+                # Proxy
+                if c2_params["proxy_host"]:
+                    data = data.replace('var proxy string', f'var proxy = "{c2_params["proxy_host"]}:{c2_params["proxy_port"]}"')
+                # JA3 String
+                if self.get_parameter("ja3"):
+                    data = data.replace('var ja3 string', f'var ja3 = "{self.get_parameter("ja3")}"')
+
+                # Write to a new file to preserve the original source
+                garbled = open(str(self.agent_code_path.joinpath("garbled.go")), "wt")
+                garbled.write(data)
+                garbled.close()
+                merlin.close()
+            else:
+                go_cmd = f'go build -o {output_file} -ldflags \'-s -w '
 
             if self.get_parameter("os").lower() == "windows" \
                     and (self.get_parameter("debug").lower() == "false"
                          and self.get_parameter("verbose").lower() == "false"):
-                go_cmd += " -H=windowsgui"
+                go_cmd += "-H=windowsgui "
             # payloadID
-            go_cmd += " -X \"main.payloadID=" + f'{self.uuid}\"'
+            go_cmd += "-X \"main.payloadID=" + f'{self.uuid}\"'
             # URL
             go_cmd += f' -X \"main.url={c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}\"'
             # Pre-Shared Key (PSK)
@@ -132,7 +194,10 @@ class Merlin(PayloadType):
                 go_cmd += f' -X \"main.ja3={self.get_parameter("ja3")}\"'
 
             # Everything else
-            go_cmd += " -buildid=\' main.go"
+            if self.get_parameter("garble").lower() == "true":
+                go_cmd += " -buildid=\' garbled.go"
+            else:
+                go_cmd += " -buildid=\' main.go"
 
             # Build the agent
             command += go_cmd
@@ -149,8 +214,9 @@ class Merlin(PayloadType):
                 resp.payload = open(str(self.agent_code_path.joinpath(output_file)), "rb").read()
                 resp.build_message += "\r\nThe Merlin agent was successfully built!"
                 resp.build_stdout += f'\r\nGo build command: {go_cmd}\r\n'
+                # os.remove(str(self.agent_code_path.joinpath(output_file)))
                 if stdout:
-                    resp.build_stdout += f'{stdout.decode()}'
+                    resp.build_stdout += f'STDOUT\n{stdout.decode()}'
                 if stderr:
                     resp.build_stderr += f'{stderr.decode()}'
                 resp.status = BuildStatus.Success

@@ -54,4 +54,7 @@ ENV PATH="${PATH}:/root/go/bin"
 # Download go-donut
 RUN go get github.com/Binject/go-donut
 
+# Download Garble
+RUN go get mvdan.cc/garble
+
 ENTRYPOINT ["/Mythic/mythic/payload_service.sh"]

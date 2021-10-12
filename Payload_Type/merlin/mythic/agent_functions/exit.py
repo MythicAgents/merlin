@@ -27,7 +27,7 @@ class ExitCommand(CommandBase):
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         # Merlin jobs.Command message type
         command = {
-            "command": "kill",
+            "command": self.cmd,
         }
 
         task.args.add_arg("type", MerlinJob.CONTROL, ParameterType.Number)
