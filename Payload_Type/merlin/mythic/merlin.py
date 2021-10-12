@@ -47,10 +47,21 @@ def donut(pe, arguments):
                 donut_args.append("--"+arg)
             elif arg.lower() == "params":
                 donut_args.append('--params')
-                donut_args.append(shlex.quote(value))
+                if value.startswith("-"):
+                    # Removed shlex.quote() because it was not quoting arguments like: -group=system
+                    # go-donut was interpreting it as an argument for itself
+                    donut_args.append(f'"{value}"')
+                else:
+                    donut_args.append(shlex.quote(value))
             else:
                 donut_args.append("--" + arg)
                 donut_args.append(value)
+
+    # Clear any old files
+    if os.path.exists('input.exe'):
+        os.remove("input.exe")
+    if os.path.exists('loader.bin'):
+        os.remove("loader.bin")
 
     # Write file to location in container
     if 'in' not in arguments and len(pe) > 0:

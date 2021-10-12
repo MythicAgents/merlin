@@ -107,6 +107,7 @@ class Merlin(PayloadType):
                 # https://github.com/burrowers/garble/issues/323
                 # Currently the only option is to open the file and replace the strings to prevent using ldflags
                 command += "export GOPRIVATE=github.com,gopkg.in,golang.org/x/net,golang.org/x/text;"
+                command += "export CGO_ENABLED=0;"
                 go_cmd = f'garble -tiny -literals -seed {secrets.token_hex(32)} build -o {output_file} -ldflags \''
 
                 # For the record, I'm not a fan of doing things this way. Temporary until Garble can handle ldflags
