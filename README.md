@@ -15,14 +15,23 @@ Mythic documentation can be found at <https://docs.mythic-c2.net/>
 
 ## Getting Started
 
-To get started, clone the [Mythic](https://github.com/its-a-feature/Mythic/) repository, install it, and then pull down the [Merlin](https://github.com/MythicAgents/merlin) repository from the MythicAgents organization.
+To get started:
 
+1. Clone the [Mythic](https://github.com/its-a-feature/Mythic/) repository
+2. Pull down the [http](https://github.com/MythicC2Profiles/http) C2 profile from the MythicC2Profiles organization
+3. Pull down the [Merlin](https://github.com/MythicAgents/merlin) agent from the MythicAgents organization
+4. Start Mythic
+5. Navigate to <https://127.0.0.1:7443> and login with a username of `mythic_admin` and password retrieved from the `.env` file
+
+This code snippet will execute most of the getting started steps:
 ```text
+cd ~/
 git clone https://github.com/its-a-feature/Mythic
-cd Mythic
-sudo ./start_mythic.sh
-sudo ./install_agent_from_github.sh https://github.com/MythicAgents/merlin
-sudo ./start_payload_types.sh merlin
+cd Mythic/
+./mythic-cli install github https://github.com/MythicC2Profiles/http
+./mythic-cli install github https://github.com/MythicAgents/merlin
+sudo ./mythic-cli mythic start
+sudo cat .env | grep MYTHIC_ADMIN_PASSWORD
 ```
 
 ## Known Limitations
