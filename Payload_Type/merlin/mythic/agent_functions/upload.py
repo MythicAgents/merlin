@@ -12,19 +12,25 @@ class UploadArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "path": CommandParameter(
+            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="The file path on the host where the agent is running that the file will be written to",
-                ui_position=1,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=True,
+                )],
             ),
-            "file": CommandParameter(
+            CommandParameter(
                 name="file",
                 type=ParameterType.File,
                 description="The file to upload to the host where the agent is running",
-                ui_position=0,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             )
         }
 

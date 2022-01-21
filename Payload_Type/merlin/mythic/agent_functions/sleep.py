@@ -8,13 +8,17 @@ class SleepArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "time": CommandParameter(
+            CommandParameter(
                 name="time",
                 type=ParameterType.String,
                 description="The amount of time for the agent to sleep between checkins."
                             "\r\n Use Go's time notation such as 30s for thirty seconds",
                 value="30s",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

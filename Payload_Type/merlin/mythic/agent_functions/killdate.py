@@ -12,11 +12,15 @@ class KillDateArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "date": CommandParameter(
+            CommandParameter(
                 name="date",
                 type=ParameterType.String,
                 description="The date, as a Unix epoch timestamp, that the agent should quit running",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

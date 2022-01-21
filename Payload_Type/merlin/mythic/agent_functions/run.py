@@ -12,20 +12,26 @@ class RunArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to start the executable with",
-                ui_position=1,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=False,
+                )],
             ),
-            "executable": CommandParameter(
+            CommandParameter(
                 name="executable",
                 type=ParameterType.String,
                 description="The executable program to start",
                 value="whoami",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

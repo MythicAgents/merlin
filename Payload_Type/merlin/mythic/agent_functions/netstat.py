@@ -12,13 +12,16 @@ class NetstatArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "protocol": CommandParameter(
+            CommandParameter(
                 name="protocol",
                 type=ParameterType.ChooseOne,
                 description="Limit the netstat collection to the selected protocol",
                 choices=["tcp", "udp"],
-                ui_position=0,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             ),
         }
 

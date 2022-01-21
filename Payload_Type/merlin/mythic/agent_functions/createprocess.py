@@ -13,27 +13,36 @@ class CreateProcessArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "shellcode": CommandParameter(
+            CommandParameter(
                 name="shellcode",
                 type=ParameterType.File,
                 description="The shellcode file you want to execute in the spawnto process",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=0,
+                )],
             ),
-            "spawnto": CommandParameter(
+            CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
                 description="The child process that will be started to execute the shellcode in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
-                ui_position=1,
-                required=True
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=1,
+                )],
             ),
-            "spawntoargs": CommandParameter(
+            CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="argument to create the spawnto process with, if any",
-                ui_position=2,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=2,
+                    required=False,
+                )],
             ),
         }
 

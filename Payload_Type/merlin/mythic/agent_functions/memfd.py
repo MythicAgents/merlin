@@ -13,19 +13,25 @@ class MemfdArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "executable": CommandParameter(
+            CommandParameter(
                 name="executable",
                 type=ParameterType.File,
                 description="The Linux executable (PE file) you want to run",
-                ui_position=0,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             ),
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments to start the executable with",
-                ui_position=1,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=False,
+                )],
             ),
         }
 

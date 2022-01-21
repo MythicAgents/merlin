@@ -12,19 +12,24 @@ class StompArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "source": CommandParameter(
+            CommandParameter(
                 name="source",
                 type=ParameterType.String,
                 description="The source file's date/time to copy",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=0,
+                )],
             ),
-            "destination": CommandParameter(
+            CommandParameter(
                 name="destination",
                 type=ParameterType.String,
                 description="The destination filepath to apply the date/time stamp",
-                ui_position=1,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    ui_position=1,
+                )],
             ),
         }
 

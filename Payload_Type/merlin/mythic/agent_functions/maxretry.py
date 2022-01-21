@@ -12,12 +12,16 @@ class RetryArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "maxretry": CommandParameter(
+            CommandParameter(
                 name="maxretry",
                 type=ParameterType.String,
                 description="The maximum amount of times the Agent can fail to check in before it quits running",
                 value="7",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

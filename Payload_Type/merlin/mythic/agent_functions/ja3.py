@@ -12,12 +12,16 @@ class JA3Arguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "ja3string": CommandParameter(
+            CommandParameter(
                 name="ja3string",
                 type=ParameterType.String,
                 description="The JA3 \"string\" that the client should use",
                 value="",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

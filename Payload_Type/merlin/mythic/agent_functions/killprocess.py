@@ -12,12 +12,15 @@ class KillArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "pid": CommandParameter(
+            CommandParameter(
                 name="pid",
                 type=ParameterType.String,
                 description="The Process ID (PID) you want to kill",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

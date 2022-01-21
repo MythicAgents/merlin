@@ -8,12 +8,16 @@ class SkewArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "amount": CommandParameter(
+            CommandParameter(
                 name="amount",
                 type=ParameterType.String,
                 description="The amount of skew, or jitter, to add to an agent callback",
                 default_value="3000",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

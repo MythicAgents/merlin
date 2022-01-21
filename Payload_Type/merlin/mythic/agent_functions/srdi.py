@@ -14,79 +14,109 @@ class SRDIArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "dll": CommandParameter(
+            CommandParameter(
                 name="dll",
                 type=ParameterType.File,
                 description="DLL to convert to shellcode",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "function-name": CommandParameter(
+            CommandParameter(
                 name="function-name",
                 type=ParameterType.String,
                 description="The function to call after DllMain",
-                ui_position=1,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=False,
+                )],
             ),
-            "user-data": CommandParameter(
+            CommandParameter(
                 name="user-data",
                 type=ParameterType.String,
                 description="Data to pass to the target function",
-                ui_position=2,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=2,
+                    required=False,
+                )],
             ),
-            "clear-header": CommandParameter(
+            CommandParameter(
                 name="clear-header",
                 type=ParameterType.Boolean,
                 description="Clear the PE header on load",
-                ui_position=3,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=3,
+                    required=False,
+                )],
             ),
-            "obfuscate-imports": CommandParameter(
+            CommandParameter(
                 name="obfuscate-imports",
                 description="Randomize import dependency load order",
                 type=ParameterType.Boolean,
-                ui_position=4,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=4,
+                    required=False,
+                )],
             ),
-            "import-delay": CommandParameter(
+            CommandParameter(
                 name="import-delay",
                 description="Number of seconds to pause between loading imports",
                 type=ParameterType.Number,
-                ui_position=5,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=5,
+                    required=False,
+                )],
             ),
-            "method": CommandParameter(
+            CommandParameter(
                 name="method",
                 type=ParameterType.ChooseOne,
                 choices=["createprocess", "self", "remote", "RtlCreateUserThread", "userapc"],
                 description="The shellcode injection method to use. Use createprocess if you want output back",
-                ui_position=7,
-                required=True
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=7,
+                    required=False,
+                )],
             ),
-            "pid": CommandParameter(
+            CommandParameter(
                 name="pid",
                 type=ParameterType.Number,
                 description="The Process ID (PID) to inject the shellcode into. Not used with the 'self' method",
-                ui_position=8,
-                required=False
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=8,
+                    required=False,
+                )],
             ),
-            "spawnto": CommandParameter(
+            CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
                 description="The child process that will be started to execute the shellcode in. "
                             "Only used with the createprocess method",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
-                ui_position=9,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=9,
+                    required=False,
+                )],
             ),
-            "spawntoargs": CommandParameter(
+            CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any. "
                             "Only used with the createprocess method",
-                ui_position=10,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=10,
+                    required=False,
+                )],
             ),
         }
 

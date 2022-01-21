@@ -12,20 +12,26 @@ class ENVArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "method": CommandParameter(
+            CommandParameter(
                 name="method",
                 type=ParameterType.ChooseOne,
                 description="The desired environment interaction method",
                 choices=["get", "set", "showall", "unset"],
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="arguments",
                 type=ParameterType.String,
                 description="Arguments for the env method",
-                ui_position=1,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=False,
+                )],
             ),
         }
 

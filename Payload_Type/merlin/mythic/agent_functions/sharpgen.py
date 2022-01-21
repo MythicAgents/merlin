@@ -15,28 +15,37 @@ class SharpGenArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "code": CommandParameter(
+            CommandParameter(
                 name="code",
                 type=ParameterType.String,
                 description="The CSharp code you want to execute",
                 default_value="Console.WriteLine(Mimikatz.LogonPasswords());",
-                ui_position=0,
-                required=True
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "spawnto": CommandParameter(
+            CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
                 description="the child process that will be started to execute the assembly in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
-                ui_position=1,
-                required=True
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=True,
+                )],
             ),
-            "spawntoargs": CommandParameter(
+            CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any",
-                ui_position=2,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=2,
+                    required=False,
+                )],
             ),
         }
 

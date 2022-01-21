@@ -13,34 +13,46 @@ class ExecutePEArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "executable": CommandParameter(
+            CommandParameter(
                 name="executable",
                 type=ParameterType.File,
                 description="The Windows executable (PE file) you want to run",
-                ui_position=0,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             ),
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="executable arguments",
                 type=ParameterType.String,
                 description="Arguments to execute the assembly with",
-                ui_position=1,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=True,
+                )],
             ),
-            "spawnto": CommandParameter(
+            CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
                 description="The child process that will be started to execute the PE in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
-                ui_position=2,
-                required=True
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=2,
+                    required=True,
+                )],
             ),
-            "spawntoargs": CommandParameter(
+            CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any",
-                ui_position=3,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=3,
+                    required=False,
+                )],
             ),
         }
 

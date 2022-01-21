@@ -12,12 +12,16 @@ class LSArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "path": CommandParameter(
+            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="The directory path to list the contents of",
                 default_value=".",
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             ),
         }
 

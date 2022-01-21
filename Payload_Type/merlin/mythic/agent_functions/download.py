@@ -12,11 +12,15 @@ class DownloadArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "file": CommandParameter(
+            CommandParameter(
                 name="file",
                 type=ParameterType.String,
                 description="The file to download from the host where the agent is running",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
         }
 

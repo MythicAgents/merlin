@@ -13,28 +13,37 @@ class MimikatzArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "commandline": CommandParameter(
+            CommandParameter(
                 name="commandline",
                 type=ParameterType.String,
                 description="Mimikatz commandline arguments",
                 default_value="token::whoami coffee",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "spawnto": CommandParameter(
+            CommandParameter(
                 name="spawnto",
                 type=ParameterType.String,
                 description="The child process that will be started to execute Mimikatz in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
-                ui_position=1,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=True,
+                )],
             ),
-            "spawntoargs": CommandParameter(
+            CommandParameter(
                 name="spawnto arguments",
                 type=ParameterType.String,
                 description="argument to create the spawnto process with, if any",
-                ui_position=2,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=2,
+                    required=False,
+                )],
             ),
         }
 

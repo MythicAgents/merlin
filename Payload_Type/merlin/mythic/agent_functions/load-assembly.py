@@ -12,11 +12,15 @@ class LoadAssemblyArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "assembly": CommandParameter(
+            CommandParameter(
                 name="assembly",
                 type=ParameterType.File,
                 description="The .NET assembly to load into the default AppDomain",
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             ),
         }
 

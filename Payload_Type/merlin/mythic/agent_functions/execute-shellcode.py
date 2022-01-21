@@ -12,27 +12,36 @@ class ExecuteShellcodeArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "shellcode": CommandParameter(
+            CommandParameter(
                 name="shellcode",
                 type=ParameterType.File,
                 description="The binary file that contains the shellcode",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "method": CommandParameter(
+            CommandParameter(
                 name="method",
                 type=ParameterType.ChooseOne,
                 choices=["self", "remote", "RtlCreateUserThread", "userapc"],
                 description="The shellcode injection method to use",
-                ui_position=1,
-                required=True
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "pid": CommandParameter(
+            CommandParameter(
                 name="pid",
                 type=ParameterType.Number,
                 description="The Process ID (PID) to inject the shellcode into. Not used with the 'self' method",
-                ui_position=2,
-                required=False
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=2,
+                    required=False,
+                )],
             ),
         }
 

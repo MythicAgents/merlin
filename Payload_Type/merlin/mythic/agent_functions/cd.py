@@ -12,12 +12,16 @@ class CDArguments(TaskArguments):
     def __init__(self, command_line):
         super().__init__(command_line)
         self.args = {
-            "path": CommandParameter(
+            CommandParameter(
                 name="path",
                 type=ParameterType.String,
                 description="The directory path to change to",
                 value="",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=0,
+                )],
             ),
         }
 
