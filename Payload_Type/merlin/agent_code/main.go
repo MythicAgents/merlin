@@ -18,16 +18,15 @@
 package main
 
 import (
-	"fmt"
-	uuid "github.com/satori/go.uuid"
-
 	// Standard
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	// 3rd Party
 	"github.com/fatih/color"
+	uuid "github.com/satori/go.uuid"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin-agent/agent"

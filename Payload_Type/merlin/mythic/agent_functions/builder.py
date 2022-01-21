@@ -14,7 +14,7 @@ debug = False
 # define your payload type class here, it must extend the PayloadType class though
 class Merlin(PayloadType):
     name = "merlin"  # name that would show up in the UI
-    file_extension = "exe"  # default file extension to use when creating payloads
+    file_extension = ""  # default file extension to use when creating payloads
     author = "Russel Van Tuyl - @Ne0nd0g"  # author of the payload type
     supported_os = [SupportedOS.Windows, SupportedOS.Linux, SupportedOS.MacOS, SupportedOS("freebsd"), SupportedOS("openbsd"), SupportedOS("solaris")]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
@@ -22,8 +22,8 @@ class Merlin(PayloadType):
     note = """A port of Merlin from https://www.github.com/Ne0nd0g/merlin to Mythic"""
     # setting this to True allows users to only select a subset of commands when generating a payload
     supports_dynamic_loading = False
-    translation_container = "merlin-translate-jwe"
-    mythic_encrypts = False
+    # translation_container = "merlin-translate-jwe"
+    mythic_encrypts = True
     build_parameters = {
         #  these are all the build parameters that will be presented to the user when creating your payload
         BuildParameter(
@@ -130,7 +130,7 @@ class Merlin(PayloadType):
                 merlin = open(str(self.agent_code_path.joinpath("main.go")), "rt")
                 data = merlin.read()
                 # C2 Profile
-                data = data.replace('var profile = ""', f'var payloadID = "{c2_profile["name"]}"')
+                data = data.replace('var profile = ""', f'var profile = "{c2_profile["name"]}"')
                 # payloadID
                 data = data.replace('var payloadID = ""', f'var payloadID = "{self.uuid}"')
                 # URL
