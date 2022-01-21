@@ -118,11 +118,11 @@ class Merlin(PayloadType):
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
             if self.get_parameter("garble") and profile != "merlin-http":
-                # Can't garble or include in GOPRIVATE: go.dedis.ch/kyber,golang.org/x/sys
+                # Can't garble or include in GOPRIVATE: go.dedis.ch/kyber,github.com/lucas-clemente/quic-go/internal/qtls
                 # Can't use Garble because it doesn't handle ldflags for -X parameters
                 # https://github.com/burrowers/garble/issues/323
                 # Currently the only option is to open the file and replace the strings to prevent using ldflags
-                command += "export GOPRIVATE=github.com,gopkg.in,golang.org/x/net,golang.org/x/text;"
+                command += "export GOGARBLE=golang.org,gopkg.in,github.com/Ne0nd0g,github.com/fatih,github.com/google,github.com/satori,github.com/mattn,github.com/refraction-networking,github.com/cretz;"
                 command += "export CGO_ENABLED=0;"
                 go_cmd = f'garble -tiny -literals -seed {secrets.token_hex(32)} build -o {output_file} -ldflags \''
 
