@@ -9,11 +9,13 @@ debug = False
 
 
 class KillArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="pid",
+                cli_name="pid",
+                display_name="Process ID",
                 type=ParameterType.String,
                 description="The Process ID (PID) you want to kill",
                 parameter_group_info=[ParameterGroupInfo(
@@ -22,16 +24,12 @@ class KillArguments(TaskArguments):
                     required=True,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                args = str.split(self.command_line)
-                if len(args) > 0:
-                    self.add_arg("pid", args[0])
 
 
 class KillCommand(CommandBase):

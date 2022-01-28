@@ -12,11 +12,13 @@ debug = False
 
 
 class SharpGenArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="code",
+                cli_name="code",
+                display_name="CSharp Code",
                 type=ParameterType.String,
                 description="The CSharp code you want to execute",
                 default_value="Console.WriteLine(Mimikatz.LogonPasswords());",
@@ -28,6 +30,8 @@ class SharpGenArguments(TaskArguments):
             ),
             CommandParameter(
                 name="spawnto",
+                cli_name="spawnto",
+                display_name="SpawnTo Program",
                 type=ParameterType.String,
                 description="the child process that will be started to execute the assembly in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
@@ -38,7 +42,9 @@ class SharpGenArguments(TaskArguments):
                 )],
             ),
             CommandParameter(
-                name="spawnto arguments",
+                name="spawntoargs",
+                cli_name="spawnto-args",
+                display_name="SpawnTo Program Arguments",
                 type=ParameterType.String,
                 description="Argument to create the spawnto process with, if any",
                 parameter_group_info=[ParameterGroupInfo(
@@ -47,14 +53,12 @@ class SharpGenArguments(TaskArguments):
                     required=False,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("code", self.command_line, ParameterType.String)
 
 
 class SharpGenCommand(CommandBase):
@@ -80,7 +84,8 @@ class SharpGenCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         task.display_params = f'{task.args.get_arg("code")}\n ' \
-                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
+                              f'SpawnTo: {task.args.get_arg("spawnto")} ' \
+                              f'SpawnTo Arguments: {task.args.get_arg("spawntoargs")}'
 
         if debug:
             await MythicRPC().execute(
@@ -152,18 +157,23 @@ def sharpgen(code):
         The executed SharpGen command line string followed by SharpGen's STDOUT/STDERR text
     """
 
-    sharpgen_args = ['dotnet', '/opt/SharpGen/bin/release/netcoreapp2.1/SharpGen.dll', '-f', 'sharpgen.exe',
-                     shlex.quote(code)]
+    sharpgen_args = [
+        'dotnet',
+        '/opt/merlin/data/src/cobbr/SharpGen/bin/release/netcoreapp2.1/SharpGen.dll',
+        '-f',
+        'sharpgen.exe',
+        shlex.quote(code)
+    ]
 
     result = subprocess.getoutput(" ".join(sharpgen_args))
 
     if "CompilationErrors" in result:
         raise Exception(f'There was an error compiling the code with SharpGen:\n{result}')
 
-    with open('/opt/SharpGen/Output/sharpgen.exe', 'rb') as output:
+    with open('/opt/merlin/data/src/cobbr/SharpGen/Output/sharpgen.exe', 'rb') as output:
         sharpgen_bytes = output.read()
     output.close()
-    os.remove("/opt/SharpGen/Output/sharpgen.exe")
+    os.remove("/opt/merlin/data/src/cobbr/SharpGen/Output/sharpgen.exe")
 
     return sharpgen_bytes, f'[SharpGen]\r\n' \
                            f'Commandline: {" ".join(sharpgen_args)}\r\n' \

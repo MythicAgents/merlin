@@ -9,11 +9,13 @@ debug = False
 
 
 class NetstatArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="protocol",
+                cli_name="proto",
+                display_name="Protocol",
                 type=ParameterType.ChooseOne,
                 description="Limit the netstat collection to the selected protocol",
                 choices=["tcp", "udp"],
@@ -23,16 +25,12 @@ class NetstatArguments(TaskArguments):
                     required=False,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                args = str.split(self.command_line)
-                if len(args) > 0:
-                    self.add_arg("protocol", args[0])
 
 
 class NetstatCommand(CommandBase):
@@ -50,6 +48,9 @@ class NetstatCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        if debug:
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
+
         task.display_params = f'{task.args.get_arg("protocol")}'
 
         command = {

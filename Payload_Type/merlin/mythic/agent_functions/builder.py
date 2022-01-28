@@ -112,9 +112,8 @@ class Merlin(PayloadType):
             if os.path.exists(str(self.agent_code_path.joinpath(output_file))):
                 os.remove(str(self.agent_code_path.joinpath(output_file)))
 
-            # Fix GOPATH 
-            command = "export GOPATH=/go/src;"
-            command += "export GOOS=" + selected_os + ";"
+            # Set Operating System and Architecture (e.g., Windows AMD64)
+            command = "export GOOS=" + selected_os + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
             if self.get_parameter("garble") and profile != "merlin-http":

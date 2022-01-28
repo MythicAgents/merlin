@@ -3,82 +3,117 @@ from merlin import *
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
-import shlex
 
 # Set to enable debug output to Mythic
 debug = False
 
 
 class ExecuteAssemblyArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
-                name="assembly",
+                name="file",
+                display_name=".NET Assembly",
                 type=ParameterType.File,
-                description="The .NET assembly you want to execute",
+                description="Upload a new .NET assembly you want to execute",
                 parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
+                    group_name="New File",
                     ui_position=0,
-                    required=False,
-                )],
-            ),
-            CommandParameter(
-                name="arguments",
-                type=ParameterType.String,
-                description="Arguments to execute the .NET assembly with",
-                parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
-                    ui_position=1,
-                    required=False,
-                )],
-            ),
-            CommandParameter(
-                name="spawnto",
-                type=ParameterType.String,
-                description="The child process that will be started to execute the assembly in",
-                default_value="C:\\Windows\\System32\\WerFault.exe",
-                parameter_group_info=[ParameterGroupInfo(
-                    group_name="Default",
-                    ui_position=2,
                     required=True,
                 )],
             ),
             CommandParameter(
-                name="spawnto arguments",
-                type=ParameterType.String,
-                description="Argument to create the spawnto process with, if any",
+                name="filename",
+                cli_name="assembly",
+                display_name=".NET Assembly",
+                type=ParameterType.ChooseOne,
+                dynamic_query_function=get_file_list,
+                description=".NET assembly, EXE, DLL, VBS, JS or XSL file to execute in-memory",
                 parameter_group_info=[ParameterGroupInfo(
                     group_name="Default",
-                    ui_position=3,
-                    required=False,
+                    ui_position=0,
+                    required=True,
                 )],
             ),
-        }
+            CommandParameter(
+                name="arguments",
+                cli_name="args",
+                display_name=".NET Assembly Arguments",
+                type=ParameterType.String,
+                description="Arguments to execute the .NET assembly with",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        group_name="Default",
+                        ui_position=1,
+                        required=False,
+                    ),
+                    ParameterGroupInfo(
+                        group_name="New File",
+                        ui_position=1,
+                        required=False,
+                    ),
+                ],
+            ),
+            CommandParameter(
+                name="spawnto",
+                cli_name="spawnto",
+                display_name="SpawnTo Program",
+                type=ParameterType.String,
+                description="The child process that will be started to execute the assembly in",
+                default_value="C:\\Windows\\System32\\WerFault.exe",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        group_name="Default",
+                        ui_position=2,
+                        required=True,
+                    ),
+                    ParameterGroupInfo(
+                        group_name="New File",
+                        ui_position=2,
+                        required=True,
+                    ),
+                ],
+            ),
+            CommandParameter(
+                name="spawntoargs",
+                cli_name="spawnto-args",
+                display_name="SpawnTo Arguments",
+                type=ParameterType.String,
+                description="Argument to create the spawnto process with, if any",
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        group_name="Default",
+                        ui_position=3,
+                        required=False,
+                    ),
+                    ParameterGroupInfo(
+                        group_name="New File",
+                        ui_position=3,
+                        required=False,
+                    ),
+                ],
+            ),
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
             else:
-                # This allows an operator to specify the name of an a file that was previously registered with Mythic
-                # in place of providing the actual file
-                args = shlex.split(self.command_line)
-                if len(args) > 0:
-                    self.add_arg("assembly_name", args[0], ParameterType.String)
-                if len(args) > 1:
-                    self.add_arg("arguments", args[1], ParameterType.String)
-                if len(args) > 2:
-                    self.add_arg("spawnto", args[2], ParameterType.String)
-                if len(args) > 3:
-                    self.add_arg("spawntoargs", args[3], ParameterType.String)
+                pass
 
 
 class ExecuteAssemblyCommand(CommandBase):
     cmd = "execute-assembly"
     needs_admin = False
-    help_cmd = "execute-assembly"
-    description = "Convert a .NET assembly into shellcode with Donut, execute it in the spawnto process, and return the output"
+    help_cmd = "execute-assembly <assembly name> <spawnto> <spawnto arguments>\n" \
+               "execute-assembly -assembly <assembly name> -args <assembly argumetns> -spawnto <spawnto> " \
+               "-spawnto-args <spawnto-arguments>"
+    description = "Convert a .NET assembly into shellcode with Donut, execute it in the SpawnTo process, and return " \
+                  "the output\n\n" \
+                  "Change the Parameter Group to \"Default\" to use a file that was previously registered with " \
+                  "Mythic and \"New File\" to register and use a new file from your host OS.\n"
     version = 1
     author = "@Ne0nd0g"
     argument_class = ExecuteAssemblyArguments
@@ -90,31 +125,9 @@ class ExecuteAssemblyCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         if debug:
-            await MythicRPC().execute(
-                "create_output",
-                task_id=task.id,
-                output=f'\n[DEBUG]Task:\n{task}',
-            )
-        # Use Cases
-        # 1. User provides an assembly that has NOT been previously registered
-        # 2. User provides an assembly that HAS been previously registered
-        # 3. User provides a file name of an assembly that has NOT been previously registered
-        # 4. User provides a file name of an assembly that HAS been previously registered
-        # 5. If a file was provided instead of a filename, use the provided file
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
 
-        # Determine if a file or a file name was provided
-        if task.args.get_arg("assembly") is None:
-            # A file WAS NOT provided
-            if task.args.has_arg("assembly_name"):
-                assembly_name = task.args.get_arg("assembly_name")
-                assembly_bytes = None
-            else:
-                raise Exception(f'A file or the name of a file was not provided')
-        else:
-            assembly_name = json.loads(task.original_params)["assembly"]
-            assembly_bytes = task.args.get_arg("assembly")
-
-        assembly = await get_or_register_file(task, assembly_name, assembly_bytes)
+        assembly_name, assembly_uuid, assembly = await get_file_contents(task)
 
         # Donut
         donut_args = {
@@ -122,7 +135,7 @@ class ExecuteAssemblyCommand(CommandBase):
             "exit": "2",
             "verbose": True,
         }
-        donut_shellcode, donut_result = donut(assembly, donut_args)
+        donut_shellcode, donut_result = donut(base64.b64decode(assembly), donut_args)
         task.stdout += f'\n{donut_result}'
 
         # 1. Shellcode
@@ -141,12 +154,13 @@ class ExecuteAssemblyCommand(CommandBase):
         }
 
         task.display_params = f'{assembly_name} {task.args.get_arg("arguments")}\n ' \
-                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
+                              f'SpawnTo: {task.args.get_arg("spawnto")} ' \
+                              f'SpawnTo Args: {task.args.get_arg("spawntoargs")}'
 
         task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg("assembly")
-        task.args.remove_arg("assembly_name")
+        task.args.remove_arg("file")
+        task.args.remove_arg("filename")
         task.args.remove_arg("arguments")
         task.args.remove_arg("spawnto")
         task.args.remove_arg("spawntoargs")

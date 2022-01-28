@@ -3,18 +3,19 @@ from merlin import MerlinJob, donut
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
-import shlex
 
 # Set to enable debug output to Mythic
 debug = False
 
 
 class MimikatzArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="commandline",
+                cli_name="command",
+                display_name="Mimikatz Command",
                 type=ParameterType.String,
                 description="Mimikatz commandline arguments",
                 default_value="token::whoami coffee",
@@ -26,6 +27,8 @@ class MimikatzArguments(TaskArguments):
             ),
             CommandParameter(
                 name="spawnto",
+                cli_name="spawnto",
+                display_name="SpawnTo Program",
                 type=ParameterType.String,
                 description="The child process that will be started to execute Mimikatz in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
@@ -36,38 +39,32 @@ class MimikatzArguments(TaskArguments):
                 )],
             ),
             CommandParameter(
-                name="spawnto arguments",
+                name="spawntoargs",
+                cli_name="spawnto-args",
+                display_name="SpawnTo Program Arguments",
                 type=ParameterType.String,
-                description="argument to create the spawnto process with, if any",
+                description="argument to create the SpawnTo process with, if any",
                 parameter_group_info=[ParameterGroupInfo(
                     group_name="Default",
                     ui_position=2,
                     required=False,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                # This allows an operator to specify the name of an a file that was previously registered with Mythic
-                # in place of providing the actual file
-                args = shlex.split(self.command_line)
-                if len(args) > 0:
-                    self.add_arg("commandline", args[0], ParameterType.String)
-                if len(args) > 1:
-                    self.add_arg("spawnto", args[1], ParameterType.String)
-                if len(args) > 2:
-                    self.add_arg("spawntoargs", args[2], ParameterType.String)
 
 
 class MimikatzCommand(CommandBase):
     cmd = "mimikatz"
     needs_admin = False
     help_cmd = "mimikatz"
-    description = "Converts mimikatz.exe into shellcode with Donut, executes it in the spawnto process, and returns output"
+    description = "Converts mimikatz.exe into shellcode with Donut, " \
+                  "executes it in the SpawnTo process, and returns output. " \
+                  "The Mimikatz \"exit\" is automatically added."
     version = 1
     author = "@Ne0nd0g"
     argument_class = MimikatzArguments
@@ -79,7 +76,8 @@ class MimikatzCommand(CommandBase):
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
         task.display_params = f'{task.args.get_arg("commandline")}\n' \
-                              f'SpawnTo: {task.args.get_arg("spawnto")} {task.args.get_arg("spawntoargs")}'
+                              f'SpawnTo: {task.args.get_arg("spawnto")} ' \
+                              f'SpawnTo Arguments: {task.args.get_arg("spawntoargs")}'
         if debug:
             await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()')
 

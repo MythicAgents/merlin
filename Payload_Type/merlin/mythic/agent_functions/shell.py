@@ -10,11 +10,13 @@ debug = False
 
 
 class ShellArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="arguments",
+                cli_name="command",
+                display_name="Command",
                 type=ParameterType.String,
                 description="Commandline string or arguments to run in the shell",
                 parameter_group_info=[ParameterGroupInfo(
@@ -23,14 +25,12 @@ class ShellArguments(TaskArguments):
                     required=True,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("arguments", self.command_line)
 
 
 class ShellCommand(CommandBase):

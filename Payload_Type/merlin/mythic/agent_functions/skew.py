@@ -5,11 +5,13 @@ import json
 
 
 class SkewArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="amount",
+                cli_name="amount",
+                display_name="Amount",
                 type=ParameterType.String,
                 description="The amount of skew, or jitter, to add to an agent callback",
                 default_value="3000",
@@ -19,14 +21,12 @@ class SkewArguments(TaskArguments):
                     required=True,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("amount", str.split(self.command_line)[0])
 
 
 class SkewCommand(CommandBase):

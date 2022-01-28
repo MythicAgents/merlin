@@ -9,11 +9,13 @@ debug = False
 
 
 class InvokeAssemblyArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="assembly",
+                cli_name="assembly",
+                display_name=".NET Assembly",
                 type=ParameterType.String,
                 description="Name of the previously loaded assembly to execute",
                 parameter_group_info=[ParameterGroupInfo(
@@ -24,6 +26,8 @@ class InvokeAssemblyArguments(TaskArguments):
             ),
             CommandParameter(
                 name="arguments",
+                cli_name="args",
+                display_name=".NET Assembly Arguments",
                 type=ParameterType.String,
                 description="Arguments to invoke (execute) the assembly",
                 parameter_group_info=[ParameterGroupInfo(
@@ -32,16 +36,12 @@ class InvokeAssemblyArguments(TaskArguments):
                     required=False,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                args = str.split(self.command_line)
-                self.add_arg("assembly", args[0])
-                self.add_arg("arguments", " ".join(args[1:]))
 
 
 class LoadAssemblyCommand(CommandBase):

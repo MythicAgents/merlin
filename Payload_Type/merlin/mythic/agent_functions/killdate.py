@@ -9,11 +9,13 @@ debug = False
 
 
 class KillDateArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
             CommandParameter(
                 name="date",
+                cli_name="date",
+                display_name="Kill Date",
                 type=ParameterType.String,
                 description="The date, as a Unix epoch timestamp, that the agent should quit running",
                 parameter_group_info=[ParameterGroupInfo(
@@ -22,14 +24,12 @@ class KillDateArguments(TaskArguments):
                     required=True,
                 )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("date", str.split(self.command_line)[0])
 
 
 class KillDateCommand(CommandBase):
