@@ -79,14 +79,14 @@ class MimikatzCommand(CommandBase):
                               f'SpawnTo: {task.args.get_arg("spawnto")} ' \
                               f'SpawnTo Arguments: {task.args.get_arg("spawntoargs")}'
         if debug:
-            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Starting create_tasking()\n')
 
         if debug:
-            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Calling donut()')
+            await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]Calling donut()\n')
         # Donut Arguments
         donut_args = {
             # Mimikatz already exists at this location in the Merlin Docker container
-            "in": "/opt/mimikatz/x64/mimikatz.exe",
+            "in": "/opt/merlin/data/src/mimikatz/x64/mimikatz.exe",
             # Must append the "exit" command for Mimikatz to return
             "params": f'{task.args.get_arg("commandline")} exit',
             "exit": "2",
