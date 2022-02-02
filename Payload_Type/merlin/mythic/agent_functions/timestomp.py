@@ -9,35 +9,38 @@ debug = False
 
 
 class StompArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "source": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="source",
+                cli_name="source",
+                display_name="Source File",
                 type=ParameterType.String,
                 description="The source file's date/time to copy",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=0,
+                )],
             ),
-            "destination": CommandParameter(
+            CommandParameter(
                 name="destination",
+                cli_name="destination",
+                display_name="Destination File",
                 type=ParameterType.String,
                 description="The destination filepath to apply the date/time stamp",
-                ui_position=1,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    ui_position=1,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                args = str.split(self.command_line)
-                if len(args) > 0:
-                    self.add_arg("source", args[0])
-                if len(args) > 1:
-                    self.add_arg("destination", args[1])
 
 
 class StompCommand(CommandBase):

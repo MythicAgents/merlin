@@ -9,17 +9,23 @@ debug = False
 
 
 class RetryArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "maxretry": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="maxretry",
+                cli_name="maxretry",
+                display_name="Max Retry",
                 type=ParameterType.String,
                 description="The maximum amount of times the Agent can fail to check in before it quits running",
                 value="7",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:

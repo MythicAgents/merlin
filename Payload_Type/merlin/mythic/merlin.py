@@ -174,3 +174,107 @@ async def get_or_register_file(task, filename, file_bytes):
                 )
     else:
         raise Exception(f'A required filename was not provided')
+
+
+async def get_file_list(callback: dict) -> [str]:
+    """
+    Get a unique list of file names that have been previously registered with Mythic.
+    This function is typically used to populate dropdown menus for agent commands
+
+    :param callback:
+    :return:
+    """
+    resp = await MythicRPC().execute(
+        function_name="get_file",
+        callback_id=callback["id"],
+        limit_by_callback=False,
+        get_contents=False,
+        filename="",  # Return all filenames
+        max_results=-1  # Return all results
+    )
+    if resp.status == MythicRPCStatus.Success:
+        file_names = []
+        for f in resp.response:
+            if f["filename"] not in file_names:
+                file_names.append(f["filename"])
+        file_names.sort()
+        return file_names
+    else:
+        return []
+
+
+async def get_file_contents(task: MythicTask) -> (str, str, str):
+    """
+    Parse a MythicTask to determine if a new file or previously registered file was selected and return its contents.
+    The task MUST include either a file or filename argument where file is a UUID and filename is just a string
+    Returns Filename, File UUID, and File contents as a Base64 string
+
+    :param task:
+    :return:
+    """
+
+    # Determine if a file or a file name was provided
+    if task.args.get_arg("filename") is not None:
+        pre = await MythicRPC().execute(
+            function_name="get_file",
+            task_id=task.id,
+            filename=task.args.get_arg("filename"),
+            get_contents=False,
+            max_results=-1,
+            limit_by_callback=False,
+        )
+
+        if len(pre.response) > 1:
+            await MythicRPC().execute(
+                function_name="create_output",
+                task_id=task.id,
+                output=f'Mythic returned {len(pre.response)} files. Only the first one will be used.\n'
+            )
+
+        resp = await MythicRPC().execute(
+            function_name="get_file",
+            task_id=task.id,
+            filename=task.args.get_arg("filename"),
+            get_contents=True,
+            max_results=1,
+            limit_by_callback=False,
+        )
+    elif task.args.get_arg("file") is not None:
+        resp = await MythicRPC().execute(
+            function_name="get_file",
+            task_id=task.id,
+            file_id=task.args.get_arg("file"),
+            get_contents=True,
+            limit_by_callback=False,
+        )
+    else:
+        raise Exception("A file, or the name of a previously registered file name with Mythic, was not provided")
+
+    if resp.status != MythicRPCStatus.Success:
+        raise Exception(f'there was an error making the Mythic \"get_file\" RPC:\n{resp}')
+
+    if len(resp.response) <= 0 and task.args.get_arg("file") is not None:
+        raise Exception(f'The Mythic \"get_file\" RPC for file UUID {task.args.get_arg("file")} returned 0 results')
+    elif len(resp.response) <= 0 and task.args.get_arg("filename") is not None:
+        await MythicRPC().execute("create_output", task_id=task.id, output=f'[DEBUG]RPC Response: {resp}\n')
+        raise Exception(f'The Mythic \"get_file\" RPC for the \"{task.args.get_arg("filename")}\" file returned 0 results.')
+
+    filename = resp.response[0]["filename"]
+    file_uuid = resp.response[0]["agent_file_id"]
+    contents = resp.response[0]["contents"]
+    sha = resp.response[0]["sha1"]
+
+    if task.args.get_arg("filename") is not None:
+        await MythicRPC().execute(
+            function_name="create_output",
+            task_id=task.id,
+            output=f'Using previously registered file {filename} with ID {file_uuid} and SHA1: {sha}\n'
+        )
+    elif task.args.get_arg("file") is not None:
+        await MythicRPC().execute(
+            function_name="create_output",
+            task_id=task.id,
+            output=f'Registered new file \"{filename}\" with ID {file_uuid} and SHA1: {sha}\n'
+        )
+
+    return filename, file_uuid, contents

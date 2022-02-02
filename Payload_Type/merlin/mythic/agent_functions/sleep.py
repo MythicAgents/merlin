@@ -5,25 +5,29 @@ import json
 
 
 class SleepArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "time": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="time",
+                cli_name="time",
+                display_name="Time",
                 type=ParameterType.String,
                 description="The amount of time for the agent to sleep between checkins."
                             "\r\n Use Go's time notation such as 30s for thirty seconds",
                 value="30s",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("time", str.split(self.command_line)[0])
 
 
 class SleepCommand(CommandBase):

@@ -9,25 +9,33 @@ debug = False
 
 
 class ENVArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "method": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="method",
+                cli_name="method",
                 type=ParameterType.ChooseOne,
                 description="The desired environment interaction method",
                 choices=["get", "set", "showall", "unset"],
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-            "arguments": CommandParameter(
+            CommandParameter(
                 name="arguments",
+                cli_name="args",
                 type=ParameterType.String,
                 description="Arguments for the env method",
-                ui_position=1,
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=1,
+                    required=False,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -44,7 +52,7 @@ class ENVArguments(TaskArguments):
 class ENVCommand(CommandBase):
     cmd = "env"
     needs_admin = False
-    help_cmd = "env"
+    help_cmd = "env <method: get,set, showall, unset> <args>"
     description = "Get, list, or set environment variables"
     version = 1
     author = "@Ne0nd0g"

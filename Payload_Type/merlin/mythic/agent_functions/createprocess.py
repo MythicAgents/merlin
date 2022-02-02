@@ -1,5 +1,5 @@
 
-from merlin import MerlinJob
+from merlin import MerlinJob, get_file_list, get_file_contents
 from mythic_payloadtype_container.MythicCommandBase import *
 from mythic_payloadtype_container.MythicRPC import *
 import json
@@ -10,32 +10,69 @@ debug = False
 
 
 class CreateProcessArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "shellcode": CommandParameter(
-                name="shellcode",
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
+                name="filename",
+                cli_name="shellcode",
+                type=ParameterType.ChooseOne,
+                dynamic_query_function=get_file_list,
+                description="The shellcode filename you want to execute in the spawnto process",
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=0,
+                )],
+            ),
+            CommandParameter(
+                name="file",
                 type=ParameterType.File,
                 description="The shellcode file you want to execute in the spawnto process",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="New File",
+                    ui_position=0,
+                )],
             ),
-            "spawnto": CommandParameter(
+            CommandParameter(
                 name="spawnto",
+                cli_name="spawnto",
                 type=ParameterType.String,
                 description="The child process that will be started to execute the shellcode in",
                 default_value="C:\\Windows\\System32\\WerFault.exe",
-                ui_position=1,
-                required=True
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="Default",
+                        ui_position=1,
+                    ),
+                    ParameterGroupInfo(
+                        required=True,
+                        group_name="New File",
+                        ui_position=1,
+                    )
+                ],
             ),
-            "spawntoargs": CommandParameter(
+            CommandParameter(
                 name="spawnto arguments",
+                cli_name="args",
                 type=ParameterType.String,
                 description="argument to create the spawnto process with, if any",
-                ui_position=2,
-                required=False,
+                parameter_group_info=[
+                    ParameterGroupInfo(
+                        group_name="Default",
+                        ui_position=2,
+                        required=False,
+                    ),
+                    ParameterGroupInfo(
+                        group_name="New File",
+                        ui_position=2,
+                        required=False,
+                    )
+                ],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -46,9 +83,12 @@ class CreateProcessArguments(TaskArguments):
 class CreateProcessCommand(CommandBase):
     cmd = "create-process"
     needs_admin = False
-    help_cmd = "create-process"
+    help_cmd = "create-process <shellcode file name> <spawnto> <spawnto args>\n" \
+               "create-process -shellcode <shellcode filename> -spawnto <spawnto> -args <spawnto args>"
     description = "Uses process hollowing to create a child process from the spawnto argument, allocate the provided " \
-                  "shellcode into it, execute it, and use anonymous pipes to collect STDOUT/STDERR"
+                  "shellcode into it, execute it, and use anonymous pipes to collect STDOUT/STDERR\n\nChange the " \
+                  "Parameter Group to \"Default\" to use a shellcode file that was previously registered with Mythic " \
+                  "and \"New File\" to register and use a new shellcode file from your host OS.\n"
     version = 1
     author = "@Ne0nd0g"
     argument_class = CreateProcessArguments
@@ -59,15 +99,20 @@ class CreateProcessCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        task.display_params = f'{json.loads(task.original_params)["shellcode"]}' \
-                              f'\nShellcode size: {task.args.get_arg("shellcode")}\n' \
+        if debug:
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
+
+        filename, _, contents = await get_file_contents(task)
+
+        task.display_params = f'{filename}' \
+                              f'\nShellcode size: {len(contents)}\n' \
                               f'SpawnTo: {task.args.get_arg("spawnto")} ' \
                               f'{task.args.get_arg("spawntoargs")}'
         # 1. Shellcode
         # 2. SpawnTo Executable
         # 3. SpawnTo Arguments
         args = [
-            base64.b64encode(task.args.get_arg("shellcode")).decode("utf-8"),
+            contents,
             task.args.get_arg("spawnto"),
             task.args.get_arg("spawntoargs")
         ]
@@ -80,7 +125,8 @@ class CreateProcessCommand(CommandBase):
 
         task.args.add_arg("type", MerlinJob.MODULE, ParameterType.Number)
         task.args.add_arg("payload", json.dumps(command), ParameterType.String)
-        task.args.remove_arg("shellcode")
+        task.args.remove_arg("file")
+        task.args.remove_arg("filename")
         task.args.remove_arg("spawnto")
         task.args.remove_arg("spawntoargs")
 

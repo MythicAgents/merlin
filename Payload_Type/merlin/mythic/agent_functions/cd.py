@@ -9,17 +9,22 @@ debug = False
 
 
 class CDArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "path": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="path",
+                cli_name="path",
                 type=ParameterType.String,
                 description="The directory path to change to",
                 value="",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    required=True,
+                    group_name="Default",
+                    ui_position=0,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -32,7 +37,7 @@ class CDArguments(TaskArguments):
 class CDCommand(CommandBase):
     cmd = "cd"
     needs_admin = False
-    help_cmd = "cd"
+    help_cmd = "cd <path>"
     description = "Change the agent's current working directory"
     version = 1
     author = "@Ne0nd0g"

@@ -9,30 +9,34 @@ debug = False
 
 
 class JA3Arguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "ja3string": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="ja3string",
+                cli_name="ja3string",
+                display_name="JA3 STRING",
                 type=ParameterType.String,
                 description="The JA3 \"string\" that the client should use",
                 value="",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                self.add_arg("ja3string", str.split(self.command_line)[0])
 
 
 class JA3Command(CommandBase):
     cmd = "ja3"
     needs_admin = False
-    help_cmd = "ja3"
+    help_cmd = "ja3 <ja3 string>"
     description = "Instruct the agent to use a client derived from the input JA3 string to communicate with the " \
                   "server.\r\nWARNING: Make sure the server can support the client configuration"
     version = 1

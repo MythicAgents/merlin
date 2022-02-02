@@ -9,9 +9,9 @@ debug = False
 
 
 class PipesArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {}
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = []
 
     async def parse_arguments(self):
         pass
@@ -32,7 +32,8 @@ class PipesCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        task.display_params = f'{self.cmd}'
+        if debug:
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
 
         command = {
             "command": self.cmd,

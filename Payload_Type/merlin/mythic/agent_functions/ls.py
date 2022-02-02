@@ -9,27 +9,28 @@ debug = False
 
 
 class LSArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "path": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="path",
+                cli_name="path",
+                display_name="Path",
                 type=ParameterType.String,
                 description="The directory path to list the contents of",
                 default_value=".",
-                required=False,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=False,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                if len(str.split(self.command_line)) > 0:
-                    self.add_arg("path", str.split(self.command_line)[0])
-                else:
-                    self.add_arg("path", ".")
 
 
 class LSCommand(CommandBase):

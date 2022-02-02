@@ -1,6 +1,7 @@
 
 from mythic_payloadtype_container.PayloadBuilder import *
 from mythic_payloadtype_container.MythicCommandBase import *
+from mythic_payloadtype_container.MythicRPC import *
 import asyncio
 import os
 import time
@@ -13,80 +14,95 @@ debug = False
 # define your payload type class here, it must extend the PayloadType class though
 class Merlin(PayloadType):
     name = "merlin"  # name that would show up in the UI
-    file_extension = "exe"  # default file extension to use when creating payloads
+    file_extension = ""  # default file extension to use when creating payloads
     author = "Russel Van Tuyl - @Ne0nd0g"  # author of the payload type
-    supported_os = [SupportedOS.Windows, SupportedOS.Linux, SupportedOS.MacOS]  # supported OS and architecture combos
+    supported_os = [SupportedOS.Windows, SupportedOS.Linux, SupportedOS.MacOS, SupportedOS("freebsd"), SupportedOS("openbsd"), SupportedOS("solaris")]  # supported OS and architecture combos
     wrapper = False  # does this payload type act as a wrapper for another payloads inside of it?
     wrapped_payloads = []  # if so, which payload types
     note = """A port of Merlin from https://www.github.com/Ne0nd0g/merlin to Mythic"""
     # setting this to True allows users to only select a subset of commands when generating a payload
     supports_dynamic_loading = False
+    # translation_container = "merlin-translate-jwe"
+    mythic_encrypts = True
     build_parameters = {
         #  these are all the build parameters that will be presented to the user when creating your payload
-        "verbose": BuildParameter(
+        BuildParameter(
             name="verbose",
             description="Enable agent verbose output to STDOUT",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["false", "true"],
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False,
             required=False,
         ),
-        "debug": BuildParameter(
+        BuildParameter(
             name="debug",
             description="Enable agent debug messages to STDOUT",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["false", "true"],
+            parameter_type=BuildParameterType.Boolean,
+            default_value=False,
             required=False,
         ),
-        "os": BuildParameter(
-            name="os",
-            description="What Operating System will the agent be running on.\r\nSelect DARWIN for macOS",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["windows", "darwin", "linux", "freebsd", "openbsd", "solaris"],
-            required=False,
-        ),
-        "arch": BuildParameter(
+        BuildParameter(
             name="arch",
             description="What architecture will the agent be executed on?",
             parameter_type=BuildParameterType.ChooseOne,
             choices=["amd64", "386", "arm", "mips"],
             required=False,
         ),
-        "maxretry": BuildParameter(
+        BuildParameter(
           name="maxretry",
           description="How many times can the Agent fail to check in before it exits?",
           parameter_type=BuildParameterType.String,
           default_value="7",
           required=False,
         ),
-        "padding": BuildParameter(
+        BuildParameter(
             name="padding",
             description="What is the maximum size of the random amount of data added to each message as padding?",
             parameter_type=BuildParameterType.String,
             default_value="4096",
             required=False,
         ),
-        "ja3": BuildParameter(
+        BuildParameter(
             name="ja3",
             description="The JA3 string of the TLS configuration the agent should use",
             parameter_type=BuildParameterType.String,
             default_value="",
             required=False,
         ),
-        "garble": BuildParameter(
+        BuildParameter(
             name="garble",
             description="Use Garble to obfuscate the output Go executable. WARNING - This significantly slows the agent build time",
-            parameter_type=BuildParameterType.ChooseOne,
-            choices=["false", "true"],
+            parameter_type=BuildParameterType.Boolean,
             default_value="false",
             required=False,
         ),
     }
     #  the names of the c2 profiles that your agent supports
-    c2_profiles = ["http"]
+    c2_profiles = ["http", "merlin-http"]
 
     async def build(self) -> BuildResponse:
         resp = BuildResponse(status=BuildStatus.Error)
+
+        # Extract C2 information into local variables
+        c2_profile = self.c2info[0].get_c2profile()
         c2_params = self.c2info[0].get_parameters_dict()
+
+        # Set the selected Operating System to lowercase for Go build
+        selected_os = self.selected_os.lower()
+        if self.selected_os == "macos":
+            selected_os = "darwin"
+
+        # Set the selected profile into a local variable
+        profile = c2_profile["name"]
+
+        # Set the Pre-Shared Key based on the C2 profile
+        psk = ""
+        if profile == "http":
+            psk = c2_params["AESPSK"]["enc_key"]
+        elif profile == "merlin-http":
+            rpc_resp = await MythicRPC().execute_c2rpc(c2_profile=c2_profile["name"], function_name="get_psk", task_id=31773, message="test")
+            if rpc_resp.error:
+                raise Exception
+            psk = rpc_resp.response
 
         # Merlin specific build code
         try:
@@ -96,29 +112,40 @@ class Merlin(PayloadType):
             if os.path.exists(str(self.agent_code_path.joinpath(output_file))):
                 os.remove(str(self.agent_code_path.joinpath(output_file)))
 
-            # Fix GOPATH 
-            command = "export GOPATH=/go/src;"
-            command += "export GOOS=" + self.get_parameter("os").lower() + ";"
+            # Set Operating System and Architecture (e.g., Windows AMD64)
+            command = "export GOOS=" + selected_os + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
 
-            if self.get_parameter("garble").lower() == "true":
-                # Can't garble or include in GOPRIVATE: go.dedis.ch/kyber,golang.org/x/sys
+            if self.get_parameter("garble") and profile != "merlin-http":
+                # Can't garble or include in GOPRIVATE: go.dedis.ch/kyber,github.com/lucas-clemente/quic-go/internal/qtls
                 # Can't use Garble because it doesn't handle ldflags for -X parameters
                 # https://github.com/burrowers/garble/issues/323
                 # Currently the only option is to open the file and replace the strings to prevent using ldflags
-                command += "export GOPRIVATE=github.com,gopkg.in,golang.org/x/net,golang.org/x/text;"
+                command += "export GOGARBLE=golang.org,gopkg.in,github.com/Ne0nd0g,github.com/fatih,github.com/google,github.com/satori,github.com/mattn,github.com/refraction-networking,github.com/cretz;"
                 command += "export CGO_ENABLED=0;"
                 go_cmd = f'garble -tiny -literals -seed {secrets.token_hex(32)} build -o {output_file} -ldflags \''
 
                 # For the record, I'm not a fan of doing things this way. Temporary until Garble can handle ldflags
                 merlin = open(str(self.agent_code_path.joinpath("main.go")), "rt")
                 data = merlin.read()
+                # C2 Profile
+                data = data.replace('var profile = ""', f'var profile = "{c2_profile["name"]}"')
                 # payloadID
                 data = data.replace('var payloadID = ""', f'var payloadID = "{self.uuid}"')
                 # URL
-                data = data.replace('var url = "https://127.0.0.1:443"', f'var url = "{c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}"')
+                if profile == "http":
+                    data = data.replace('var url = "https://127.0.0.1:443"', f'var url = "{c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}"')
+                elif profile == "merlin-http":
+                    uris = str.split(c2_params["uri"], ",")
+                    if len(uris) > 1:
+                        all_uris = ""
+                        for uri in uris:
+                            all_uris += f'{c2_params["host"]}:{c2_params["port"]}/{uri},'
+                        data = data.replace('var url = "https://127.0.0.1:443"', f'var url = "{all_uris.rstrip(",")}"')
+                    else:
+                        data = data.replace('var url = "https://127.0.0.1:443"', f'var url = "{c2_params["host"]}:{c2_params["port"]}/{c2_params["uri"]}"')
                 # Pre-Shared Key (PSK)
-                data = data.replace('var psk string', f'var psk = "{c2_params["AESPSK"]["enc_key"]}"')
+                data = data.replace('var psk string', f'var psk = "{psk}"')
                 # HTTP Headers
                 for header in c2_params["headers"]:
                     if header["key"] == "User-Agent":
@@ -154,16 +181,21 @@ class Merlin(PayloadType):
             else:
                 go_cmd = f'go build -o {output_file} -ldflags \'-s -w '
 
-            if self.get_parameter("os").lower() == "windows" \
-                    and (self.get_parameter("debug").lower() == "false"
-                         and self.get_parameter("verbose").lower() == "false"):
+            if selected_os == "windows" \
+                    and (not self.get_parameter("debug")
+                         and not self.get_parameter("verbose")):
                 go_cmd += "-H=windowsgui "
             # payloadID
             go_cmd += "-X \"main.payloadID=" + f'{self.uuid}\"'
+            # profile
+            go_cmd += " -X \"main.profile=" + f'{c2_profile["name"]}\"'
             # URL
-            go_cmd += f' -X \"main.url={c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}\"'
+            if profile == "http":
+                go_cmd += f' -X \"main.url={c2_params["callback_host"]}:{c2_params["callback_port"]}/{c2_params["post_uri"]}\"'
+            elif profile == "merlin-http":
+                go_cmd += f' -X \"main.url={c2_params["host"]}:{c2_params["port"]}{c2_params["uri"].split(",")[0]}\"'
             # Pre-Shared Key (PSK)
-            go_cmd += f' -X \"main.psk={c2_params["AESPSK"]["enc_key"]}\"'
+            go_cmd += f' -X \"main.psk={psk}\"'
             # HTTP Headers
             for header in c2_params["headers"]:
                 if header["key"] == "User-Agent":
@@ -194,8 +226,12 @@ class Merlin(PayloadType):
                 go_cmd += f' -X \"main.ja3={self.get_parameter("ja3")}\"'
 
             # Everything else
-            if self.get_parameter("garble").lower() == "true":
+            if self.get_parameter("garble") and profile != "merlin-http":
                 go_cmd += " -buildid=\' garbled.go"
+            elif self.get_parameter("garble") and profile == "merlin-http":
+                resp.build_message += "\nMerlin can't be Garbled when using the merlin-http C2 profile." \
+                                      " Use Mythic's HTTP C2 profile instead\n"
+                go_cmd += " -buildid=\' main.go"
             else:
                 go_cmd += " -buildid=\' main.go"
 
@@ -226,5 +262,5 @@ class Merlin(PayloadType):
             if debug:
                 resp.build_stdout += f"\r\n[DEBUG]\r\ncommand: {command}\r\ngo_cmd: {go_cmd}, "
         except Exception as e:
-            resp.build_message = "[ERROR]" + str(e)
+            resp.build_message += "[ERROR]" + str(e)
         return resp

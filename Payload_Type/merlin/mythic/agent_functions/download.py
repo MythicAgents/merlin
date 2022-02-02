@@ -9,16 +9,20 @@ debug = False
 
 
 class DownloadArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "file": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="file",
                 type=ParameterType.String,
                 description="The file to download from the host where the agent is running",
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
@@ -31,7 +35,7 @@ class DownloadArguments(TaskArguments):
 class DownloadCommand(CommandBase):
     cmd = "download"
     needs_admin = False
-    help_cmd = "download"
+    help_cmd = "download <filepath>"
     description = "Downloads a file from the host where the agent is running"
     version = 1
     supported_ui_features = ["file_browser:download"]

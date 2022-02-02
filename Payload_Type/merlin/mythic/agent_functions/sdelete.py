@@ -9,26 +9,27 @@ debug = False
 
 
 class SDArguments(TaskArguments):
-    def __init__(self, command_line):
-        super().__init__(command_line)
-        self.args = {
-            "path": CommandParameter(
+    def __init__(self, command_line, **kwargs):
+        super().__init__(command_line, **kwargs)
+        self.args = [
+            CommandParameter(
                 name="path",
+                cli_name="path",
+                display_name="Path",
                 type=ParameterType.String,
                 description="The path of the file to securely delete",
-                ui_position=0,
-                required=True,
+                parameter_group_info=[ParameterGroupInfo(
+                    group_name="Default",
+                    ui_position=0,
+                    required=True,
+                )],
             ),
-        }
+        ]
 
     async def parse_arguments(self):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
-            else:
-                args = str.split(self.command_line)
-                if len(args) > 0:
-                    self.add_arg("path", args[0])
 
 
 class SDCommand(CommandBase):
