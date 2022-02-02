@@ -32,7 +32,8 @@ class PSCommand(CommandBase):
     )
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        task.display_params = f'{self.cmd}'
+        if debug:
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
 
         command = {
             "command": self.cmd,
