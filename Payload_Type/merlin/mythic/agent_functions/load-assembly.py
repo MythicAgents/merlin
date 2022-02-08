@@ -43,6 +43,8 @@ class LoadAssemblyArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("filename", self.command_line)
 
 
 class LoadAssemblyCommand(CommandBase):

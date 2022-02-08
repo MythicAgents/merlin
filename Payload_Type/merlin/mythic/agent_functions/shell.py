@@ -31,6 +31,8 @@ class ShellArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
+            else:
+                self.add_arg("arguments", self.command_line)
 
 
 class ShellCommand(CommandBase):

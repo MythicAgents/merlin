@@ -43,6 +43,12 @@ class RunArguments(TaskArguments):
         if len(self.command_line) > 0:
             if self.command_line[0] == '{':
                 self.load_args_from_json_string(self.command_line)
+            else:
+                args = str.split(self.command_line)
+                if len(args) > 0:
+                    self.add_arg("executable", args[0])
+                if len(args) > 1:
+                    self.add_arg("arguments", " ".join(args[1:]))
 
 
 class RunCommand(CommandBase):
