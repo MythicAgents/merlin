@@ -56,17 +56,22 @@ class RunCommand(CommandBase):
     attackmapping = ["T1106"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
-        task.display_params = f'{task.args.get_arg("executable")} {task.args.get_arg("arguments")}'
+        if debug:
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
 
         # Executable Arguments
         args = []
         # TODO Handle argument parsing when quotes and escapes are used
-        arguments = task.args.get_arg("arguments").split()
-        if len(arguments) == 1:
-            args.append(arguments[0])
-        elif len(arguments) > 1:
-            for arg in arguments:
-                args.append(arg)
+        if task.args.get_arg("arguments"):
+            task.display_params = f'{task.args.get_arg("executable")} {task.args.get_arg("arguments")}'
+            arguments = task.args.get_arg("arguments").split()
+            if len(arguments) == 1:
+                args.append(arguments[0])
+            elif len(arguments) > 1:
+                for arg in arguments:
+                    args.append(arg)
+        else:
+            task.display_params = f'{task.args.get_arg("executable")}'
 
         # Merlin jobs.Command message type
         command = {
