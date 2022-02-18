@@ -75,6 +75,14 @@ class Merlin(PayloadType):
             default_value="false",
             required=False,
         ),
+        BuildParameter(
+            name="output",
+            description="Payload output format (e.g., DLL, dylib, or shellcode (RAW)",
+            parameter_type=BuildParameterType.ChooseOne,
+            choices=["dll", "dylib", "raw"],
+            default_value="raw",
+            required=False,
+        ),
     }
     #  the names of the c2 profiles that your agent supports
     c2_profiles = ["http", "merlin-http"]
