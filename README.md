@@ -37,9 +37,9 @@ sudo cat .env | grep MYTHIC_ADMIN_PASSWORD
 ## Known Limitations
 This implementation of Merlin on the Mythic Framework is incomplete and is still in development. Here are some known limitations:
 
-| Feature | Status | Notes |
-| --- | --- | --- |
-| MiniDump | Not Implemented
-| Padding | Not Implemented
-| File Chunking | Not Implemented
-| Windows DLL | Not Implemented
+| Feature       | Status          | Notes         |
+|---------------|-----------------|---------------|
+| MiniDump      | Not Implemented |               |
+| Padding       | Implemented     | Merlin v1.3.0 |
+| File Chunking | Not Implemented |               |
+| Windows DLL   | Not Implemented |               |
