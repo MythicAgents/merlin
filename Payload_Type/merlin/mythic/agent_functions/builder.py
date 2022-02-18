@@ -88,7 +88,7 @@ class Merlin(PayloadType):
 
         # Set the selected Operating System to lowercase for Go build
         selected_os = self.selected_os.lower()
-        if self.selected_os == "macos":
+        if selected_os == "macos":
             selected_os = "darwin"
 
         # Set the selected profile into a local variable
