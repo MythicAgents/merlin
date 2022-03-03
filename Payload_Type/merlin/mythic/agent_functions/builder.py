@@ -70,17 +70,21 @@ class Merlin(PayloadType):
         ),
         BuildParameter(
             name="garble",
-            description="Use Garble to obfuscate the output Go executable. WARNING - This significantly slows the agent build time",
+            description="Use Garble to obfuscate the output Go executable. "
+                        "WARNING - This significantly slows the agent build time",
             parameter_type=BuildParameterType.Boolean,
             default_value="false",
             required=False,
         ),
         BuildParameter(
-            name="output",
-            description="Payload output format (e.g., DLL, dylib, or shellcode (RAW)",
+            name="buildmode",
+            description="Payload build mode and output format.\n"
+                        "DEFAULT: exe, bin, etc. "
+                        "SHARED: dll, so. "
+                        "RAW: Windows shellcode only. ",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["dll", "dylib", "raw"],
-            default_value="raw",
+            choices=["default", "shared", "raw"],
+            default_value="default",
             required=False,
         ),
     }
@@ -96,7 +100,7 @@ class Merlin(PayloadType):
 
         # Set the selected Operating System to lowercase for Go build
         selected_os = self.selected_os.lower()
-        if self.selected_os == "macos":
+        if self.selected_os.lower() == "macos":
             selected_os = "darwin"
 
         # Set the selected profile into a local variable
@@ -112,6 +116,14 @@ class Merlin(PayloadType):
                 raise Exception
             psk = rpc_resp.response
 
+        # Build mode, Operating System, and Architecture checks
+        if self.get_parameter("buildmode") == "raw" and selected_os != "windows":
+            resp.build_message = f'Buildmode \"raw\" can only be used with Windows payloads'
+            return resp
+        elif selected_os == "darwin" and self.get_parameter("buildmode") != "default":
+            resp.build_message = f'Unable to cross compile shared/raw build modes for macOS'
+            return resp
+
         # Merlin specific build code
         try:
             output_file = "merlin"
@@ -123,6 +135,11 @@ class Merlin(PayloadType):
             # Set Operating System and Architecture (e.g., Windows AMD64)
             command = "export GOOS=" + selected_os + ";"
             command += "export GOARCH=" + self.get_parameter("arch").lower() + ";"
+
+            # Export variables to compile Windows DLL
+            if selected_os == "windows" and \
+                    (self.get_parameter("buildmode") == "shared" or self.get_parameter("buildmode") == "raw"):
+                command += "export CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CGO_ENABLED=1;"
 
             if self.get_parameter("garble") and profile != "merlin-http":
                 # Can't garble or include in GOPRIVATE: go.dedis.ch/kyber,github.com/lucas-clemente/quic-go/internal/qtls
@@ -186,12 +203,17 @@ class Merlin(PayloadType):
                 garbled.write(data)
                 garbled.close()
                 merlin.close()
+            elif selected_os == "windows" and \
+                    (self.get_parameter("buildmode") == "shared" or self.get_parameter("buildmode") == "raw"):
+                go_cmd = f'go build -buildmode=c-archive -o main.a -ldflags \'-s -w '
+            elif self.get_parameter("buildmode") == "shared":
+                go_cmd = f'go build -buildmode=c-shared -o {output_file} -ldflags \'-s -w '
             else:
                 go_cmd = f'go build -o {output_file} -ldflags \'-s -w '
 
             if selected_os == "windows" \
-                    and (not self.get_parameter("debug")
-                         and not self.get_parameter("verbose")):
+                    and (not self.get_parameter("debug") and not self.get_parameter("verbose")) \
+                    and self.get_parameter("buildmode") == "default":
                 go_cmd += "-H=windowsgui "
             # payloadID
             go_cmd += "-X \"main.payloadID=" + f'{self.uuid}\"'
@@ -234,14 +256,34 @@ class Merlin(PayloadType):
                 go_cmd += f' -X \"main.ja3={self.get_parameter("ja3")}\"'
 
             # Everything else
-            if self.get_parameter("garble") and profile != "merlin-http":
+            # Windows DLL
+            if selected_os == "windows" and \
+                    (self.get_parameter("buildmode") == "shared" or self.get_parameter("buildmode") == "raw"):
+                if not output_file.endswith(".dll"):
+                    output_file = f'{output_file}.dll'
+                go_cmd += " -buildid=\' main.go dll.go;"
+                go_cmd += f"x86_64-w64-mingw32-gcc -shared -pthread -o {output_file} merlin.c main.a " \
+                          "-lwinmm -lntdll -lws2_32"
+            elif self.get_parameter("garble") and profile != "merlin-http":
                 go_cmd += " -buildid=\' garbled.go"
             elif self.get_parameter("garble") and profile == "merlin-http":
                 resp.build_message += "\nMerlin can't be Garbled when using the merlin-http C2 profile." \
                                       " Use Mythic's HTTP C2 profile instead\n"
                 go_cmd += " -buildid=\' main.go"
             else:
-                go_cmd += " -buildid=\' main.go"
+                if self.get_parameter("buildmode") == "shared":
+                    go_cmd += " -buildid=\' -tags shared main.go shared.go"
+                else:
+                    go_cmd += " -buildid=\' main.go"
+
+            # Convert Windows DLL to shellcode with sRDI
+            if selected_os == "windows" and self.get_parameter("buildmode") == "raw":
+                # Input path: /Mythic/agent_code/merlin.dll
+                # Output path: /Mythic/agent_code/merlin.bin
+                go_cmd += f';python3 /opt/merlin/data/src/sRDI/Python/ConvertToShellcode.py ' \
+                            f'-f Run -c -i -d 7 ' \
+                            f'{str(self.agent_code_path.joinpath(output_file))}'
+                output_file = output_file.replace(".dll", ".bin")
 
             # Build the agent
             command += go_cmd
