@@ -3,7 +3,7 @@ module github.com/MythicAgents/merlin/Payload_Type/merlin/agent_code
 go 1.16
 
 require (
-	github.com/Ne0nd0g/merlin-agent v1.3.0
+	github.com/Ne0nd0g/merlin-agent v1.3.1
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/lucas-clemente/quic-go v0.25.0 // indirect

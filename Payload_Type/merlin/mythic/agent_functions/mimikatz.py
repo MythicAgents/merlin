@@ -35,7 +35,7 @@ class MimikatzArguments(TaskArguments):
                 parameter_group_info=[ParameterGroupInfo(
                     group_name="Default",
                     ui_position=1,
-                    required=True,
+                    required=False,
                 )],
             ),
             CommandParameter(

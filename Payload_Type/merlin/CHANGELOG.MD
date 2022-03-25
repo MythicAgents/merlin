@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 1.2.0 - 2022-03-25
+
+### Added
+
+- Added version number confusion, don't even know what number I should be on :0)
+- Generate Merlin as a DLL or Shellcode
+- Support for the [Service Wrapper](https://github.com/MythicAgents/service_wrapper) and [ScareCrow Wrapper](https://github.com/MythicAgents/scarecrow_wrapper) payloads
+
+### Changed
+
+- Garble now uses ldflags to build instead of modifying the file directly
+
 ## 1.1.0 - 2021-10-12
 
 ### Added
