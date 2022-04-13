@@ -26,11 +26,9 @@ import (
 
 	// 3rd Party
 	"github.com/fatih/color"
-	uuid "github.com/satori/go.uuid"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin-agent/agent"
-	"github.com/Ne0nd0g/merlin-agent/clients/http"
 	"github.com/Ne0nd0g/merlin-agent/clients/mythic"
 	"github.com/Ne0nd0g/merlin-agent/core"
 )
@@ -101,49 +99,6 @@ func main() {
 		}
 		// Get the client
 		a.Client, err = mythic.New(clientConfig)
-		if err != nil {
-			if core.Verbose {
-				color.Red(err.Error())
-			}
-			os.Exit(1)
-		}
-	case "merlin-http":
-		// Merlin HTTP C2 profile client configuration
-		clientConfig := http.Config{
-			Host:        host,
-			Proxy:       proxy,
-			UserAgent:   useragent,
-			PSK:         psk,
-			JA3:         ja3,
-			Padding:     padding,
-			AuthPackage: "opaque",
-			Opaque:      opaque,
-		}
-		// Set agentID to payload ID
-		clientConfig.AgentID, err = uuid.FromString(payloadID)
-		if err != nil {
-			if core.Verbose {
-				color.Red(fmt.Sprintf("there was an error converting the payload ID string \"%s\" to a uuid: %s", payloadID, err))
-			}
-			os.Exit(1)
-		}
-		// Parse URLs
-		if url != "" {
-			clientConfig.URL = strings.Split(strings.ReplaceAll(url, " ", ""), ",")
-		}
-		// Parse http or https
-		if strings.HasPrefix(url, "https://") {
-			clientConfig.Protocol = "https"
-		} else if strings.HasPrefix(url, "http://") {
-			clientConfig.Protocol = "https"
-		} else {
-			if core.Verbose {
-				color.Red("unable to detect valid protocol from URL: " + url)
-				os.Exit(1)
-			}
-		}
-		// Get the client
-		a.Client, err = http.New(clientConfig)
 		if err != nil {
 			if core.Verbose {
 				color.Red(err.Error())

@@ -5,10 +5,9 @@ go 1.16
 require (
 	github.com/Binject/debug v0.0.0-20211007083345-9605c99179ee // indirect
 	github.com/Ne0nd0g/merlin v1.4.0 // indirect
-	github.com/Ne0nd0g/merlin-agent v1.4.0
+	github.com/Ne0nd0g/merlin-agent v1.4.1
 	github.com/fatih/color v1.13.0
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/lucas-clemente/quic-go v0.26.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/refraction-networking/utls v1.0.0 // indirect

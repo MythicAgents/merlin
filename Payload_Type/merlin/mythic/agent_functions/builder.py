@@ -193,15 +193,15 @@ class Merlin(PayloadType):
                     (self.get_parameter("buildmode") == "shared" or self.get_parameter("buildmode") == "raw"):
                 if not output_file.endswith(".dll"):
                     output_file = f'{output_file}.dll'
-                go_cmd = f'build -buildmode=c-archive -o main.a -ldflags {ldflags} main.go dll.go'
+                go_cmd = f'build -buildmode=c-archive -o main.a -ldflags {ldflags} -tags=mythic main.go dll.go'
                 go_cmd += f";x86_64-w64-mingw32-gcc -shared -pthread -o {output_file} merlin.c main.a " \
                           "-lwinmm -lntdll -lws2_32"
                 if not output_file.endswith(".dll"):
                     output_file = f'{output_file}.dll'
             elif self.get_parameter("buildmode") == "shared":
-                go_cmd = f'build -buildmode=c-shared -o {output_file} -ldflags {ldflags} -tags shared main.go shared.go'
+                go_cmd = f'build -buildmode=c-shared -o {output_file} -ldflags {ldflags} -tags=mythic,shared main.go shared.go'
             else:
-                go_cmd = f'build -buildmode=default -o {output_file} -ldflags {ldflags} main.go'
+                go_cmd = f'build -buildmode=default -o {output_file} -ldflags {ldflags} -tags=mythic main.go'
 
             # Setup Garble
             if self.get_parameter("garble"):
