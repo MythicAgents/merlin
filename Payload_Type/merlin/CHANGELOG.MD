@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - [Issue 4](https://github.com/MythicAgents/merlin/issues/4) Updated `builder.py` to use `mythic` Golang build tag
 - Updated merlin-agent v1.4.1
 
+### Fixed
+
+- [Issue 3](https://github.com/MythicAgents/merlin/issues/3) skew correctly calculated
+
 ## 1.3.0 - 2022-04-07
 
 ### Added

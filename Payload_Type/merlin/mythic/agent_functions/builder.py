@@ -162,7 +162,8 @@ class Merlin(PayloadType):
             # Sleep
             ldflags += f' -X \"main.sleep={c2_params["callback_interval"]}s\"'
             # Skew
-            ldflags += f' -X \"main.skew={int(c2_params["callback_interval"]) * 1000}\"'
+            skew = int(((int(c2_params["callback_jitter"])/100) * int(c2_params["callback_interval"])) * 1000)
+            ldflags += f' -X \"main.skew={skew}\"'
             # Kill Date
             killdate = str(int(time.mktime(time.strptime(c2_params["killdate"], "%Y-%m-%d"))))
             ldflags += f' -X \"main.killdate={killdate}\"'
