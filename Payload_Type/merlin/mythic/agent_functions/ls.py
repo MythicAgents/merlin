@@ -46,6 +46,9 @@ class LSCommand(CommandBase):
     attackmapping = ["T1083"]
 
     async def create_tasking(self, task: MythicTask) -> MythicTask:
+        if debug:
+            await MythicRPC().execute(function_name="create_output", task_id=task.id, output=f'\n[DEBUG]Input task:{task}')
+
         task.display_params = f'{task.args.get_arg("path")}'
 
         # Arguments
