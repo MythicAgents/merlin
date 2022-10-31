@@ -75,12 +75,13 @@ class LoadAssemblyCommand(CommandBase):
             task.args.get_arg("assembly"),
         ]
 
-        arguments = task.args.get_arg("arguments").split()
-        if len(arguments) == 1:
-            args.append(arguments[0])
-        elif len(arguments) > 1:
-            for arg in arguments:
-                args.append(arg)
+        if task.args.get_arg("arguments") is not None:
+            arguments = task.args.get_arg("arguments").split()
+            if len(arguments) == 1:
+                args.append(arguments[0])
+            elif len(arguments) > 1:
+                for arg in arguments:
+                    args.append(arg)
 
         # Merlin jobs.Command message type
         command = {
