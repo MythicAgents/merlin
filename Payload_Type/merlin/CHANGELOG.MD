@@ -6,9 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 1.4.1 - 2022-10-31
 
+## Changed
+
+- Upgraded `merlin-base` Docker image to v1.2.0
+  - Upgrades Python to `3.8.15`
+  - Upgrades Garble to `v0.7.2`
+  - Checks out known working sRDI hash `5690685aee6751d0dbcf2c50b6fdd4427c1c9a0a`
+
 ## Fixed
 
 - [Issue 5](https://github.com/MythicAgents/merlin/issues/5) - Invoke-Assembly Errors Without Assembly Arguments
+- [Issue 6](https://github.com/MythicAgents/merlin/issues/6) - Generated Shellcode Does Not Work
 
 ## 1.4.0 - 2022-07-22
 

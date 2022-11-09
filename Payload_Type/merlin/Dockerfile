@@ -1,4 +1,4 @@
-FROM ne0nd0g/merlin-base:v1.1.2
+FROM ne0nd0g/merlin-base:v1.2.0
 
 WORKDIR /Mythic
 
