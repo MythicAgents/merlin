@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 1.5.0 - 2022-11-11
+
+### Added
+
+- Parrot specific web browsers through [utls](https://github.com/refraction-networking/utls#parroting) library
+  - The builder contains a drop-down list of acceptable options
+  - Use the `parrot` command to change while the agent is running
+  - If a JA3 string is provided, the parrot string will be ignored
+
+### Changed
+
+- Updated merlin-agent v1.4.2
+- Upgraded `merlin-base` Docker image to v1.3.0
+  - Upgrades to Go v1.19
+
+
 ## 1.4.1 - 2022-10-31
 
 ## Changed
