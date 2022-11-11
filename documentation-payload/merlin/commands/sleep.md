@@ -24,7 +24,7 @@ Change the amount of time the agent will sleep between checkins
 ## Usage
 
 ```
-cd /path/to/directory
+sleep 30s
 ```
 
 ## MITRE ATT&CK Mapping
