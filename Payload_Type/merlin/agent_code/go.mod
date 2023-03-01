@@ -3,7 +3,7 @@ module github.com/MythicAgents/merlin/Payload_Type/merlin/agent_code
 go 1.19
 
 require (
-	github.com/Ne0nd0g/merlin-agent v1.6.0
+	github.com/Ne0nd0g/merlin-agent v1.6.1
 	github.com/fatih/color v1.13.0
 	github.com/satori/go.uuid v1.2.0
 )
