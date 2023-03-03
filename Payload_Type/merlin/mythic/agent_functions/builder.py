@@ -43,7 +43,7 @@ class Merlin(PayloadType):
             name="arch",
             description="What architecture will the agent be executed on?",
             parameter_type=BuildParameterType.ChooseOne,
-            choices=["amd64", "386", "arm", "mips"],
+            choices=["amd64", "386", "arm", "arm64", "mips", "mips64"],
             required=False,
         ),
         BuildParameter(
