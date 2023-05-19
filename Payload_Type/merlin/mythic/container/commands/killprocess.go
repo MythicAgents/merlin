@@ -17,8 +17,8 @@ package commands
 
 import (
 	// Standard
-	"encoding/json"
 	"fmt"
+	"strconv"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
@@ -27,19 +27,19 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// download creates and return a Mythic Command structure that is registered with the Mythic server and subsequently
-// instructs the Merlin Agent to download a file from the Agent to the Mythic server
-func download() structs.Command {
+// killProcess returns a Mythic Command structure that is registered with the Mythic server that subsequently instructs the
+// Merlin Agent to kill a running process by its Process ID (PID)
+func killProcess() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
 	}
 
-	file := structs.CommandParameter{
-		Name:                                    "file",
-		ModalDisplayName:                        "file",
-		CLIName:                                 "file",
+	pid := structs.CommandParameter{
+		Name:                                    "pid",
+		ModalDisplayName:                        "Process ID",
+		CLIName:                                 "pid",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The file, and optionally the full path, to download",
+		Description:                             "The Process ID (PID) you want to kill",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -59,65 +59,63 @@ func download() structs.Command {
 	}
 
 	command := structs.Command{
-		Name:                           "download",
+		Name:                           "killprocess",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "download <file path>",
-		Description:                    "Downloads a file from the host where the agent is running",
+		HelpString:                     "killprocess <PID>",
+		Description:                    "Kill a running process by its Process ID (PID)",
 		Version:                        0,
-		SupportedUIFeatures:            []string{"file_browser:download"},
+		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1560", "T1041"},
+		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{file},
+		CommandParameters:              []structs.CommandParameter{pid},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      downloadCreateTasking,
+		TaskFunctionCreateTasking:      killprocessCreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
 		TaskFunctionParseArgDictionary: taskFunctionParseArgDictionary,
 		TaskCompletionFunctions:        nil,
 	}
-
 	return command
 }
 
-func downloadCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+// killprocessCreateTasking takes a Mythic Task and converts into a Merlin Job that that is encoded into JSON and subsequently sent to the Merlin Agent
+func killprocessCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
-	filepath, err := task.Args.GetStringArg("file")
+
+	v, err := task.Args.GetArg("pid")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"file\" argument's value for the \"download\" command: %s", err)
+		resp.Error = fmt.Sprintf("there was an error getting the \"pid\" argument's value for the \"killprocess\" command: %s", err)
+		resp.Success = false
+		return
+	}
+	pid := v.(string)
+
+	// Make sure a number was provided
+	_, err = strconv.Atoi(pid)
+	if err != nil {
+		resp.Error = fmt.Sprintf("there was an error converting the \"pid\" to an integer for the \"killprocess\" command: %s", err)
 		resp.Success = false
 		return
 	}
 
-	job := jobs.FileTransfer{
-		FileLocation: filepath,
-		IsDownload:   false,
+	job := jobs.Command{
+		Command: task.Task.CommandName,
+		Args:    []string{pid},
 	}
 
-	jobBytes, err := json.Marshal(job)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/killprocessCreateTasking/killprocessCreateTasking(): %s", err)
 		resp.Success = false
 		return
 	}
+	task.Args.SetManualArgs(mythicJob)
 
-	mythicJob := Job{
-		Type:    jobs.FILETRANSFER,
-		Payload: string(jobBytes),
-	}
-
-	mythicJobBytes, err := json.Marshal(mythicJob)
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
-		resp.Success = false
-		return
-	}
-	task.Args.SetManualArgs(string(mythicJobBytes))
-
-	resp.DisplayParams = &filepath
+	resp.DisplayParams = &pid
 	resp.Success = true
 
 	return

@@ -17,8 +17,9 @@ package commands
 
 import (
 	// Standard
-	"encoding/json"
 	"fmt"
+	"strconv"
+	"time"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
@@ -27,19 +28,18 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// download creates and return a Mythic Command structure that is registered with the Mythic server and subsequently
-// instructs the Merlin Agent to download a file from the Agent to the Mythic server
-func download() structs.Command {
+// killdate returns a Mythic Command structure that is registered with the Mythic server that subsequently instructs the
+// Merlin Agent to the exact date and time, as an epoch timestamp, it should stop running
+func killdate() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
 	}
-
-	file := structs.CommandParameter{
-		Name:                                    "file",
-		ModalDisplayName:                        "file",
-		CLIName:                                 "file",
+	date := structs.CommandParameter{
+		Name:                                    "date",
+		ModalDisplayName:                        "Kill Date",
+		CLIName:                                 "date",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The file, and optionally the full path, to download",
+		Description:                             "The date, as a Unix epoch timestamp, that the agent should quit running",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -59,20 +59,20 @@ func download() structs.Command {
 	}
 
 	command := structs.Command{
-		Name:                           "download",
+		Name:                           "killdate",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "download <file path>",
-		Description:                    "Downloads a file from the host where the agent is running",
+		HelpString:                     "killdate <epoch date/time>",
+		Description:                    "The date, as a Unix epoch timestamp, that the agent should quit running.\nVisit: https://www.epochconverter.com/",
 		Version:                        0,
-		SupportedUIFeatures:            []string{"file_browser:download"},
+		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1560", "T1041"},
+		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{file},
+		CommandParameters:              []structs.CommandParameter{date},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      downloadCreateTasking,
+		TaskFunctionCreateTasking:      killdateCreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,41 +83,40 @@ func download() structs.Command {
 	return command
 }
 
-func downloadCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+// killdateCreateTasking takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func killdateCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
-	filepath, err := task.Args.GetStringArg("file")
+
+	v, err := task.Args.GetArg("date")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"file\" argument's value for the \"download\" command: %s", err)
+		resp.Error = fmt.Sprintf("there was an error getting the \"date\" argument's value for the \"killdate\" command: %s", err)
 		resp.Success = false
 		return
 	}
+	date := v.(string)
 
-	job := jobs.FileTransfer{
-		FileLocation: filepath,
-		IsDownload:   false,
+	job := jobs.Command{
+		Command: task.Task.CommandName,
+		Args:    []string{date},
 	}
 
-	jobBytes, err := json.Marshal(job)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/killdate/killdateCreateTasking(): %s", err)
 		resp.Success = false
 		return
 	}
+	task.Args.SetManualArgs(mythicJob)
 
-	mythicJob := Job{
-		Type:    jobs.FILETRANSFER,
-		Payload: string(jobBytes),
+	// Convert to human-readable format
+	var epoch string
+	d, err := strconv.Atoi(date)
+	if err == nil {
+		epoch = time.Unix(int64(d), 0).UTC().Format(time.RFC3339)
 	}
 
-	mythicJobBytes, err := json.Marshal(mythicJob)
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
-		resp.Success = false
-		return
-	}
-	task.Args.SetManualArgs(string(mythicJobBytes))
-
-	resp.DisplayParams = &filepath
+	disp := fmt.Sprintf("%s %s", date, epoch)
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

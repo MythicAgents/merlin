@@ -17,7 +17,6 @@ package commands
 
 import (
 	// Standard
-	"encoding/json"
 	"fmt"
 
 	// Mythic
@@ -30,18 +29,46 @@ import (
 // cd creates and return a Mythic Command structure that is registered with the Mythic server
 // This command is instructs the Merlin Agent to change it's current working directory to the one provided
 func cd() structs.Command {
+	attr := structs.CommandAttribute{
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+	}
+
+	directory := structs.CommandParameter{
+		Name:                                    "directory",
+		ModalDisplayName:                        "directory",
+		CLIName:                                 "directory",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "The directory path to change to",
+		Choices:                                 nil,
+		DefaultValue:                            nil,
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
+			{
+				ParameterIsRequired:   true,
+				GroupName:             "Default",
+				UIModalPosition:       0,
+				AdditionalInformation: nil,
+			},
+		},
+	}
+
 	command := structs.Command{
 		Name:                           "cd",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "cd <path>",
+		HelpString:                     "cd <directory path>",
 		Description:                    "Change the agent's current working directory",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
 		MitreAttackMappings:            []string{"T1005"},
 		ScriptOnlyCommand:              false,
-		CommandAttributes:              structs.CommandAttribute{},
-		CommandParameters:              nil,
+		CommandAttributes:              attr,
+		CommandParameters:              []structs.CommandParameter{directory},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
 		TaskFunctionCreateTasking:      cdCreateTask,
@@ -55,7 +82,7 @@ func cd() structs.Command {
 	return command
 }
 
-// cdCreateTask task a Mythic Task and converts into a Merlin Job that that is encoded into JSON and subsequently sent to the Merlin Agent
+// cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
 func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 	/*
@@ -103,30 +130,28 @@ func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreate
 		}
 	*/
 
+	path, err := task.Args.GetStringArg("directory")
+	if err != nil {
+		resp.Error = fmt.Sprintf("mythic/container/commands/cd/cdCreateTask(): %s", err)
+		resp.Success = false
+		return
+	}
+
 	job := jobs.Command{
 		Command: task.Task.CommandName,
-		Args:    []string{task.Task.Params},
+		Args:    []string{path},
 	}
 
-	jobBytes, err := json.Marshal(job)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/cd/cdCreateTask(): %s", err)
 		resp.Success = false
 		return
 	}
 
-	mythicJob := Job{
-		Type:    jobs.NATIVE,
-		Payload: string(jobBytes),
-	}
-	mythicJobBytes, err := json.Marshal(mythicJob)
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
-		resp.Success = false
-		return
-	}
-	task.Args.SetManualArgs(string(mythicJobBytes))
+	task.Args.SetManualArgs(mythicJob)
 
+	resp.DisplayParams = &path
 	resp.Success = true
 
 	return

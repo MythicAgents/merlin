@@ -17,10 +17,16 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
+	// Standard
+	"encoding/json"
 	"fmt"
+
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 	"github.com/MythicMeta/MythicContainer/mythicrpc"
+
+	// Merlin
+	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
 type Command interface {
@@ -35,7 +41,7 @@ type Job struct {
 
 // Commands returns a list of all the commands the Merlin agent payload supports
 func Commands() (commands []structs.Command) {
-	commands = append(commands, cd(), exit())
+	commands = append(commands, cd(), createProcess(), donutCmd(), download(), env(), exit(), ifconfig(), invokeAssembly(), ja3(), killdate(), killProcess(), loadAssembly(), listAssembly())
 	return
 }
 
@@ -102,11 +108,11 @@ func taskFunctionCreateTasking(task *structs.PTTaskMessageAllData) (resp structs
 }
 
 func taskFunctionParseArgDictionary(args *structs.PTTaskMessageArgsData, input map[string]interface{}) error {
-	return nil
+	return args.LoadArgsFromDictionary(input)
 }
 
 func taskFunctionParseArgString(args *structs.PTTaskMessageArgsData, input string) error {
-	return nil
+	return args.LoadArgsFromJSONString(input)
 }
 
 // GetFileList queries the Mythic server for files it knows about and returns a list of those Mythic file objects
@@ -184,7 +190,58 @@ func GetFileContents(fileID string) (contents []byte, err error) {
 		err = fmt.Errorf("Payload_Type/merlin/mythic/container/commands/GetFileContents(): the SendMythicRPCFileGetContent function returned an error: %s", resp.Error)
 		return
 	}
-
 	contents = resp.Content
 	return
+}
+
+func GetFileName(fileID string) (name string, err error) {
+	search := mythicrpc.MythicRPCFileSearchMessage{
+		TaskID:              0,
+		CallbackID:          0,
+		Filename:            "",
+		LimitByCallback:     false,
+		MaxResults:          -1,
+		Comment:             "",
+		AgentFileID:         fileID,
+		IsPayload:           false,
+		IsDownloadFromAgent: false,
+		IsScreenshot:        false,
+	}
+	resp, err := mythicrpc.SendMythicRPCFileSearch(search)
+	if err != nil {
+		err = fmt.Errorf("Payload_Type/merlin/mythic/container/commands/GetFileName(): there was an error calling the SendMythicRPCFileSearch function: %s", err)
+		return
+	}
+
+	if len(resp.Files) <= 0 {
+		err = fmt.Errorf("Payload_Type/merlin/mythic/container/commands/GetFileName(): %d files were returned", len(resp.Files))
+		return
+	}
+
+	for _, file := range resp.Files {
+		if file.AgentFileId == fileID {
+			name = file.Filename
+			return
+		}
+	}
+	return
+}
+
+func ConvertMerlinJobToMythicTask(job jobs.Command, jobType int) (bytes string, err error) {
+	jobBytes, err := json.Marshal(job)
+	if err != nil {
+		err = fmt.Errorf("mythic/container/commands/ConvertMerlinJobToMythicTask: there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		return
+	}
+
+	mythicJob := Job{
+		Type:    jobType,
+		Payload: string(jobBytes),
+	}
+	mythicJobBytes, err := json.Marshal(mythicJob)
+	if err != nil {
+		err = fmt.Errorf("mythic/container/commands/ConvertMerlinJobToMythicTask: there was an error JSON marshalling the Job structure: %s", err)
+		return
+	}
+	return string(mythicJobBytes), nil
 }

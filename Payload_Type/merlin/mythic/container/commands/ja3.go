@@ -17,7 +17,6 @@ package commands
 
 import (
 	// Standard
-	"encoding/json"
 	"fmt"
 
 	// Mythic
@@ -27,19 +26,18 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// download creates and return a Mythic Command structure that is registered with the Mythic server and subsequently
-// instructs the Merlin Agent to download a file from the Agent to the Mythic server
-func download() structs.Command {
+// ja3 is a command to instruct the Merlin Agent to use a TLS client derived from the input JA3 string to communicate with the server.
+func ja3() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
 	}
 
-	file := structs.CommandParameter{
-		Name:                                    "file",
-		ModalDisplayName:                        "file",
-		CLIName:                                 "file",
+	ja3string := structs.CommandParameter{
+		Name:                                    "ja3string",
+		ModalDisplayName:                        "JA3 String",
+		CLIName:                                 "ja3string",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The file, and optionally the full path, to download",
+		Description:                             "The JA3 \"string\" that the client should use",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -59,20 +57,20 @@ func download() structs.Command {
 	}
 
 	command := structs.Command{
-		Name:                           "download",
+		Name:                           "ja3",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "download <file path>",
-		Description:                    "Downloads a file from the host where the agent is running",
+		HelpString:                     "ja3 <ja3string>",
+		Description:                    "Instruct the agent to use a client derived from the input JA3 string to communicate with the server.\nWARNING: Make sure the server can support the client configuration",
 		Version:                        0,
-		SupportedUIFeatures:            []string{"file_browser:download"},
+		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1560", "T1041"},
+		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{file},
+		CommandParameters:              []structs.CommandParameter{ja3string},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      downloadCreateTasking,
+		TaskFunctionCreateTasking:      ja3CreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,41 +81,31 @@ func download() structs.Command {
 	return command
 }
 
-func downloadCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+// ja3CreateTasking takes a Mythic Task and converts into a Merlin Job for the JA3 command that is encoded into JSON and subsequently sent to the Merlin Agent
+func ja3CreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
-	filepath, err := task.Args.GetStringArg("file")
+
+	v, err := task.Args.GetArg("ja3string")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"file\" argument's value for the \"download\" command: %s", err)
+		resp.Error = fmt.Sprintf("there was an error getting the \"ja3string\" argument's value for the \"ja3\" command: %s", err)
 		resp.Success = false
 		return
 	}
+	ja3string := v.(string)
 
-	job := jobs.FileTransfer{
-		FileLocation: filepath,
-		IsDownload:   false,
+	job := jobs.Command{
+		Command: "ja3",
+		Args:    []string{ja3string},
 	}
 
-	jobBytes, err := json.Marshal(job)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/ja3/ja3CreateTasking(): %s", err)
 		resp.Success = false
 		return
 	}
-
-	mythicJob := Job{
-		Type:    jobs.FILETRANSFER,
-		Payload: string(jobBytes),
-	}
-
-	mythicJobBytes, err := json.Marshal(mythicJob)
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
-		resp.Success = false
-		return
-	}
-	task.Args.SetManualArgs(string(mythicJobBytes))
-
-	resp.DisplayParams = &filepath
+	task.Args.SetManualArgs(mythicJob)
+	resp.DisplayParams = &ja3string
 	resp.Success = true
 
 	return

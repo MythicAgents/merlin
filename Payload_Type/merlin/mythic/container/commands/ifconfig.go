@@ -16,7 +16,6 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	// Standard
 	"fmt"
 
 	// Mythic
@@ -26,28 +25,27 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// exit creates and return a Mythic Command structure that is registered with the Mythic server.
-// This command instructs the Merlin Agent to quit running and exit.
-func exit() structs.Command {
+// ifconfig creates and return a Mythic Command structure that is registered with the Mythic server that subsequently
+// instructs the Merlin Agent to enumerate that network interfaces and return the information
+func ifconfig() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
 	}
-
 	command := structs.Command{
-		Name:                           "exit",
+		Name:                           "ifconfig",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "exit",
-		Description:                    "Instruct the agent to quit running and exit",
+		HelpString:                     "ifconfig",
+		Description:                    "Enumerates a list of all network interfaces",
 		Version:                        0,
-		SupportedUIFeatures:            []string{"callback_table:exit"},
+		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{},
+		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
 		CommandParameters:              nil,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      exitCreateTasking,
+		TaskFunctionCreateTasking:      ifconfigCreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     nil,
@@ -57,8 +55,8 @@ func exit() structs.Command {
 	return command
 }
 
-// exitCreateTask takes a Mythic Task and converts into a Merlin Job that that is encoded into JSON and subsequently sent to the Merlin Agent
-func exitCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+// ifconfigCreateTasking task a Mythic Task and converts into a Merlin Job that that is encoded into JSON and subsequently sent to the Merlin Agent
+func ifconfigCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 
 	job := jobs.Command{
@@ -66,15 +64,14 @@ func exitCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskC
 		Args:    []string{},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/exit/exitCreateTasking(): %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/ifconfig/ifconfigCreateTasking(): %s", err)
 		resp.Success = false
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
-
 	resp.Success = true
 
 	return

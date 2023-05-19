@@ -26,28 +26,26 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// exit creates and return a Mythic Command structure that is registered with the Mythic server.
-// This command instructs the Merlin Agent to quit running and exit.
-func exit() structs.Command {
+func listAssembly() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},
 	}
 
 	command := structs.Command{
-		Name:                           "exit",
+		Name:                           "list-assembly",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "exit",
-		Description:                    "Instruct the agent to quit running and exit",
+		HelpString:                     "list-assembly",
+		Description:                    "List the .NET assemblies that have been loaded in the default AppDomain in the Agent's process.",
 		Version:                        0,
-		SupportedUIFeatures:            []string{"callback_table:exit"},
+		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{},
+		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
 		CommandParameters:              nil,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      exitCreateTasking,
+		TaskFunctionCreateTasking:      listAssemblyCreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     nil,
@@ -57,16 +55,15 @@ func exit() structs.Command {
 	return command
 }
 
-// exitCreateTask takes a Mythic Task and converts into a Merlin Job that that is encoded into JSON and subsequently sent to the Merlin Agent
-func exitCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+func listAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 
 	job := jobs.Command{
-		Command: task.Task.CommandName,
-		Args:    []string{},
+		Command: "clr",
+		Args:    []string{"list-assemblies"},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
 		resp.Error = fmt.Sprintf("mythic/container/commands/exit/exitCreateTasking(): %s", err)
 		resp.Success = false
@@ -78,4 +75,5 @@ func exitCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskC
 	resp.Success = true
 
 	return
+
 }

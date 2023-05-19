@@ -16,9 +16,15 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	"encoding/json"
+	// Standard
+	"encoding/base64"
 	"fmt"
+	"strings"
+
+	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+
+	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
@@ -120,13 +126,13 @@ func createProcess() structs.Command {
 		DynamicQueryFunction:                    nil,
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
-				ParameterIsRequired:   true,
+				ParameterIsRequired:   false,
 				GroupName:             "Default",
 				UIModalPosition:       2,
 				AdditionalInformation: nil,
 			},
 			{
-				ParameterIsRequired:   true,
+				ParameterIsRequired:   false,
 				GroupName:             "New File",
 				UIModalPosition:       2,
 				AdditionalInformation: nil,
@@ -149,7 +155,7 @@ func createProcess() structs.Command {
 		CommandParameters:              parameters,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      taskFunctionCreateTasking,
+		TaskFunctionCreateTasking:      createProcessCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -183,52 +189,72 @@ func createProcessCreateTask(task *structs.PTTaskMessageAllData) (resp structs.P
 	args := v.(string)
 
 	// Determine if a "filename" or "file" Mythic command argument was provided
-	v, err = task.Args.GetArg("filename")
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"filename\" command argument: %s", err)
+	var shellcode []byte
+	var filename string
+	switch strings.ToLower(task.Task.ParameterGroupName) {
+	case "default":
+		v, err = task.Args.GetArg("filename")
+		if err != nil {
+			resp.Error = fmt.Sprintf("there was an error getting the \"filename\" command argument: %s", err)
+			resp.Success = false
+			return
+		}
+		filename = v.(string)
+		shellcode, err = GetFileByName(filename)
+		if err != nil {
+			resp.Error = fmt.Sprintf("there was an error getting the file by its name \"%s\": %s", v.(string), err)
+			resp.Success = false
+			return
+		}
+	case "new file":
+		// structs.COMMAND_PARAMETER_TYPE_FILE
+		v, err = task.Args.GetArg("file")
+		if err != nil {
+			resp.Error = fmt.Sprintf("there was an error getting the \"file\" command argument: %s", err)
+			resp.Success = false
+			return
+		}
+		shellcode, err = GetFileContents(v.(string))
+		if err != nil {
+			resp.Error = fmt.Sprintf("there was an error getting the file by its id \"%s\": %s", v.(string), err)
+			resp.Success = false
+			return
+		}
+		filename, err = GetFileName(v.(string))
+		if err != nil {
+			resp.Error = fmt.Sprintf("there was an error getting the file name by its id \"%s\": %s", v.(string), err)
+			resp.Success = false
+			return
+		}
+	default:
+		resp.Error = fmt.Sprintf("unknown parameter group: %s", task.Task.ParameterGroupName)
 		resp.Success = false
 		return
-	}
-	filename := v.(string)
-
-	var contents []byte
-	// If a "filename" was provided, get it
-	if filename != "" {
-		contents, err = GetFileByName(filename)
-	} else {
-
 	}
 
 	//  Merlin Job
 	// Command: createprocess
 	// Arguments:
-	// 1. file contents
+	// 1. File contents as Base64 string
 	// 2. SpawnTo executable file path on host where the Agent is running
 	// 3. SpawnTo arguments
 
 	job := jobs.Command{
-		Command: task.Task.CommandName,
-		Args:    []string{string(contents), spawnto, args},
+		Command: "createprocess",
+		Args:    []string{base64.StdEncoding.EncodeToString(shellcode), spawnto, args},
 	}
 
-	jobBytes, err := json.Marshal(job)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/createProcess/createProcessCreateTask(): %s", err)
 		resp.Success = false
 		return
 	}
 
-	mythicJob := Job{
-		Type:    jobs.MODULE,
-		Payload: string(jobBytes),
-	}
-	mythicJobBytes, err := json.Marshal(mythicJob)
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
-		resp.Success = false
-		return
-	}
-	task.Args.SetManualArgs(string(mythicJobBytes))
+	task.Args.SetManualArgs(mythicJob)
+
+	disp := fmt.Sprintf("Filename: %s, SpawnTo: %s, SpawnTo Arguments: %s", filename, spawnto, args)
+	resp.DisplayParams = &disp
 
 	resp.Success = true
 
