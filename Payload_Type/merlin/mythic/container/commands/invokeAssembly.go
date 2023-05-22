@@ -22,6 +22,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -109,37 +110,42 @@ func invokeAssembly() structs.Command {
 }
 
 func invokeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/invokeAssembly/invokeAssemblyCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	v, err := task.Args.GetArg("assembly")
+	assembly, err := task.Args.GetStringArg("assembly")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"assembly\" argument's value for the \"invoke-assembly\" command: %s", err)
+		err = fmt.Errorf("%s there was an error getting the \"assembly\" argument's value for the \"invoke-assembly\" command: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	assembly := v.(string)
 
 	job := jobs.Command{
 		Command: "clr",
 		Args:    []string{task.Task.CommandName, assembly},
 	}
 
-	v, err = task.Args.GetArg("arguments")
+	args, err := task.Args.GetStringArg("arguments")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"arguments\" argument's value for the \"invoke-assembly\" command: %s", err)
+		err = fmt.Errorf("%s there was an error getting the \"arguments\" argument's value for the \"invoke-assembly\" command: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	args := v.(string)
 
-	for _, arg := range strings.Split(args, " ") {
-		job.Args = append(job.Args, arg)
+	if args != "" {
+		job.Args = append(job.Args, strings.Split(args, " ")...)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/invokeAssembly/invokeAssemblyCreateTasking(): %s", err)
+		err = fmt.Errorf("%s: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 

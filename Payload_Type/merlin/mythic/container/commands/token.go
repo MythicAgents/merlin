@@ -22,6 +22,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -36,7 +37,7 @@ func token() structs.Command {
 	method := structs.CommandParameter{
 		Name:                                    "method",
 		ModalDisplayName:                        "Method",
-		CLIName:                                 "temp1",
+		CLIName:                                 "method",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
 		Description:                             "The \"method\" to interact with Windows access tokens",
 		Choices:                                 []string{"make", "privs", "rev2self", "steal", "whoami"},
@@ -214,43 +215,55 @@ func tokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 
 	method, err := task.Args.GetStringArg("method")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"method\" argument %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	args, err := task.Args.GetStringArg("arguments")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"arguments\" argument %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	pid, err := task.Args.GetNumberArg("pid")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"pid\" argument %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	tokenPID, err := task.Args.GetNumberArg("token-pid")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"token-pid\" argument %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	user, err := task.Args.GetStringArg("username")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"username\" argument %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	pass, err := task.Args.GetStringArg("password")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"password\" argument %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 

@@ -85,7 +85,7 @@ func cd() structs.Command {
 
 // cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
 func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/nslookupg/nslookupCreateTask()"
+	pkg := "mythic/container/commands/cd/cdCreateTask()"
 	resp.TaskID = task.Task.ID
 
 	path, err := task.Args.GetStringArg("directory")

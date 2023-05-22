@@ -37,7 +37,7 @@ func makeToken() structs.Command {
 		ModalDisplayName:                        "Username",
 		CLIName:                                 "user",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "Domain and username to make a token for (e.g. ACME\\\\RASTLEY",
+		Description:                             "Domain and username to make a token for (e.g. ACME\\RASTLEY",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -83,7 +83,7 @@ func makeToken() structs.Command {
 	command := structs.Command{
 		Name:                  "make_token",
 		NeedsAdminPermissions: false,
-		HelpString:            "make_token <DOMAIN\\\\Username> <password>",
+		HelpString:            "make_token <DOMAIN\\Username> <password>",
 		Description: "Create a new type-9 logon session and Windows access token for the provided" +
 			" credentials. The token is only used for NETWORK authentication, not local.",
 		Version:                        0,
@@ -126,7 +126,7 @@ func makeTokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTas
 
 	job := jobs.Command{
 		Command: "token",
-		Args:    []string{user, pass},
+		Args:    []string{"make", user, pass},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)

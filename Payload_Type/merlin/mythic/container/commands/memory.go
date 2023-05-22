@@ -22,6 +22,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -243,36 +244,46 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 
 	method, err := task.Args.GetStringArg("method")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"method\" argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	module, err := task.Args.GetStringArg("module")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"module\" argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	proc, err := task.Args.GetStringArg("proc")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"proc\" argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	bytes, err := task.Args.GetStringArg("bytes")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"bytes\" argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	length, err := task.Args.GetNumberArg("length")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the \"length\" argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
@@ -280,6 +291,7 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 		Command: "memory",
 	}
 
+	fmt.Printf("Parameter Group Name: %s\n", task.Task.ParameterGroupName)
 	switch strings.ToLower(task.Task.ParameterGroupName) {
 	case "default":
 		switch strings.ToLower(method) {
@@ -288,8 +300,10 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 		case "patch", "write":
 			job.Args = []string{method, module, proc, bytes}
 		default:
-			resp.Error = fmt.Sprintf("%s: %s", pkg, "Invalid method provided")
+			err = fmt.Errorf("%s: unhandled parameter group name %s", pkg, task.Task.ParameterGroupName)
+			resp.Error = err.Error()
 			resp.Success = false
+			logging.LogError(err, "returning with error")
 			return
 		}
 	case "read":
@@ -300,8 +314,10 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic job: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 

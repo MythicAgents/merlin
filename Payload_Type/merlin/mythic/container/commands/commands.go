@@ -54,68 +54,7 @@ func Commands() (commands []structs.Command) {
 	return
 }
 
-// taskFunctionCreateTasking is a generic function to transform a Mythic Task into a format the Merlin Agent can understand
-/*
-	What Merlin gets from Mythic
-	{
-		"action":"get_tasking",
-		"padding":"Sb",
-		"tasks":[
-			{
-				"timestamp":1678920007,
-				"command":"cd",
-				"parameters":"/home/rastley/Downloads",
-				"id":"28c242ef-97fe-4074-84de-4d5e40056f4f"
-			}
-		]
-	}
-
-	// The JSON object above is unmarshalled into this structure only used by the Mythic client in Merlin
-	// through the convertToMerlinMessage() function
-	// Merlin Agent ignores the Command field except for SOCKS messages
-	type Task struct {
-		ID      string  `json:"id"`
-		Command string  `json:"command"`
-		Params  string  `json:"parameters"`
-		Time    float64 `json:"timestamp"`
-	}
-
-	The task params needs to be a JSON object that matches this Job structure
-		The Job.Type directly relates to Merlin job types like CMD, CONTROL, or NATIVE
-		The Job.Payload needs to be a JSON object that unmarshalled in to corresponding Merlin structure
-
-
-	// The Task structure's Params field from above is JSON unmarshalled into this Job structure in the convertTasksToJobs() function
-	// Job is a structure used only by the Mythic client in Merlin
-	type Job struct {
-		Type    int    `json:"type"`
-		Payload string `json:"payload"`
-	}
-
-	// The Job structure's Payload field from above is JSON unmarshalled into this Command structure in the convertTasksToJobs() function
-	// Command is the structure to send a task for the agent to execute
-	type Command struct {
-		Command string   `json:"command"`
-		Args    []string `json:"args"`
-	}
-*/
-func taskFunctionCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	return structs.PTTaskCreateTaskingMessageResponse{
-		TaskID:                 task.Task.ID,
-		Success:                true,
-		Error:                  "",
-		CommandName:            nil,
-		TaskStatus:             nil,
-		DisplayParams:          nil,
-		Stdout:                 nil,
-		Stderr:                 nil,
-		Completed:              nil,
-		TokenID:                nil,
-		CompletionFunctionName: nil,
-		ParameterGroupName:     "",
-	}
-}
-
+// taskFunctionParseArgDictionary is a generic function used to parse the input map into the provided Mythic task message
 func taskFunctionParseArgDictionary(args *structs.PTTaskMessageArgsData, input map[string]interface{}) error {
 	// Nothing ot parse
 	if len(input) == 0 {
@@ -124,6 +63,7 @@ func taskFunctionParseArgDictionary(args *structs.PTTaskMessageArgsData, input m
 	return args.LoadArgsFromDictionary(input)
 }
 
+// taskFunctionParseArgString is a generic function used to parse the input string into the provided Mythic task message
 func taskFunctionParseArgString(args *structs.PTTaskMessageArgsData, input string) error {
 	// Nothing to parse
 	if input == "" {
@@ -254,6 +194,7 @@ func GetFileContents(fileID string) (contents []byte, err error) {
 	return
 }
 
+// GetFileName retrieves the file name for the provided fileID string
 func GetFileName(fileID string) (name string, err error) {
 	search := mythicrpc.MythicRPCFileSearchMessage{
 		TaskID:              0,
@@ -287,6 +228,7 @@ func GetFileName(fileID string) (name string, err error) {
 	return
 }
 
+// ConvertMerlinJobToMythicTask takes in a Merlin jobs.Job structure and converts it to a Mythic Job structure
 func ConvertMerlinJobToMythicTask(job jobs.Command, jobType int) (bytes string, err error) {
 	jobBytes, err := json.Marshal(job)
 	if err != nil {
