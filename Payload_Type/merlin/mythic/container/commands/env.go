@@ -22,6 +22,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -105,33 +106,36 @@ func env() structs.Command {
 	return command
 }
 
-// envCreateTask task a Mythic Task and converts into a Merlin Job that that is encoded into JSON and subsequently sent to the Merlin Agent
+// envCreateTask task a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
 func envCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/env/envCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	v, err := task.Args.GetArg("method")
+	method, err := task.Args.GetStringArg("method")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"method\" argument's value for the \"env\" command: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the \"method\" argument's value for the \"env\" command: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	method := v.(string)
 
 	job := jobs.Command{
 		Command: task.Task.CommandName,
 		Args:    []string{method},
 	}
 
-	v, err = task.Args.GetArg("args")
+	args, err := task.Args.GetStringArg("arguments")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"args\" argument's value for the \"env\" command: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the \"arguments\" argument's value for the \"env\" command: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	args := v.(string)
 
-	for _, a := range strings.Split(args, " ") {
-		job.Args = append(job.Args, a)
+	if args != "" {
+		job.Args = append(job.Args, strings.Split(args, " ")...)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)

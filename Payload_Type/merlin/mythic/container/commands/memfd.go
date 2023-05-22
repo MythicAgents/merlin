@@ -16,9 +16,10 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	// Standard
 	"encoding/base64"
+	// Standard
 	"fmt"
+
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
@@ -26,13 +27,18 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-func loadAssembly() structs.Command {
+// memfd creates and return a Mythic Command structure that is registered with the Mythic server
+func memfd() structs.Command {
+	attr := structs.CommandAttribute{
+		SupportedOS: []string{structs.SUPPORTED_OS_LINUX, "Debian"},
+	}
+
 	filename := structs.CommandParameter{
 		Name:                                    "filename",
-		ModalDisplayName:                        ".NET Assembly File",
+		ModalDisplayName:                        "Executable",
 		CLIName:                                 "filename",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
+		Description:                             "The Linux executable file you want to run in memory",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -53,10 +59,10 @@ func loadAssembly() structs.Command {
 
 	file := structs.CommandParameter{
 		Name:                                    "file",
-		ModalDisplayName:                        ".NET Assembly File",
+		ModalDisplayName:                        "Executable",
 		CLIName:                                 "file",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
+		Description:                             "The Linux executable file you want to run in memory",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -74,35 +80,69 @@ func loadAssembly() structs.Command {
 			},
 		},
 	}
-	parameters := []structs.CommandParameter{filename, file}
+
+	args := structs.CommandParameter{
+		Name:                                    "args",
+		ModalDisplayName:                        "Arguments",
+		CLIName:                                 "args",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "Arguments to start the executable with",
+		Choices:                                 nil,
+		DefaultValue:                            nil,
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
+			{
+				ParameterIsRequired:   true,
+				GroupName:             "Default",
+				UIModalPosition:       1,
+				AdditionalInformation: nil,
+			},
+			{
+				ParameterIsRequired:   false,
+				GroupName:             "New File",
+				UIModalPosition:       1,
+				AdditionalInformation: nil,
+			},
+		},
+	}
+
+	params := []structs.CommandParameter{file, filename, args}
 	command := structs.Command{
-		Name:                  "load-assembly",
+		Name:                  "memfd",
 		NeedsAdminPermissions: false,
-		HelpString: "Load a .NET assembly into the Agent's process that can be executed multiple " +
-			"times without having to transfer the assembly over the network each time. Change the Parameter Group to " +
-			"\\\"Default\\\" to use a file that was previously registered with Mythic and \\\"New File\\\" to register " +
-			"and use a new file from your host OS.",
+		HelpString:            "memfd <executable name> <args>",
+		Description: "Load a Linux executable file into memory (RAM) as an anonymous file using the" +
+			" memfd_create API call, execute it, and returns the results. Change the Parameter Group to \\\"Default\\\"" +
+			" to use a file that was previously registered with Mythic and \\\"New File\\\" to register and use a new " +
+			"file from your host OS.",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            nil,
+		MitreAttackMappings:            []string{"T1055"},
 		ScriptOnlyCommand:              false,
-		CommandAttributes:              structs.CommandAttribute{SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS}},
-		CommandParameters:              parameters,
+		CommandAttributes:              attr,
+		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      createLoadAssemblyTask,
+		TaskFunctionCreateTasking:      memfdCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
 		TaskFunctionParseArgDictionary: taskFunctionParseArgDictionary,
 		TaskCompletionFunctions:        nil,
 	}
+
 	return command
 }
 
-func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/loadAssembly/loadAssemblyCreateTask()"
+// memfdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func memfdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/memfd/memfdCreateTask()"
 	resp.TaskID = task.Task.ID
 
 	// Get the file as a byte array, its name, and any errors
@@ -113,21 +153,29 @@ func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PT
 		return
 	}
 
+	args, err := task.Args.GetStringArg("args")
+	if err != nil {
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		resp.Success = false
+		return
+	}
+
 	job := jobs.Command{
-		Command: "clr",
-		Args:    []string{"load-assembly", base64.StdEncoding.EncodeToString(data), filename},
+		Command: "memfd",
+		Args:    []string{base64.StdEncoding.EncodeToString(data), args},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/loadAssembly/createLoadAssemblyTask(): %s", err)
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &filename
+	disp := fmt.Sprintf("%s %s", filename, args)
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

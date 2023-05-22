@@ -3,13 +3,13 @@ module MyContainer
 go 1.19
 
 require (
-	github.com/Binject/go-donut v0.0.0-20220908180326-fcdcc35d591c
 	github.com/MythicMeta/MythicContainer v1.0.8-rc01
 	github.com/Ne0nd0g/merlin v1.5.1
 )
 
 require (
-	github.com/Binject/debug v0.0.0-20230508195519-26db73212a7a // indirect
+	github.com/Binject/debug v0.0.0-20201228082058-60012895f187 // indirect
+	github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/zerologr v1.2.3 // indirect

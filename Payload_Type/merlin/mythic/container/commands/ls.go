@@ -21,27 +21,25 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// cd creates and return a Mythic Command structure that is registered with the Mythic server
-// This command is instructs the Merlin Agent to change it's current working directory to the one provided
-func cd() structs.Command {
+// ls creates and return a Mythic Command structure that is registered with the Mythic server
+func ls() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
 	}
 
-	directory := structs.CommandParameter{
-		Name:                                    "directory",
-		ModalDisplayName:                        "directory",
-		CLIName:                                 "directory",
+	path := structs.CommandParameter{
+		Name:                                    "path",
+		ModalDisplayName:                        "Path",
+		CLIName:                                 "path",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The directory path to change to",
+		Description:                             "The directory path to list the contents of",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            ".",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -50,7 +48,7 @@ func cd() structs.Command {
 		DynamicQueryFunction:                    nil,
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
-				ParameterIsRequired:   true,
+				ParameterIsRequired:   false,
 				GroupName:             "Default",
 				UIModalPosition:       0,
 				AdditionalInformation: nil,
@@ -59,20 +57,20 @@ func cd() structs.Command {
 	}
 
 	command := structs.Command{
-		Name:                           "cd",
+		Name:                           "ls",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "cd <directory path>",
-		Description:                    "Change the agent's current working directory",
+		HelpString:                     "ls <directory path>",
+		Description:                    "Use Golang native commands to list a directory's contents",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1005"},
+		MitreAttackMappings:            []string{"T1083"},
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{directory},
+		CommandParameters:              []structs.CommandParameter{path},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      cdCreateTask,
+		TaskFunctionCreateTasking:      lsCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,18 +81,18 @@ func cd() structs.Command {
 	return command
 }
 
-// cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
-func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/nslookupg/nslookupCreateTask()"
+// lsCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func lsCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 
-	path, err := task.Args.GetStringArg("directory")
+	path, err := task.Args.GetStringArg("path")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'directory' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("mythic/container/commands/ls/lsCreateTask(): %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
+	}
+	if path == "" {
+		path = "."
 	}
 
 	job := jobs.Command{
@@ -104,10 +102,8 @@ func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreate
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("mythic/container/commands/ls/lsCreateTask(): %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 

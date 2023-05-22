@@ -18,28 +18,27 @@ package commands
 import (
 	// Standard
 	"fmt"
+	"strings"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// cd creates and return a Mythic Command structure that is registered with the Mythic server
-// This command is instructs the Merlin Agent to change it's current working directory to the one provided
-func cd() structs.Command {
+// shell creates and return a Mythic Command structure that is registered with the Mythic server
+func shell() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	directory := structs.CommandParameter{
-		Name:                                    "directory",
-		ModalDisplayName:                        "directory",
-		CLIName:                                 "directory",
+	args := structs.CommandParameter{
+		Name:                                    "arguments",
+		ModalDisplayName:                        "Arguments",
+		CLIName:                                 "args",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The directory path to change to",
+		Description:                             "Commandline string or arguments to run in the shell",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -58,21 +57,22 @@ func cd() structs.Command {
 		},
 	}
 
+	params := []structs.CommandParameter{args}
 	command := structs.Command{
-		Name:                           "cd",
+		Name:                           "shell",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "cd <directory path>",
-		Description:                    "Change the agent's current working directory",
+		HelpString:                     "shell <arg1> <arg2>...",
+		Description:                    "Execute the commandline string or arguments in the operating system's default shell",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1005"},
+		MitreAttackMappings:            []string{"T1059"},
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{directory},
+		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      cdCreateTask,
+		TaskFunctionCreateTasking:      shellCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,37 +83,38 @@ func cd() structs.Command {
 	return command
 }
 
-// cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
-func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/nslookupg/nslookupCreateTask()"
+// shellCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func shellCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/shell/shellCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	path, err := task.Args.GetStringArg("directory")
+	args, err := task.Args.GetStringArg("arguments")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'directory' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	job := jobs.Command{
 		Command: task.Task.CommandName,
-		Args:    []string{path},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
+	// TODO parse args according to target OS (e.g., escapes, etc.)
+	if args != "" {
+		job.Args = append(job.Args, strings.Split(args, " ")...)
+	}
+
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CMD)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &path
+	disp := fmt.Sprintf("%s", args)
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

@@ -27,7 +27,7 @@ import (
 	"time"
 )
 
-var debugInfo = true
+var debugInfo = false
 
 // Build is the function Mythic calls to compile the Merlin Agent
 func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildResponse) {
@@ -342,7 +342,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	cmd := exec.Command(bin, goArgs...)
 	cmd.Dir = filepath.Join(".", "merlin", "agent_code")
 	stdOut, err := cmd.CombinedOutput()
-	fmt.Printf("Combined output: %s, Error: %s\n", stdOut, err)
+	fmt.Printf("Combined output: %s, Error: %v\n", stdOut, err)
 	response.BuildStdOut = string(stdOut)
 	if err != nil {
 		response.BuildMessage = "there was an error compiling the agent"

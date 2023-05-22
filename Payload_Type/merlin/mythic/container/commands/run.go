@@ -17,8 +17,9 @@ package commands
 
 import (
 	// Standard
-	"encoding/base64"
 	"fmt"
+	"strings"
+
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
@@ -26,37 +27,18 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-func loadAssembly() structs.Command {
-	filename := structs.CommandParameter{
-		Name:                                    "filename",
-		ModalDisplayName:                        ".NET Assembly File",
-		CLIName:                                 "filename",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
-		SupportedAgents:                         nil,
-		SupportedAgentBuildParameters:           nil,
-		ChoicesAreAllCommands:                   false,
-		ChoicesAreLoadedCommands:                false,
-		FilterCommandChoicesByCommandAttributes: nil,
-		DynamicQueryFunction:                    GetFileList,
-		ParameterGroupInformation: []structs.ParameterGroupInfo{
-			{
-				ParameterIsRequired:   true,
-				GroupName:             "Default",
-				UIModalPosition:       0,
-				AdditionalInformation: nil,
-			},
-		},
+// run creates and return a Mythic Command structure that is registered with the Mythic server
+func run() structs.Command {
+	attr := structs.CommandAttribute{
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	file := structs.CommandParameter{
-		Name:                                    "file",
-		ModalDisplayName:                        ".NET Assembly File",
-		CLIName:                                 "file",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
+	executable := structs.CommandParameter{
+		Name:                                    "executable",
+		ModalDisplayName:                        "Executable",
+		CLIName:                                 "executable",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "The executable, or program, to run",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -68,45 +50,76 @@ func loadAssembly() structs.Command {
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
 				ParameterIsRequired:   true,
-				GroupName:             "New File",
+				GroupName:             "Default",
 				UIModalPosition:       0,
 				AdditionalInformation: nil,
 			},
 		},
 	}
-	parameters := []structs.CommandParameter{filename, file}
+
+	args := structs.CommandParameter{
+		Name:                                    "arguments",
+		ModalDisplayName:                        "Arguments",
+		CLIName:                                 "args",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "Arguments to start the executable with",
+		Choices:                                 nil,
+		DefaultValue:                            nil,
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
+			{
+				ParameterIsRequired:   false,
+				GroupName:             "Default",
+				UIModalPosition:       1,
+				AdditionalInformation: nil,
+			},
+		},
+	}
+
+	params := []structs.CommandParameter{executable, args}
 	command := structs.Command{
-		Name:                  "load-assembly",
-		NeedsAdminPermissions: false,
-		HelpString: "Load a .NET assembly into the Agent's process that can be executed multiple " +
-			"times without having to transfer the assembly over the network each time. Change the Parameter Group to " +
-			"\\\"Default\\\" to use a file that was previously registered with Mythic and \\\"New File\\\" to register " +
-			"and use a new file from your host OS.",
+		Name:                           "run",
+		NeedsAdminPermissions:          false,
+		HelpString:                     "run <arg1> <arg2>...",
+		Description:                    "Run the executable with the provided arguments and return the results",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            nil,
+		MitreAttackMappings:            []string{"T1106"},
 		ScriptOnlyCommand:              false,
-		CommandAttributes:              structs.CommandAttribute{SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS}},
-		CommandParameters:              parameters,
+		CommandAttributes:              attr,
+		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      createLoadAssemblyTask,
+		TaskFunctionCreateTasking:      runCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
 		TaskFunctionParseArgDictionary: taskFunctionParseArgDictionary,
 		TaskCompletionFunctions:        nil,
 	}
+
 	return command
 }
 
-func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/loadAssembly/loadAssemblyCreateTask()"
+// runCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func runCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/run/runCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	// Get the file as a byte array, its name, and any errors
-	data, filename, err := GetFile(task)
+	executable, err := task.Args.GetStringArg("executable")
+	if err != nil {
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		resp.Success = false
+		return
+	}
+
+	args, err := task.Args.GetStringArg("arguments")
 	if err != nil {
 		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
@@ -114,20 +127,25 @@ func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PT
 	}
 
 	job := jobs.Command{
-		Command: "clr",
-		Args:    []string{"load-assembly", base64.StdEncoding.EncodeToString(data), filename},
+		Command: executable,
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
+	// TODO parse args according to target OS (e.g., escapes, etc.)
+	if args != "" {
+		job.Args = append(job.Args, strings.Split(args, " ")...)
+	}
+
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CMD)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/loadAssembly/createLoadAssemblyTask(): %s", err)
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &filename
+	disp := fmt.Sprintf("%s %s", executable, args)
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

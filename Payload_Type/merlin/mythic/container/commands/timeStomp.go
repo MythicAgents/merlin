@@ -17,8 +17,8 @@ package commands
 
 import (
 	// Standard
-	"encoding/base64"
 	"fmt"
+
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
@@ -26,37 +26,18 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-func loadAssembly() structs.Command {
-	filename := structs.CommandParameter{
-		Name:                                    "filename",
-		ModalDisplayName:                        ".NET Assembly File",
-		CLIName:                                 "filename",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
-		SupportedAgents:                         nil,
-		SupportedAgentBuildParameters:           nil,
-		ChoicesAreAllCommands:                   false,
-		ChoicesAreLoadedCommands:                false,
-		FilterCommandChoicesByCommandAttributes: nil,
-		DynamicQueryFunction:                    GetFileList,
-		ParameterGroupInformation: []structs.ParameterGroupInfo{
-			{
-				ParameterIsRequired:   true,
-				GroupName:             "Default",
-				UIModalPosition:       0,
-				AdditionalInformation: nil,
-			},
-		},
+// timeStomp creates and return a Mythic Command structure that is registered with the Mythic server
+func timeStomp() structs.Command {
+	attr := structs.CommandAttribute{
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	file := structs.CommandParameter{
-		Name:                                    "file",
-		ModalDisplayName:                        ".NET Assembly File",
-		CLIName:                                 "file",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
+	source := structs.CommandParameter{
+		Name:                                    "source",
+		ModalDisplayName:                        "Source Filepath",
+		CLIName:                                 "source",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "The source filepath to copy the timestamp from",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -68,45 +49,76 @@ func loadAssembly() structs.Command {
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
 				ParameterIsRequired:   true,
-				GroupName:             "New File",
+				GroupName:             "Default",
 				UIModalPosition:       0,
 				AdditionalInformation: nil,
 			},
 		},
 	}
-	parameters := []structs.CommandParameter{filename, file}
+
+	destination := structs.CommandParameter{
+		Name:                                    "destination",
+		ModalDisplayName:                        "Destination Filepath",
+		CLIName:                                 "destination",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "The destination filepath to apply the date/time stamp to",
+		Choices:                                 nil,
+		DefaultValue:                            nil,
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
+			{
+				ParameterIsRequired:   true,
+				GroupName:             "Default",
+				UIModalPosition:       1,
+				AdditionalInformation: nil,
+			},
+		},
+	}
+
+	params := []structs.CommandParameter{source, destination}
 	command := structs.Command{
-		Name:                  "load-assembly",
-		NeedsAdminPermissions: false,
-		HelpString: "Load a .NET assembly into the Agent's process that can be executed multiple " +
-			"times without having to transfer the assembly over the network each time. Change the Parameter Group to " +
-			"\\\"Default\\\" to use a file that was previously registered with Mythic and \\\"New File\\\" to register " +
-			"and use a new file from your host OS.",
+		Name:                           "timestomp",
+		NeedsAdminPermissions:          false,
+		HelpString:                     "timeStomp <source filepath> <destination filepath>",
+		Description:                    "Copy a file's creation date/time stamp to another file",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            nil,
+		MitreAttackMappings:            []string{},
 		ScriptOnlyCommand:              false,
-		CommandAttributes:              structs.CommandAttribute{SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS}},
-		CommandParameters:              parameters,
+		CommandAttributes:              attr,
+		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      createLoadAssemblyTask,
+		TaskFunctionCreateTasking:      timeStompCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
 		TaskFunctionParseArgDictionary: taskFunctionParseArgDictionary,
 		TaskCompletionFunctions:        nil,
 	}
+
 	return command
 }
 
-func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/loadAssembly/loadAssemblyCreateTask()"
+// timeStompCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func timeStompCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/timeStomp/timeStompCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	// Get the file as a byte array, its name, and any errors
-	data, filename, err := GetFile(task)
+	source, err := task.Args.GetStringArg("source")
+	if err != nil {
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		resp.Success = false
+		return
+	}
+
+	destination, err := task.Args.GetStringArg("destination")
 	if err != nil {
 		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
@@ -114,20 +126,21 @@ func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PT
 	}
 
 	job := jobs.Command{
-		Command: "clr",
-		Args:    []string{"load-assembly", base64.StdEncoding.EncodeToString(data), filename},
+		Command: "touch",
+		Args:    []string{"touch", source, destination},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/loadAssembly/createLoadAssemblyTask(): %s", err)
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &filename
+	disp := fmt.Sprintf("%s %s", source, destination)
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

@@ -21,27 +21,25 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// cd creates and return a Mythic Command structure that is registered with the Mythic server
-// This command is instructs the Merlin Agent to change it's current working directory to the one provided
-func cd() structs.Command {
+// skew creates and return a Mythic Command structure that is registered with the Mythic server
+func skew() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	directory := structs.CommandParameter{
-		Name:                                    "directory",
-		ModalDisplayName:                        "directory",
-		CLIName:                                 "directory",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The directory path to change to",
+	amount := structs.CommandParameter{
+		Name:                                    "amount",
+		ModalDisplayName:                        "Skew Amount",
+		CLIName:                                 "amount",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_NUMBER,
+		Description:                             "The amount of skew, or jitter, to add to an agent callback",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            3000,
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -58,21 +56,22 @@ func cd() structs.Command {
 		},
 	}
 
+	params := []structs.CommandParameter{amount}
 	command := structs.Command{
-		Name:                           "cd",
+		Name:                           "skew",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "cd <directory path>",
-		Description:                    "Change the agent's current working directory",
+		HelpString:                     "skew <amount>",
+		Description:                    "Change the amount of skew, or jitter, between agent callbacks",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1005"},
+		MitreAttackMappings:            []string{},
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{directory},
+		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      cdCreateTask,
+		TaskFunctionCreateTasking:      skewCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,37 +82,34 @@ func cd() structs.Command {
 	return command
 }
 
-// cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
-func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/nslookupg/nslookupCreateTask()"
+// skewCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func skewCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/skew/skewCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	path, err := task.Args.GetStringArg("directory")
+	amount, err := task.Args.GetNumberArg("amount")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'directory' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	job := jobs.Command{
 		Command: task.Task.CommandName,
-		Args:    []string{path},
+		Args:    []string{fmt.Sprintf("%d", int(amount))},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &path
+	disp := fmt.Sprintf("%d", int(amount))
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

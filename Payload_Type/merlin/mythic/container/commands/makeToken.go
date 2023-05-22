@@ -17,8 +17,8 @@ package commands
 
 import (
 	// Standard
-	"encoding/base64"
 	"fmt"
+
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
@@ -26,37 +26,18 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-func loadAssembly() structs.Command {
-	filename := structs.CommandParameter{
-		Name:                                    "filename",
-		ModalDisplayName:                        ".NET Assembly File",
-		CLIName:                                 "filename",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
-		SupportedAgents:                         nil,
-		SupportedAgentBuildParameters:           nil,
-		ChoicesAreAllCommands:                   false,
-		ChoicesAreLoadedCommands:                false,
-		FilterCommandChoicesByCommandAttributes: nil,
-		DynamicQueryFunction:                    GetFileList,
-		ParameterGroupInformation: []structs.ParameterGroupInfo{
-			{
-				ParameterIsRequired:   true,
-				GroupName:             "Default",
-				UIModalPosition:       0,
-				AdditionalInformation: nil,
-			},
-		},
+// makeToken creates and return a Mythic Command structure that is registered with the Mythic server
+func makeToken() structs.Command {
+	attr := structs.CommandAttribute{
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},
 	}
 
-	file := structs.CommandParameter{
-		Name:                                    "file",
-		ModalDisplayName:                        ".NET Assembly File",
-		CLIName:                                 "file",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "The .NET assembly to load into the default AppDomain",
+	user := structs.CommandParameter{
+		Name:                                    "user",
+		ModalDisplayName:                        "Username",
+		CLIName:                                 "user",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "Domain and username to make a token for (e.g. ACME\\\\RASTLEY",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -68,66 +49,97 @@ func loadAssembly() structs.Command {
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
 				ParameterIsRequired:   true,
-				GroupName:             "New File",
+				GroupName:             "Default",
 				UIModalPosition:       0,
 				AdditionalInformation: nil,
 			},
 		},
 	}
-	parameters := []structs.CommandParameter{filename, file}
+
+	pass := structs.CommandParameter{
+		Name:                                    "pass",
+		ModalDisplayName:                        "Password",
+		CLIName:                                 "pass",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "The account's plain-text password",
+		Choices:                                 nil,
+		DefaultValue:                            nil,
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
+			{
+				ParameterIsRequired:   true,
+				GroupName:             "Default",
+				UIModalPosition:       1,
+				AdditionalInformation: nil,
+			},
+		},
+	}
+
 	command := structs.Command{
-		Name:                  "load-assembly",
+		Name:                  "make_token",
 		NeedsAdminPermissions: false,
-		HelpString: "Load a .NET assembly into the Agent's process that can be executed multiple " +
-			"times without having to transfer the assembly over the network each time. Change the Parameter Group to " +
-			"\\\"Default\\\" to use a file that was previously registered with Mythic and \\\"New File\\\" to register " +
-			"and use a new file from your host OS.",
+		HelpString:            "make_token <DOMAIN\\\\Username> <password>",
+		Description: "Create a new type-9 logon session and Windows access token for the provided" +
+			" credentials. The token is only used for NETWORK authentication, not local.",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            nil,
+		MitreAttackMappings:            []string{"T1134.003"},
 		ScriptOnlyCommand:              false,
-		CommandAttributes:              structs.CommandAttribute{SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS}},
-		CommandParameters:              parameters,
+		CommandAttributes:              attr,
+		CommandParameters:              []structs.CommandParameter{user, pass},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      createLoadAssemblyTask,
+		TaskFunctionCreateTasking:      makeTokenCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
 		TaskFunctionParseArgDictionary: taskFunctionParseArgDictionary,
 		TaskCompletionFunctions:        nil,
 	}
+
 	return command
 }
 
-func createLoadAssemblyTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/loadAssembly/loadAssemblyCreateTask()"
+// makeTokenCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func makeTokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 
-	// Get the file as a byte array, its name, and any errors
-	data, filename, err := GetFile(task)
+	user, err := task.Args.GetStringArg("user")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/makeToken/makeTokenCreateTask(): %s", err)
+		resp.Success = false
+		return
+	}
+
+	pass, err := task.Args.GetStringArg("pass")
+	if err != nil {
+		resp.Error = fmt.Sprintf("mythic/container/commands/makeToken/makeTokenCreateTask(): %s", err)
 		resp.Success = false
 		return
 	}
 
 	job := jobs.Command{
-		Command: "clr",
-		Args:    []string{"load-assembly", base64.StdEncoding.EncodeToString(data), filename},
+		Command: "token",
+		Args:    []string{user, pass},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/loadAssembly/createLoadAssemblyTask(): %s", err)
+		resp.Error = fmt.Sprintf("mythic/container/commands/makeToken/makeTokenCreateTask(): %s", err)
 		resp.Success = false
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &filename
+	disp := fmt.Sprintf("%s %s", user, pass)
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

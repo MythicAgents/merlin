@@ -21,27 +21,25 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// cd creates and return a Mythic Command structure that is registered with the Mythic server
-// This command is instructs the Merlin Agent to change it's current working directory to the one provided
-func cd() structs.Command {
+// maxRetry is a command to instruct the Merlin Agent to use a TLS client derived from the input JA3 string to communicate with the server.
+func maxRetry() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	directory := structs.CommandParameter{
-		Name:                                    "directory",
-		ModalDisplayName:                        "directory",
-		CLIName:                                 "directory",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The directory path to change to",
+	max := structs.CommandParameter{
+		Name:                                    "maxretry",
+		ModalDisplayName:                        "Max Retry",
+		CLIName:                                 "maxretry",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_NUMBER,
+		Description:                             "The maximum amount of times the Agent can fail to check in before it quits running",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            7,
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -59,20 +57,20 @@ func cd() structs.Command {
 	}
 
 	command := structs.Command{
-		Name:                           "cd",
+		Name:                           "maxretry",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "cd <directory path>",
-		Description:                    "Change the agent's current working directory",
+		HelpString:                     "maxretry <number>",
+		Description:                    "The maximum amount of time the Agent can fail to check in before it quits running",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1005"},
+		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{directory},
+		CommandParameters:              []structs.CommandParameter{max},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      cdCreateTask,
+		TaskFunctionCreateTasking:      maxRetryCreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,37 +81,32 @@ func cd() structs.Command {
 	return command
 }
 
-// cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
-func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/nslookupg/nslookupCreateTask()"
+// maxRetryCreateTasking takes a Mythic Task and converts into a Merlin Job for the JA3 command that is encoded into JSON and subsequently sent to the Merlin Agent
+func maxRetryCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 
-	path, err := task.Args.GetStringArg("directory")
+	max, err := task.Args.GetNumberArg("maxretry")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'directory' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("mythic/container/commands/maxRetry/maxRetryCreateTask(): %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	job := jobs.Command{
-		Command: task.Task.CommandName,
-		Args:    []string{path},
+		Command: "maxretry",
+		Args:    []string{fmt.Sprintf("%d", int(max))},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("mythic/container/commands/ja3/ja3CreateTasking(): %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
-
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &path
+	disp := fmt.Sprintf("%d", int(max))
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

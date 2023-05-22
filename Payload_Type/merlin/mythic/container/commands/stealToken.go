@@ -21,25 +21,23 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// cd creates and return a Mythic Command structure that is registered with the Mythic server
-// This command is instructs the Merlin Agent to change it's current working directory to the one provided
-func cd() structs.Command {
+// stealToken creates and return a Mythic Command structure that is registered with the Mythic server
+func stealToken() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},
 	}
 
-	directory := structs.CommandParameter{
-		Name:                                    "directory",
-		ModalDisplayName:                        "directory",
-		CLIName:                                 "directory",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The directory path to change to",
+	pid := structs.CommandParameter{
+		Name:                                    "pid",
+		ModalDisplayName:                        "Process ID",
+		CLIName:                                 "pid",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_NUMBER,
+		Description:                             "The process ID to steal a Windows access token from",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -58,21 +56,22 @@ func cd() structs.Command {
 		},
 	}
 
+	params := []structs.CommandParameter{pid}
 	command := structs.Command{
-		Name:                           "cd",
+		Name:                           "steal_token",
 		NeedsAdminPermissions:          false,
-		HelpString:                     "cd <directory path>",
-		Description:                    "Change the agent's current working directory",
+		HelpString:                     "steal_token <pid>",
+		Description:                    "Steal a Windows access token from the target process and impersonate it",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{"T1005"},
+		MitreAttackMappings:            []string{"T1134.001"},
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{directory},
+		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      cdCreateTask,
+		TaskFunctionCreateTasking:      stealTokenCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -83,37 +82,34 @@ func cd() structs.Command {
 	return command
 }
 
-// cdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
-func cdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/nslookupg/nslookupCreateTask()"
+// stealTokenCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func stealTokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/stealToken/stealTokenCreateTask()"
 	resp.TaskID = task.Task.ID
 
-	path, err := task.Args.GetStringArg("directory")
+	pid, err := task.Args.GetNumberArg("pid")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'directory' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	job := jobs.Command{
-		Command: task.Task.CommandName,
-		Args:    []string{path},
+		Command: "token",
+		Args:    []string{"steal", fmt.Sprintf("%d", int(pid))},
 	}
 
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	task.Args.SetManualArgs(mythicJob)
 
-	resp.DisplayParams = &path
+	disp := fmt.Sprintf("%d", int(pid))
+	resp.DisplayParams = &disp
 	resp.Success = true
 
 	return

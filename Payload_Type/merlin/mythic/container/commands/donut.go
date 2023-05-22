@@ -624,6 +624,17 @@ func donutCmd() structs.Command {
 }
 
 func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/donut/donutCreateTask()"
+	resp.TaskID = task.Task.ID
+
+	// Get the file as a byte array, its name, and any errors
+	data, _, err := GetFile(task)
+	if err != nil {
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		resp.Success = false
+		return
+	}
+
 	// module, url, entropy, arch, bypass, entrypoint, exit, class, domain, method, parameters, unicode, runtime, thread, compress, spawnto, spawntoargs
 
 	// Module
@@ -864,44 +875,8 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 		Verbose:    false,
 	}
 
-	// Determine which parameter group was used
-	var assembly []byte
-	switch strings.ToLower(task.Task.ParameterGroupName) {
-	case "default":
-		v, err = task.Args.GetArg("filename")
-		if err != nil {
-			resp.Error = fmt.Sprintf("there was an error getting the \"filename\" command argument: %s", err)
-			resp.Success = false
-			return
-		}
-		assembly, err = GetFileByName(v.(string))
-		if err != nil {
-			resp.Error = fmt.Sprintf("there was an error getting the file by its name \"%s\": %s", v.(string), err)
-			resp.Success = false
-			return
-		}
-	case "new file":
-		// structs.COMMAND_PARAMETER_TYPE_FILE
-		v, err = task.Args.GetArg("file")
-		if err != nil {
-			resp.Error = fmt.Sprintf("there was an error getting the \"file\" command argument: %s", err)
-			resp.Success = false
-			return
-		}
-		assembly, err = GetFileContents(v.(string))
-		if err != nil {
-			resp.Error = fmt.Sprintf("there was an error getting the file by its id \"%s\": %s", v.(string), err)
-			resp.Success = false
-			return
-		}
-	default:
-		resp.Error = fmt.Sprintf("unknown parameter group: %s", task.Task.ParameterGroupName)
-		resp.Success = false
-		return
-	}
-
 	// Get the assembly and turn it into a *bytes.buffer
-	buff := bytes.NewBuffer(assembly)
+	buff := bytes.NewBuffer(data)
 	var shellcode *bytes.Buffer
 	if url == "" {
 		shellcode, err = donut.ShellcodeFromBytes(buff, &config)

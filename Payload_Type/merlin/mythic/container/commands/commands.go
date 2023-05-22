@@ -20,6 +20,7 @@ import (
 	// Standard
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
@@ -41,7 +42,15 @@ type Job struct {
 
 // Commands returns a list of all the commands the Merlin agent payload supports
 func Commands() (commands []structs.Command) {
-	commands = append(commands, cd(), createProcess(), donutCmd(), download(), env(), exit(), ifconfig(), invokeAssembly(), ja3(), killdate(), killProcess(), loadAssembly(), listAssembly())
+	// TODO Fix the following commands: executePE, executeShellcode, donut
+	// TODO Add the following commands: mimikatz, sharpgen, srdi
+	commands = append(
+		commands, cd(), createProcess(), download(), env(), executeAssembly(), executeShellcode(),
+		exit(), ifconfig(), invokeAssembly(), ja3(), killdate(), killProcess(), loadAssembly(), listAssembly(), ls(),
+		makeToken(), maxRetry(), memfd(), memory(), netstat(), nslookup(), parrot(), pipes(), ps(), pwd(), rev2Self(),
+		rm(), run(), runas(), sdelete(), shell(), skew(), socks(), ssh(), stealToken(), timeStomp(), token(), upload(),
+		uptime(),
+	)
 	return
 }
 
@@ -108,11 +117,62 @@ func taskFunctionCreateTasking(task *structs.PTTaskMessageAllData) (resp structs
 }
 
 func taskFunctionParseArgDictionary(args *structs.PTTaskMessageArgsData, input map[string]interface{}) error {
+	// Nothing ot parse
+	if len(input) == 0 {
+		return nil
+	}
 	return args.LoadArgsFromDictionary(input)
 }
 
 func taskFunctionParseArgString(args *structs.PTTaskMessageArgsData, input string) error {
+	// Nothing to parse
+	if input == "" {
+		return nil
+	}
 	return args.LoadArgsFromJSONString(input)
+}
+
+// GetFile processes a Mythic task to retrieve a file and return its contents, filename, and any errors.
+// The Mythic task must have a "filename" and "file" command arguments.
+// The "filename" command argument references a file that has already been uploaded to Mythic.
+// The "file" command argument reference is used when a new file was uploaded as part of the Mythic task.
+func GetFile(task *structs.PTTaskMessageAllData) (data []byte, filename string, err error) {
+	pkg := "merlin/Payload_Type/merlin/mythic/container/commands/commands.go/GetFile():"
+	// Determine if a "filename" or "file" Mythic command argument was provided
+	switch strings.ToLower(task.Task.ParameterGroupName) {
+	case "default":
+		filename, err = task.Args.GetStringArg("filename")
+		if err != nil {
+			err = fmt.Errorf("%s there was an error getting the \"filename\" command argument for task %d: %s", pkg, task.Task.ID, err)
+			return
+		}
+		data, err = GetFileByName(filename, task.Callback.ID)
+		if err != nil {
+			err = fmt.Errorf("%s there was an error getting the file by its name \"%s\" for task %d: %s", pkg, filename, task.Task.ID, err)
+			return
+		}
+	case "new file":
+		var fileID string
+		fileID, err = task.Args.GetStringArg("file")
+		if err != nil {
+			err = fmt.Errorf("%s there was an error getting the \"file\" command argument for task %d: %s", pkg, task.Task.ID, err)
+			return
+		}
+		data, err = GetFileContents(fileID)
+		if err != nil {
+			err = fmt.Errorf("%s there was an error getting the file by its id \"%s\" for task %d: %s", pkg, fileID, task.Task.ID, err)
+			return
+		}
+		filename, err = GetFileName(fileID)
+		if err != nil {
+			err = fmt.Errorf("%s there was an error getting the file name by its id \"%s\" for task %d: %s", pkg, fileID, task.Task.ID, err)
+			return
+		}
+	default:
+		err = fmt.Errorf("%s unknown parameter group: %s", pkg, task.Task.ParameterGroupName)
+		return
+	}
+	return
 }
 
 // GetFileList queries the Mythic server for files it knows about and returns a list of those Mythic file objects
@@ -148,10 +208,10 @@ func GetFileList(msg structs.PTRPCDynamicQueryFunctionMessage) (files []string) 
 }
 
 // GetFileByName queries the Mythic server for files that match the passed in name argument and returns the contents of the first match
-func GetFileByName(name string) (contents []byte, err error) {
+func GetFileByName(name string, callback int) (contents []byte, err error) {
 	search := mythicrpc.MythicRPCFileSearchMessage{
 		TaskID:              0,
-		CallbackID:          0,
+		CallbackID:          callback,
 		Filename:            name,
 		LimitByCallback:     false,
 		MaxResults:          -1,
@@ -174,7 +234,7 @@ func GetFileByName(name string) (contents []byte, err error) {
 
 	for _, file := range resp.Files {
 		if file.Filename == name {
-			return GetFileContents(file.AgentFileId)
+			contents, err = GetFileContents(file.AgentFileId)
 		}
 	}
 	return
