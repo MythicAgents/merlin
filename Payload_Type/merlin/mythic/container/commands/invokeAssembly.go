@@ -67,7 +67,7 @@ func invokeAssembly() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "Arguments to invoke (execute) the assembly",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,

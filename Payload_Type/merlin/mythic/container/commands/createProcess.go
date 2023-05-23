@@ -19,8 +19,10 @@ import (
 	// Standard
 	"encoding/base64"
 	"fmt"
+
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -115,7 +117,7 @@ func createProcess() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "arguments to create the spawnto process with, if any",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -172,28 +174,32 @@ func createProcessCreateTask(task *structs.PTTaskMessageAllData) (resp structs.P
 	// Get the file as a byte array, its name, and any errors
 	data, filename, err := GetFile(task)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// Get SpawnTo command parameter
-	v, err := task.Args.GetArg("spawnto")
+	spawnto, err := task.Args.GetStringArg("spawnto")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawnto\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'spawnto' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	spawnto := v.(string)
 
 	// Get SpawnTo Arguments command parameter
-	v, err = task.Args.GetArg("args")
+	args, err := task.Args.GetStringArg("args")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"args\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'args' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	args := v.(string)
 
 	//  Merlin Job
 	// Command: createprocess
@@ -204,13 +210,18 @@ func createProcessCreateTask(task *structs.PTTaskMessageAllData) (resp structs.P
 
 	job := jobs.Command{
 		Command: "createprocess",
-		Args:    []string{base64.StdEncoding.EncodeToString(data), spawnto, args},
+		Args:    []string{base64.StdEncoding.EncodeToString(data), spawnto},
+	}
+	if args != "" {
+		job.Args = append(job.Args, args)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/createProcess/createProcessCreateTask(): %s", err)
+		err = fmt.Errorf("%s: there was an error converting the Merlin Job to a Mythic Task: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 

@@ -16,13 +16,20 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
+	// Standard
 	"bytes"
 	"encoding/base64"
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
-	// Mythic
 	"fmt"
+
+	// 3rd Party
 	"github.com/Binject/go-donut/donut"
+
+	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
+
+	// Merlin
+	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
 // executeAssembly returns a Mythic Command structure that is registered with the Mythic server
@@ -86,7 +93,7 @@ func executeAssembly() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "Arguments to execute the .NET assembly with",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -146,7 +153,7 @@ func executeAssembly() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "arguments to create the spawnto process with, if any",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -203,35 +210,40 @@ func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp stru
 	// Get the file as a byte array, its name, and any errors
 	data, filename, err := GetFile(task)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// Arguments
-	var arguments string
-	arguments, err = task.Args.GetStringArg("arguments")
+	arguments, err := task.Args.GetStringArg("arguments")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"arguments\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'arguments' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// SpawnTo
-	var spawnto string
-	spawnto, err = task.Args.GetStringArg("spawnto")
+	spawnto, err := task.Args.GetStringArg("spawnto")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawnto\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'spawnto' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// SpawnTo Args
-	var spawntoargs string
-	spawntoargs, err = task.Args.GetStringArg("spawntoargs")
+	spawntoargs, err := task.Args.GetStringArg("spawntoargs")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawntoargs\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'spawntoargs' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
@@ -242,8 +254,10 @@ func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp stru
 	config.Runtime = "v4.0.30319"
 	config.ExitOpt = 2
 	config.Entropy = 3
-	config.Parameters = arguments
 	config.Verbose = false
+	if arguments != "" {
+		config.Parameters = arguments
+	}
 
 	/*
 		config := donut.DonutConfig{
@@ -278,8 +292,10 @@ func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp stru
 	var shellcode *bytes.Buffer
 	shellcode, err = donut.ShellcodeFromBytes(buff, config)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error generating the shellcode from Donut: %s", err)
+		err = fmt.Errorf("%s: there was an error generating the shellcode from Donut: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
@@ -292,13 +308,18 @@ func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp stru
 
 	job := jobs.Command{
 		Command: "createprocess",
-		Args:    []string{base64.StdEncoding.EncodeToString(shellcode.Bytes()), spawnto, spawntoargs},
+		Args:    []string{base64.StdEncoding.EncodeToString(shellcode.Bytes()), spawnto},
+	}
+	if spawntoargs != "" {
+		job.Args = append(job.Args, spawntoargs)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/executeAssembly/executAssemblyCreateTasking(): %s", err)
+		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 

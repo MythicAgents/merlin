@@ -40,7 +40,7 @@ func netstat() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
 		Description:                             "Limit the netstat collection to the selected protocol",
 		Choices:                                 []string{"tcp", "udp"},
-		DefaultValue:                            nil,
+		DefaultValue:                            "tcp",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,

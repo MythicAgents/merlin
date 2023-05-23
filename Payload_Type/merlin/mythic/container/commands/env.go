@@ -29,7 +29,7 @@ import (
 )
 
 // env returns a Mythic Command structure that is registered with the Mythic server that subsequently instructs the
-// Merlin Agent to get, set, or unset environment variables on host operating system where the Agent is running
+// Merlin Agent to get, set, or unset environment variables on a host operating system where the Agent is running
 func env() structs.Command {
 	method := structs.CommandParameter{
 		Name:                                    "method",
@@ -62,7 +62,7 @@ func env() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "Arguments for the selected method",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,

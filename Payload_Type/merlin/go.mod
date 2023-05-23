@@ -3,7 +3,7 @@ module MyContainer
 go 1.19
 
 require (
-	github.com/MythicMeta/MythicContainer v1.0.8-rc01
+	github.com/MythicMeta/MythicContainer v1.0.9-rc01
 	github.com/Ne0nd0g/merlin v1.5.1
 )
 

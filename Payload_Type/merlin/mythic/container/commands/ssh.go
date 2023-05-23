@@ -22,6 +22,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -136,7 +137,7 @@ func ssh() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "Arguments to start the executable with",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -186,36 +187,46 @@ func sshCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreat
 
 	user, err := task.Args.GetStringArg("username")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'username' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	pass, err := task.Args.GetStringArg("password")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'password' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	host, err := task.Args.GetStringArg("host")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'host' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	executable, err := task.Args.GetStringArg("executable")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'executable' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	args, err := task.Args.GetStringArg("arguments")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'arguments' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
@@ -230,8 +241,10 @@ func sshCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreat
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic job: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 

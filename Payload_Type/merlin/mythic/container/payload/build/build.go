@@ -17,27 +17,32 @@ You should have received a copy of the GNU General Public License along with Mer
 package build
 
 import (
+	// Standard
 	"fmt"
-	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/mythicrpc"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	// Mythic
+	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
+	"github.com/MythicMeta/MythicContainer/mythicrpc"
 )
 
 var debugInfo = false
 
 // Build is the function Mythic calls to compile the Merlin Agent
 func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildResponse) {
+	pkg := "mythic/container/payload/build/Build()"
 	response.PayloadUUID = msg.PayloadUUID
 	response.UpdatedCommandList = &msg.CommandList
 
 	if debugInfo {
 		fmt.Printf("[DEBUG] Build(): Input Payload Build Message: %+v\n", msg)
 		fmt.Printf("[DEBUG] Build(): Input Build Parameters: %+v\n", msg.BuildParameters)
-		for key, param := range msg.BuildParameters {
+		for key, param := range msg.BuildParameters.Parameters {
 			fmt.Printf("\tKey: %s, Param: %+v (%T)\n", key, param, param)
 		}
 		fmt.Printf("[DEBUG] Build(): Input C2 Profiles: %d\n", len(msg.C2Profiles))
@@ -51,7 +56,9 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 
 	// Validate C2 Profile
 	if len(msg.C2Profiles) != 1 {
-		response.BuildStdErr = fmt.Sprintf("Build(): expected one C2Profile but received %d: %+v", len(msg.C2Profiles), msg.C2Profiles)
+		err := fmt.Errorf("%s: expected one C2Profile but received %d: %+v", pkg, len(msg.C2Profiles), msg.C2Profiles)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
@@ -59,53 +66,72 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	// Has keys: dec_key, enc_key, value (e.g., aes256_hmac)
 	crypto, ok := msg.C2Profiles[0].Parameters["AESPSK"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"AESPSK\" key was not found in the C2Profiles' parameters map"
-		return
-	}
-	psk, ok := crypto.(map[string]interface{})["enc_key"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"enc_key\" key was not found in the C2Profiles' parameters AESKPSK map"
+		err := fmt.Errorf("%s: the \"AESPSK\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	// headers key provides a vlue of map[string]interface{}
+	// Encryption Key
+	psk, ok := crypto.(map[string]interface{})["enc_key"]
+	if !ok {
+		err := fmt.Errorf("%s: the \"enc_key\" key was not found in the C2Profiles' parameters AESPSK map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
+
+	// The headers key provides a value of map[string]interface{}
 	// The key is the name of the header (e.g., Host, User-Agent)
 	v, ok := msg.C2Profiles[0].Parameters["headers"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"headers\" key was not found in the C2Profiles' parameters map"
+		err := fmt.Errorf("%s: the \"headers\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 	headers := v.(map[string]interface{})
 
+	// Port
 	v, ok = msg.C2Profiles[0].Parameters["callback_port"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"callback_port\" key was not found in the C2Profiles' parameters map"
+		err := fmt.Errorf("%s: the \"callback_port\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 	port := v.(float64)
 
 	v, ok = msg.C2Profiles[0].Parameters["killdate"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"killdate\" key was not found in the C2Profiles' parameters map"
+		err := fmt.Errorf("%s: the \"killdate\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 	// 2024-03-14 <- What Mythic provides
 	kill, err := time.Parse(time.RFC3339, fmt.Sprintf("%sT00:00:00.000Z", v.(string)))
 	if err != nil {
+		err = fmt.Errorf("%s: there was an error parsing the killdate \"%s\": %s", pkg, v, err)
 		response.BuildStdErr = fmt.Sprintf("Build: there was an error parsing the killdate \"%s\": %s", v, err)
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	v, ok = msg.C2Profiles[0].Parameters["callback_interval"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"callback_interval\" key was not found in the C2Profiles' parameters map"
+		err = fmt.Errorf("%s: the \"callback_interval\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 	sleep := v.(float64)
 
 	v, ok = msg.C2Profiles[0].Parameters["callback_jitter"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"callback_jitter\" key was not found in the C2Profiles' parameters map"
+		err = fmt.Errorf("%s: the \"callback_jitter\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 	jitter := v.(float64)
@@ -114,107 +140,100 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 
 	host, ok := msg.C2Profiles[0].Parameters["callback_host"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"callback_host\" key was not found in the C2Profiles' parameters map"
+		err = fmt.Errorf("%s: the \"callback_host\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	post, ok := msg.C2Profiles[0].Parameters["post_uri"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"callback_port\" key was not found in the C2Profiles' parameters map"
+		err = fmt.Errorf("%s: the \"post_uri\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	proxyHost, ok := msg.C2Profiles[0].Parameters["proxy_host"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"proxy_host\" key was not found in the C2Profiles' parameters map"
+		err = fmt.Errorf("%s: the \"proxy_host\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	proxyPort, ok := msg.C2Profiles[0].Parameters["proxy_port"]
 	if !ok {
-		response.BuildStdErr = "Build(): the \"proxy_port\" key was not found in the C2Profiles' parameters map"
+		err = fmt.Errorf("%s: the \"proxy_port\" key was not found in the C2Profiles' parameters map", pkg)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
-
-	/*
-		get, ok := msg.C2Profiles[0].Parameters["get_uri"]
-		if !ok {
-			response.BuildStdErr = "Build(): the \"get_uri\" key was not found in the C2Profiles' parameters map"
-			return
-		}
-
-		query, ok := msg.C2Profiles[0].Parameters["query_path_name"]
-		if !ok {
-			response.BuildStdErr = "Build(): the \"query_path_name\" key was not found in the C2Profiles' parameters map"
-			return
-		}
-
-		proxyUser, ok := msg.C2Profiles[0].Parameters["proxy_user"]
-		if !ok {
-			response.BuildStdErr = "Build(): the \"proxy_user\" key was not found in the C2Profiles' parameters map"
-			return
-		}
-
-		proxyPass, ok := msg.C2Profiles[0].Parameters["proxy_pass"]
-		if !ok {
-			response.BuildStdErr = "Build(): the \"proxy_pass\" key was not found in the C2Profiles' parameters map"
-			return
-		}
-	*/
 
 	// Validate BuildParameters
-	v, ok = msg.BuildParameters["verbose"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"verbose\" key was not found in the BuildParameter's map"
-		return
-	}
-	verbose := v.(bool)
-
-	v, ok = msg.BuildParameters["debug"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"debug\" key was not found in the BuildParameter's map"
-		return
-	}
-	debug := v.(bool)
-
-	v, ok = msg.BuildParameters["arch"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"arch\" key was not found in the BuildParameter's map"
-		return
-	}
-	arch := v.(string)
-
-	v, ok = msg.BuildParameters["buildmode"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"buildmode\" key was not found in the BuildParameter's map"
-		return
-	}
-	mode := v.(string)
-
-	max, ok := msg.BuildParameters["maxretry"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"maxretry\" key was not found in the BuildParameter's map"
+	verbose, err := msg.BuildParameters.GetBooleanArg("verbose")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"verbose\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	padding, ok := msg.BuildParameters["padding"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"padding\" key was not found in the BuildParameter's map"
+	debug, err := msg.BuildParameters.GetBooleanArg("debug")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"debug\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	ja3, ok := msg.BuildParameters["ja3"]
-	if !ok {
-		response.BuildStdErr = "Build(): the \"ja3\" key was not found in the BuildParameter's map"
+	arch, err := msg.BuildParameters.GetStringArg("arch")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"arch\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	v, ok = msg.BuildParameters["garble"]
+	mode, err := msg.BuildParameters.GetStringArg("buildmode")
 	if !ok {
-		response.BuildStdErr = "Build(): the \"garble\" key was not found in the BuildParameter's map"
+		err = fmt.Errorf("%s: there was an error getting the \"buildmode\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		return
 	}
-	garble := v.(bool)
+
+	max, err := msg.BuildParameters.GetStringArg("maxretry")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"maxretry\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
+
+	padding, err := msg.BuildParameters.GetStringArg("padding")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"padding\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
+
+	ja3, err := msg.BuildParameters.GetStringArg("ja3")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"ja3\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
+
+	garble, err := msg.BuildParameters.GetBooleanArg("garble")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the \"garble\" key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
 
 	switch msg.SelectedOS {
 	case structs.SUPPORTED_OS_MACOS:
@@ -252,11 +271,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	if proxyHost != "" {
 		ldflags += fmt.Sprintf(" -X \"main.proxy=%s:%s\"", proxyHost, proxyPort)
 	}
-	/*
-		if proxyUser != "" {
-			ldflags += fmt.Sprintf(" -X \"main.proxy=%s:%s\"", proxyHost, proxyPort)
-		}
-	*/
+
 	if msg.SelectedOS == "windows" && mode == "default" && !verbose && !debug {
 		ldflags += " -H=windowsgui"
 	}
@@ -296,7 +311,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 
 	// Tell Mythic we're done with configuration
-	mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+	resp, err := mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 		mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 			PayloadUUID: msg.PayloadUUID,
 			StepName:    "Configuring",
@@ -305,6 +320,11 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 			StepSuccess: true,
 		},
 	)
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+		logging.LogError(err, "returning with error")
+		// Do not return, keep going
+	}
 
 	// Build the payload
 	// 	Set GO environment variables
@@ -312,7 +332,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	if err != nil {
 		response.BuildMessage = "there was an error compiling the agent"
 		response.BuildStdErr = fmt.Sprintf("there was an error setting the GOOS environment variable to %s: %s", msg.SelectedOS, err)
-		mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+		resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 			mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 				PayloadUUID: msg.PayloadUUID,
 				StepName:    "Compiling",
@@ -321,13 +341,18 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 				StepSuccess: false,
 			},
 		)
+		if err != nil {
+			err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+			logging.LogError(err, "continuing")
+			// Do not return, keep going
+		}
 		return
 	}
 	err = os.Setenv("GOARCH", arch)
 	if err != nil {
 		response.BuildMessage = "there was an error compiling the agent"
 		response.BuildStdErr = fmt.Sprintf("there was an error setting the GOARCH environment variable to %s: %s", arch, err)
-		mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+		resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 			mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 				PayloadUUID: msg.PayloadUUID,
 				StepName:    "Compiling",
@@ -336,6 +361,11 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 				StepSuccess: false,
 			},
 		)
+		if err != nil {
+			err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+			logging.LogError(err, "returning with error")
+			// Do not return, keep going
+		}
 		return
 	}
 
@@ -347,7 +377,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	if err != nil {
 		response.BuildMessage = "there was an error compiling the agent"
 		response.BuildStdErr = err.Error()
-		mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+		resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 			mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 				PayloadUUID: msg.PayloadUUID,
 				StepName:    "Compiling",
@@ -356,9 +386,14 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 				StepSuccess: false,
 			},
 		)
+		if err != nil {
+			err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+			logging.LogError(err, "returning with error")
+			// Do not return, keep going
+		}
 		return
 	}
-	mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+	resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 		mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 			PayloadUUID: msg.PayloadUUID,
 			StepName:    "Compiling",
@@ -367,12 +402,17 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 			StepSuccess: true,
 		},
 	)
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+		logging.LogError(err, "continuing")
+		// Do not return, keep going
+	}
 
 	payload, err := os.ReadFile(filepath.Join(".", "merlin", "agent_code", "merlin.bin"))
 	if err != nil {
 		response.BuildMessage = "Failed to find final payload"
 		response.BuildStdErr = err.Error()
-		mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+		resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 			mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 				PayloadUUID: msg.PayloadUUID,
 				StepName:    "Returning",
@@ -381,6 +421,10 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 				StepSuccess: false,
 			},
 		)
+		if err != nil {
+			err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+			logging.LogError(err, "returning with error")
+		}
 		return
 	}
 

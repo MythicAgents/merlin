@@ -16,12 +16,13 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	"encoding/base64"
 	// Standard
+	"encoding/base64"
 	"fmt"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -88,7 +89,7 @@ func memfd() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "Arguments to start the executable with",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -148,27 +149,36 @@ func memfdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 	// Get the file as a byte array, its name, and any errors
 	data, filename, err := GetFile(task)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	args, err := task.Args.GetStringArg("args")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'args' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	job := jobs.Command{
 		Command: "memfd",
-		Args:    []string{base64.StdEncoding.EncodeToString(data), args},
+		Args:    []string{base64.StdEncoding.EncodeToString(data)},
+	}
+	if args != "" {
+		job.Args = append(job.Args, args)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error converting the job to a Mythic task: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
