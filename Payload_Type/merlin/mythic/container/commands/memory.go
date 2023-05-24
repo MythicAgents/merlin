@@ -164,14 +164,33 @@ func memory() structs.Command {
 				AdditionalInformation: nil,
 			},
 			{
-				ParameterIsRequired:   false,
-				GroupName:             "Patch",
+				ParameterIsRequired:   true,
+				GroupName:             "Write",
 				UIModalPosition:       3,
 				AdditionalInformation: nil,
 			},
+		},
+	}
+
+	// Needed a parameter with a different name, so Mythic doesn't get confused on the exclusive set
+	patchBytes := structs.CommandParameter{
+		Name:                                    "patch-bytes",
+		ModalDisplayName:                        "Bytes",
+		CLIName:                                 "patch-bytes",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
+		Description:                             "The bytes, as a hex string, that you want to be written to memory. Only used with the 'patch' method.",
+		Choices:                                 nil,
+		DefaultValue:                            "9090C3",
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
-				ParameterIsRequired:   false,
-				GroupName:             "Write",
+				ParameterIsRequired:   true,
+				GroupName:             "Patch",
 				UIModalPosition:       3,
 				AdditionalInformation: nil,
 			},
@@ -200,7 +219,7 @@ func memory() structs.Command {
 				AdditionalInformation: nil,
 			},
 			{
-				ParameterIsRequired:   false,
+				ParameterIsRequired:   true,
 				GroupName:             "Read",
 				UIModalPosition:       4,
 				AdditionalInformation: nil,
@@ -208,7 +227,7 @@ func memory() structs.Command {
 		},
 	}
 
-	params := []structs.CommandParameter{method, module, proc, bytes, length}
+	params := []structs.CommandParameter{method, module, proc, bytes, patchBytes, length}
 	command := structs.Command{
 		Name:                  "memory",
 		NeedsAdminPermissions: false,
@@ -278,6 +297,15 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 		return
 	}
 
+	patchBytes, err := task.Args.GetStringArg("patch-bytes")
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error getting the 'patch-bytes' argument: %s", pkg, err)
+		resp.Error = err.Error()
+		resp.Success = false
+		logging.LogError(err, "returning with error")
+		return
+	}
+
 	length, err := task.Args.GetNumberArg("length")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the \"length\" argument: %s", pkg, err)
@@ -291,14 +319,19 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 		Command: "memory",
 	}
 
-	fmt.Printf("Parameter Group Name: %s\n", task.Task.ParameterGroupName)
+	var disp string
 	switch strings.ToLower(task.Task.ParameterGroupName) {
 	case "default":
 		switch strings.ToLower(method) {
 		case "read":
 			job.Args = []string{method, module, proc, fmt.Sprintf("%d", int(length))}
-		case "patch", "write":
+			disp = fmt.Sprintf("%s %s:%s %d", method, module, proc, int(length))
+		case "patch":
 			job.Args = []string{method, module, proc, bytes}
+			disp = fmt.Sprintf("%s %s:%s %s", method, module, proc, bytes)
+		case "write":
+			job.Args = []string{method, module, proc, bytes}
+			disp = fmt.Sprintf("%s %s:%s %s", method, module, proc, bytes)
 		default:
 			err = fmt.Errorf("%s: unhandled parameter group name %s", pkg, task.Task.ParameterGroupName)
 			resp.Error = err.Error()
@@ -307,9 +340,14 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 			return
 		}
 	case "read":
-		job.Args = []string{method, module, proc, fmt.Sprintf("%d", int(length))}
+		job.Args = []string{"read", module, proc, fmt.Sprintf("%d", int(length))}
+		disp = fmt.Sprintf("%s %s:%s %d", strings.ToLower(task.Task.ParameterGroupName), module, proc, int(length))
 	case "patch":
-		job.Args = []string{method, module, proc, bytes}
+		job.Args = []string{"patch", module, proc, patchBytes}
+		disp = fmt.Sprintf("%s %s:%s %s", strings.ToLower(task.Task.ParameterGroupName), module, proc, patchBytes)
+	case "write":
+		job.Args = []string{"write", module, proc, bytes}
+		disp = fmt.Sprintf("%s %s:%s %s", strings.ToLower(task.Task.ParameterGroupName), module, proc, bytes)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
@@ -323,7 +361,6 @@ func memoryCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%s %s:%s %s %d", method, module, proc, bytes, int(length))
 	resp.DisplayParams = &disp
 	resp.Success = true
 

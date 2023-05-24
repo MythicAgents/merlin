@@ -53,6 +53,8 @@ github.com/MythicMeta/MythicContainer v1.0.8-rc01 h1:2iivyqxPemyFhVhmA74+dMxIDxj
 github.com/MythicMeta/MythicContainer v1.0.8-rc01/go.mod h1:EZqZAa+ZdZhhfLICL4RhnlBydMxZC4wi5vr95WRgdbY=
 github.com/MythicMeta/MythicContainer v1.0.9-rc01 h1:sLT5lj4a02IEtFMNcw48p4K12wckU8QCvEy1jKGlkPQ=
 github.com/MythicMeta/MythicContainer v1.0.9-rc01/go.mod h1:EZqZAa+ZdZhhfLICL4RhnlBydMxZC4wi5vr95WRgdbY=
+github.com/MythicMeta/MythicContainer v1.0.9-rc03 h1:EaVGD2Ljx8sNLha9dWJhsbNj3flJQgjLZ7E4ZdIAywU=
+github.com/MythicMeta/MythicContainer v1.0.9-rc03/go.mod h1:EZqZAa+ZdZhhfLICL4RhnlBydMxZC4wi5vr95WRgdbY=
 github.com/Ne0nd0g/merlin v1.5.1 h1:LDymwSEWzT2F9e0stcRFIrLERMNzYTC+k9fb26tdURc=
 github.com/Ne0nd0g/merlin v1.5.1/go.mod h1:tBMkLNIK43tggHztuskIhRgt4boQvz/d7pWV93r4Qp4=
 github.com/akamensky/argparse v1.3.0/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=

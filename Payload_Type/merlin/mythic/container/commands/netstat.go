@@ -39,8 +39,8 @@ func netstat() structs.Command {
 		CLIName:                                 "proto",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
 		Description:                             "Limit the netstat collection to the selected protocol",
-		Choices:                                 []string{"tcp", "udp"},
-		DefaultValue:                            "tcp",
+		Choices:                                 []string{"tcp", "udp", ""},
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -99,9 +99,8 @@ func netstatCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskC
 
 	job := jobs.Command{
 		Command: task.Task.CommandName,
-	}
-	if proto != "" {
-		job.Args = append(job.Args, proto)
+		// TODO Known bug that there must be something, even an empty string, in the arguments
+		Args: []string{proto},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)

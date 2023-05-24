@@ -89,7 +89,7 @@ func token() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_NUMBER,
 		Description:                             "The process ID to interact with",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            0,
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -131,13 +131,13 @@ func token() structs.Command {
 	}
 
 	user := structs.CommandParameter{
-		Name:                                    "user",
+		Name:                                    "username",
 		ModalDisplayName:                        "Username",
-		CLIName:                                 "user",
+		CLIName:                                 "username",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "Domain and username to make a token for (e.g. ACME\\\\RASTLEY",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -155,13 +155,13 @@ func token() structs.Command {
 	}
 
 	pass := structs.CommandParameter{
-		Name:                                    "pass",
+		Name:                                    "password",
 		ModalDisplayName:                        "Password",
-		CLIName:                                 "pass",
+		CLIName:                                 "password",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "The account's plain-text password",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -251,7 +251,7 @@ func tokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 
 	user, err := task.Args.GetStringArg("username")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the \"username\" argument %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'username' argument %s", pkg, err)
 		resp.Error = err.Error()
 		resp.Success = false
 		logging.LogError(err, "returning with error")
@@ -260,7 +260,7 @@ func tokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 
 	pass, err := task.Args.GetStringArg("password")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the \"password\" argument %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'password' argument %s", pkg, err)
 		resp.Error = err.Error()
 		resp.Success = false
 		logging.LogError(err, "returning with error")
@@ -269,25 +269,32 @@ func tokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 
 	job := jobs.Command{
 		Command: task.Task.CommandName,
-		Args:    []string{method},
 	}
 
-	disp := fmt.Sprintf("%s", method)
+	var disp string
 	switch strings.ToLower(task.Task.ParameterGroupName) {
 	case "default":
+		disp = fmt.Sprintf("%s", method)
+		job.Args = append(job.Args, method)
 		if args != "" {
-			job.Args = append(job.Args, args)
+			job.Args = append(job.Args, strings.Split(args, " ")...)
 			disp += fmt.Sprintf(" %s", args)
 		}
 	case "make token":
-		job.Args = append(job.Args, user, pass)
-		disp += fmt.Sprintf(" Username: %s, Password: %s", user, pass)
+		job.Args = append(job.Args, "make", user, pass)
+		disp += fmt.Sprintf("make Username: %s, Password: %s", user, pass)
 	case "steal token":
-		job.Args = append(job.Args, fmt.Sprintf("%d", int(pid)))
-		disp += fmt.Sprintf(" %d", int(pid))
+		job.Args = append(job.Args, "steal", fmt.Sprintf("%d", int(pid)))
+		disp += fmt.Sprintf("steal %d", int(pid))
 	case "token privs":
-		job.Args = append(job.Args, fmt.Sprintf("%d", int(tokenPID)))
-		disp += fmt.Sprintf(" %d", int(tokenPID))
+		job.Args = append(job.Args, "privs", fmt.Sprintf("%d", int(tokenPID)))
+		disp += fmt.Sprintf("privs %d", int(tokenPID))
+	default:
+		err = fmt.Errorf("%s: unknown parameter group %s", pkg, task.Task.ParameterGroupName)
+		resp.Error = err.Error()
+		resp.Success = false
+		logging.LogError(err, "returning with error")
+		return
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
