@@ -96,7 +96,8 @@ func sdeleteCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskC
 
 	job := jobs.Command{
 		Command: task.Task.CommandName,
-		Args:    []string{path},
+		// TODO: We don't need the command name in the args
+		Args: []string{task.Task.CommandName, path},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)

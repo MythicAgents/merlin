@@ -372,11 +372,16 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	cmd := exec.Command(bin, goArgs...)
 	cmd.Dir = filepath.Join(".", "merlin", "agent_code")
 	stdOut, err := cmd.CombinedOutput()
-	fmt.Printf("Combined output: %s, Error: %v\n", stdOut, err)
-	response.BuildStdOut = string(stdOut)
+	response.BuildStdOut = fmt.Sprintf("%s\nBuild: %s", string(stdOut), bin)
+	for _, v = range goArgs {
+		response.BuildStdOut += fmt.Sprintf(" %s", v)
+	}
+	response.BuildStdOut += "\n\n"
+	logging.LogInfo(response.BuildStdOut)
 	if err != nil {
-		response.BuildMessage = "there was an error compiling the agent"
+		response.BuildMessage += "there was an error compiling the agent"
 		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
 		resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
 			mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
 				PayloadUUID: msg.PayloadUUID,

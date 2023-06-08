@@ -27,7 +27,7 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// rev2Self creates and return a Mythic Command structure that is registered with the Mythic server
+// rev2Self creates and returns a Mythic Command structure that is registered with the Mythic server
 func rev2Self() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},

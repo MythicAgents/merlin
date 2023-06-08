@@ -3,7 +3,7 @@ module github.com/MythicAgents/merlin/Payload_Type/merlin/agent_code
 go 1.19
 
 require (
-	github.com/Ne0nd0g/merlin-agent v1.6.3
+	github.com/Ne0nd0g/merlin-agent v1.6.4
 	github.com/fatih/color v1.15.0
 	github.com/satori/go.uuid v1.2.0
 )
@@ -21,6 +21,7 @@ require (
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3 // indirect
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/lucas-clemente/quic-go v0.30.0 // indirect
 	github.com/marten-seemann/qpack v0.3.0 // indirect

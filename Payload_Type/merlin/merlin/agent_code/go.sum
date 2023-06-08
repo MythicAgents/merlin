@@ -9,6 +9,8 @@ github.com/Ne0nd0g/merlin v1.5.1 h1:LDymwSEWzT2F9e0stcRFIrLERMNzYTC+k9fb26tdURc=
 github.com/Ne0nd0g/merlin v1.5.1/go.mod h1:tBMkLNIK43tggHztuskIhRgt4boQvz/d7pWV93r4Qp4=
 github.com/Ne0nd0g/merlin-agent v1.6.3 h1:ZcRMNckR8vkAxhKhwcr0O3IOaeqO0Lxmw1i/3i6aZAI=
 github.com/Ne0nd0g/merlin-agent v1.6.3/go.mod h1:HS0ebEhfyNXatwhkFE74B/bjsb5uuflkvGizch8hzpY=
+github.com/Ne0nd0g/merlin-agent v1.6.4 h1:uKtiIJu+xYLU/OWKv0AP4oUtq7TIRQULwsmwhVSgXBo=
+github.com/Ne0nd0g/merlin-agent v1.6.4/go.mod h1:HS0ebEhfyNXatwhkFE74B/bjsb5uuflkvGizch8hzpY=
 github.com/andybalholm/brotli v1.0.5 h1:8uQZIdzKmjc/iuPu7O2ioW48L81FgatrcpfFmiq/cCs=
 github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
@@ -34,6 +36,8 @@ github.com/golang/protobuf v1.5.3 h1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3 h1:2XF1Vzq06X+inNqgJ9tRnGuw+ZVCB3FazXODD6JE1R8=
 github.com/google/pprof v0.0.0-20230510103437-eeec1cb781c3/go.mod h1:79YE0hCXdHag9sBkw2o+N/YnZtTkXi0UT9Nnixa5eYk=
+github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaUGG7oYTSPP8MxqL4YI3kZKwcP4=
+github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/klauspost/compress v1.16.5 h1:IFV2oUNUzZaz+XyusxpLzpzS8Pt5rh0Z16For/djlyI=
 github.com/klauspost/compress v1.16.5/go.mod h1:ntbaceVETuRiXiv4DpjP66DpAtAGkEQskQzEyD//IeE=
 github.com/kr/pretty v0.2.0 h1:s5hAObm+yFO5uHYt5dYjxi2rXrsnmRpJx4OYvIWUaQs=
