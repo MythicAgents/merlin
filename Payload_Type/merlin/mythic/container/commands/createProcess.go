@@ -210,10 +210,7 @@ func createProcessCreateTask(task *structs.PTTaskMessageAllData) (resp structs.P
 
 	job := jobs.Command{
 		Command: "createprocess",
-		Args:    []string{base64.StdEncoding.EncodeToString(data), spawnto},
-	}
-	if args != "" {
-		job.Args = append(job.Args, args)
+		Args:    []string{base64.StdEncoding.EncodeToString(data), spawnto, args},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)

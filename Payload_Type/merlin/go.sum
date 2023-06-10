@@ -58,6 +58,8 @@ github.com/MythicMeta/MythicContainer v1.0.9-rc03/go.mod h1:EZqZAa+ZdZhhfLICL4Rh
 github.com/Ne0nd0g/merlin v1.5.1 h1:LDymwSEWzT2F9e0stcRFIrLERMNzYTC+k9fb26tdURc=
 github.com/Ne0nd0g/merlin v1.5.1/go.mod h1:tBMkLNIK43tggHztuskIhRgt4boQvz/d7pWV93r4Qp4=
 github.com/akamensky/argparse v1.3.0/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=
+github.com/akamensky/argparse v1.4.0 h1:YGzvsTqCvbEZhL8zZu2AiA5nq805NZh75JNj4ajn1xc=
+github.com/akamensky/argparse v1.4.0/go.mod h1:S5kwC7IuDcEr5VeXtGPRVZ5o/FdhcMlQz4IZQuw64xA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=

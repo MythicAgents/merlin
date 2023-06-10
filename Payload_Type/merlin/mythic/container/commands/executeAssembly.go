@@ -308,10 +308,7 @@ func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp stru
 
 	job := jobs.Command{
 		Command: "createprocess",
-		Args:    []string{base64.StdEncoding.EncodeToString(shellcode.Bytes()), spawnto},
-	}
-	if spawntoargs != "" {
-		job.Args = append(job.Args, spawntoargs)
+		Args:    []string{base64.StdEncoding.EncodeToString(shellcode.Bytes()), spawnto, spawntoargs},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)

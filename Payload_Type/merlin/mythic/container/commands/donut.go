@@ -28,6 +28,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
@@ -273,7 +274,7 @@ func donutCmd() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
 		Description:                             "Exiting. 1=exit thread, 2=exit process",
 		Choices:                                 []string{"1", "2"},
-		DefaultValue:                            nil,
+		DefaultValue:                            "2",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -453,7 +454,7 @@ func donutCmd() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "CLR runtime version. This will override the auto-detected version",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "v4.0.30319",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -536,6 +537,36 @@ func donutCmd() structs.Command {
 		},
 	}
 
+	donutType := structs.CommandParameter{
+		Name:                                    "type",
+		ModalDisplayName:                        "type",
+		CLIName:                                 "type",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
+		Description:                             "Source file type. NET_EXE is for a NET executable.",
+		Choices:                                 []string{"NET_DLL", "NET_EXE", "DLL", "EXE", "VBS", "JS", "XSL"},
+		DefaultValue:                            "EXE",
+		SupportedAgents:                         nil,
+		SupportedAgentBuildParameters:           nil,
+		ChoicesAreAllCommands:                   false,
+		ChoicesAreLoadedCommands:                false,
+		FilterCommandChoicesByCommandAttributes: nil,
+		DynamicQueryFunction:                    nil,
+		ParameterGroupInformation: []structs.ParameterGroupInfo{
+			{
+				ParameterIsRequired:   true,
+				GroupName:             "Default",
+				UIModalPosition:       16,
+				AdditionalInformation: nil,
+			},
+			{
+				ParameterIsRequired:   true,
+				GroupName:             "New File",
+				UIModalPosition:       16,
+				AdditionalInformation: nil,
+			},
+		},
+	}
+
 	spawnto := structs.CommandParameter{
 		Name:                                    "spawnto",
 		ModalDisplayName:                        "SpawnTo Program",
@@ -554,13 +585,13 @@ func donutCmd() structs.Command {
 			{
 				ParameterIsRequired:   true,
 				GroupName:             "Default",
-				UIModalPosition:       16,
+				UIModalPosition:       17,
 				AdditionalInformation: nil,
 			},
 			{
 				ParameterIsRequired:   true,
 				GroupName:             "New File",
-				UIModalPosition:       16,
+				UIModalPosition:       17,
 				AdditionalInformation: nil,
 			},
 		},
@@ -584,19 +615,19 @@ func donutCmd() structs.Command {
 			{
 				ParameterIsRequired:   false,
 				GroupName:             "Default",
-				UIModalPosition:       17,
+				UIModalPosition:       18,
 				AdditionalInformation: nil,
 			},
 			{
 				ParameterIsRequired:   false,
 				GroupName:             "New File",
-				UIModalPosition:       17,
+				UIModalPosition:       18,
 				AdditionalInformation: nil,
 			},
 		},
 	}
 
-	params := []structs.CommandParameter{module, url, entropy, arch, bypass, entrypoint, exit, class, domain, method, parameters, unicode, runtime, thread, compress, spawnto, spawntoargs, file, filename}
+	params := []structs.CommandParameter{module, url, entropy, arch, bypass, entrypoint, exit, class, domain, method, parameters, unicode, runtime, thread, compress, donutType, spawnto, spawntoargs, file, filename}
 
 	command := structs.Command{
 		Name:                           "donut",
@@ -630,54 +661,69 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 	// Get the file as a byte array, its name, and any errors
 	data, _, err := GetFile(task)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// module, url, entropy, arch, bypass, entrypoint, exit, class, domain, method, parameters, unicode, runtime, thread, compress, spawnto, spawntoargs
 
 	// Module
-	v, err := task.Args.GetArg("module")
+	module, err := task.Args.GetStringArg("module")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"module\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'module' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	module := v.(string)
 
 	// URL
-	v, err = task.Args.GetArg("url")
+	url, err := task.Args.GetStringArg("url")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"url\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'url' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	url := v.(string)
+
+	instanceType := donut.DONUT_INSTANCE_PIC
+	if url != "" {
+		instanceType = donut.DONUT_INSTANCE_URL
+	}
 
 	// Entropy
-	v, err = task.Args.GetArg("entropy")
+	e, err := task.Args.GetStringArg("entropy")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"entropy\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'entropy' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
-	entropy, err := strconv.Atoi(v.(string))
+	entropy, err := strconv.Atoi(e)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error converting the \"entropy\" command argument to an integer: %s", err)
+		err = fmt.Errorf("%s: there was an error converting the 'entropy' command argument to an integer: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// Arch
-	v, err = task.Args.GetArg("arch")
+	a, err := task.Args.GetStringArg("arch")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"arch\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'arch' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 	var arch donut.DonutArch
-	switch strings.ToLower(v.(string)) {
+	switch strings.ToLower(a) {
 	case "x32":
 		arch = donut.X32
 	case "x64":
@@ -688,17 +734,52 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 		arch = donut.X84
 	}
 
-	// Bypass - AMSI/WLDP : 1=skip, 2=abort on fail, 3=continue on fail
-	v, err = task.Args.GetArg("bypass")
+	// Type
+	var modType donut.ModuleType
+	donutType, err := task.Args.GetStringArg("type")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"bypass\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'type' argument: %s", pkg, err)
+		resp.Error = err.Error()
+		resp.Success = false
+		logging.LogError(err, "returning with error")
+		return
+	}
+	switch strings.ToLower(donutType) {
+	case "net_dll":
+		modType = donut.DONUT_MODULE_NET_DLL
+	case "net_exe":
+		modType = donut.DONUT_MODULE_NET_EXE
+	case "dll":
+		modType = donut.DONUT_MODULE_DLL
+	case "exe":
+		modType = donut.DONUT_MODULE_EXE
+	case "vbs":
+		modType = donut.DONUT_MODULE_VBS
+	case "js":
+		modType = donut.DONUT_MODULE_JS
+	case "xsl":
+		modType = donut.DONUT_MODULE_XSL
+	default:
+		resp.Error = fmt.Sprintf("invalid donut module type: %s", donutType)
 		resp.Success = false
 		return
 	}
-	bypass, err := strconv.Atoi(v.(string))
+
+	// Bypass - AMSI/WLDP : 1=skip, 2=abort on fail, 3=continue on fail
+	b, err := task.Args.GetStringArg("bypass")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error converting the \"bypass\" command argument to an integer: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'bypass' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
+		return
+	}
+	bypass, err := strconv.Atoi(b)
+	if err != nil {
+		err = fmt.Errorf("%s: there was an error converting the 'bypass' command argument to an integer: %s", pkg, err)
+		resp.Error = err.Error()
+		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 	switch bypass {
@@ -710,118 +791,125 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 	}
 
 	// Entrypoint
-	v, err = task.Args.GetArg("entrypoint")
+	ent, err := task.Args.GetBooleanArg("entrypoint")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"entrypoint\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'entrypoint' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
 	var entrypoint uint64
-	if v.(bool) {
+	if ent {
 		entrypoint = 1
 	}
 
 	// Exit - 1=exit thread, 2=exit process
-	v, err = task.Args.GetArg("exit")
+	ex, err := task.Args.GetStringArg("exit")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"exit\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'exit' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	exit, err := strconv.Atoi(v.(string))
+	exit, err := strconv.Atoi(ex)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error converting the \"exit\" command argument to an integer: %s", err)
+		err = fmt.Errorf("%s: there was an error converting the 'exit' command argument to an integer: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
 	switch exit {
 	case 1:
 	case 2:
 	default:
-		exit = 1
+		exit = 2
 	}
 
 	// Class
-	v, err = task.Args.GetArg("class")
+	class, err := task.Args.GetStringArg("class")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"class\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'class' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	class := v.(string)
 
 	// Domain
-	v, err = task.Args.GetArg("domain")
+	domain, err := task.Args.GetStringArg("domain")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"domain\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'domain' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	domain := v.(string)
 
 	// Method
-	v, err = task.Args.GetArg("method")
+	method, err := task.Args.GetStringArg("method")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"method\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'method' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	method := v.(string)
 
 	// Parameters
-	v, err = task.Args.GetArg("parameters")
+	parameters, err := task.Args.GetStringArg("parameters")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"parameters\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'parameters' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	parameters := v.(string)
 
 	// Unicode
-	v, err = task.Args.GetArg("unicode")
+	u, err := task.Args.GetBooleanArg("unicode")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"unicode\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'unicode' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
 	var unicode uint32
-	if v.(bool) {
+	if u {
 		unicode = 1
 	}
 
 	// Runtime
-	v, err = task.Args.GetArg("runtime")
+	runtime, err := task.Args.GetStringArg("runtime")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"runtime\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'runtime' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	runtime := v.(string)
 
 	// Thread
-	v, err = task.Args.GetArg("thread")
+	t, err := task.Args.GetBooleanArg("thread")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"thread\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'thread' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
 	var thread uint32
-	if v.(bool) == true {
+	if t == true {
 		thread = 1
 	}
 
 	// Compress - Pack/Compress file. 1=disable, 2=LZNT1, 3=Xpress, 4=Xpress Huffman
-	v, err = task.Args.GetArg("compress")
+	comp, err := task.Args.GetStringArg("compress")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"compress\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'compress' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	compress, err := strconv.Atoi(v.(string))
+	compress, err := strconv.Atoi(comp)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error converting the \"compress\" command argument to an integer: %s", err)
+		err = fmt.Errorf("%s: there was an error converting the 'compress' command argument to an integer: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
 	switch compress {
 	case 1:
@@ -833,27 +921,27 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 	}
 
 	// SpawnTo
-	v, err = task.Args.GetArg("spawnto")
+	spawnto, err := task.Args.GetStringArg("spawnto")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawnto\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'spawnto' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	spawnto := v.(string)
 
 	// SpawnTo Args
-	v, err = task.Args.GetArg("spawntoargs")
+	spawntoargs, err := task.Args.GetStringArg("spawntoargs")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawntoargs\" command argument: %s", err)
+		err = fmt.Errorf("%s: there was an error getting the 'spawntoargs' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
-		return
+		logging.LogError(err, "returning with error")
 	}
-	spawntoargs := v.(string)
 
 	config := donut.DonutConfig{
 		Arch:       arch,
-		Type:       0,
-		InstType:   0,
+		Type:       modType, // NET_DLL, NET_EXE, EXE, DLL, JS, VBS, XSL
+		InstType:   instanceType,
 		Parameters: parameters,
 		Entropy:    uint32(entropy),
 		Thread:     thread,

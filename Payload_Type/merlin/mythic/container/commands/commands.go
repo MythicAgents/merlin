@@ -42,12 +42,11 @@ type Job struct {
 
 // Commands returns a list of all the commands the Merlin agent payload supports
 func Commands() (commands []structs.Command) {
-	// TODO Fix the following commands: executePE, executeShellcode, donut
-	// TODO Add the following commands: mimikatz, sharpgen, srdi
+	// TODO Add the following commands: sharpgen, srdi
 	commands = append(
-		commands, cd(), createProcess(), download(), env(), executeAssembly(), executeShellcode(),
+		commands, cd(), createProcess(), donutCmd(), download(), env(), executeAssembly(), executePE(), executeShellcode(),
 		exit(), ifconfig(), invokeAssembly(), ja3(), killdate(), killProcess(), loadAssembly(), listAssembly(), ls(),
-		makeToken(), maxRetry(), memfd(), memory(), netstat(), nslookup(), parrot(), pipes(), ps(), pwd(), rev2Self(),
+		makeToken(), maxRetry(), memfd(), memory(), mimikatz(), netstat(), nslookup(), parrot(), pipes(), ps(), pwd(), rev2Self(),
 		rm(), run(), runas(), sdelete(), shell(), skew(), socks(), ssh(), stealToken(), timeStomp(), token(), upload(),
 		uptime(),
 	)

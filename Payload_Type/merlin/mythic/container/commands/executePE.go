@@ -237,7 +237,6 @@ func executePECreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PT
 	}
 
 	// Donut Config
-	// Donut Config
 	config := donut.DefaultConfig()
 	config.Arch = donut.X84
 	config.Type = donut.DONUT_MODULE_EXE
@@ -245,34 +244,6 @@ func executePECreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PT
 	config.Entropy = 3
 	config.Parameters = arguments
 	config.Verbose = false
-	fmt.Printf("Donut Config: %+v\n", config)
-	/*
-		config := donut.DonutConfig{
-			Arch:       donut.X84,
-			Type:       donut.DONUT_MODULE_EXE,
-			InstType:   0,
-			Parameters: arguments,
-			Entropy:    3,
-			Thread:     0,
-			Compress:   0,
-			Unicode:    0,
-			OEP:        0,
-			ExitOpt:    2,
-			Format:     1, // 1=Binary (default), 2=Base64, 3=C, 4=Ruby, 5=Python, 6=PowerShell, 7=C#, 8=Hexadecimal
-			Domain:     "",
-			Class:      "",
-			Method:     "",
-			Runtime:    "",
-			Bypass:     3,
-			Module:     nil,
-			ModuleName: "",
-			URL:        "",
-			ModuleMac:  0,
-			ModuleData: nil,
-			Verbose:    false,
-		}
-
-	*/
 
 	// Get the PE and turn it into a *bytes.buffer
 	buff := bytes.NewBuffer(data)
