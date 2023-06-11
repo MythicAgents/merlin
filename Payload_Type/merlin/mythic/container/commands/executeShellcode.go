@@ -16,14 +16,17 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
+	// Standard
 	"encoding/base64"
 	"encoding/json"
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	"fmt"
+	"strings"
 
 	// Mythic
-	"fmt"
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"strings"
+
+	// Merlin
+	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
 // executeShellcode returns a Mythic Command structure that is registered with the Mythic server
@@ -196,13 +199,6 @@ func executeShellcodeCreateTasking(task *structs.PTTaskMessageAllData) (resp str
 		resp.Success = false
 		return
 	}
-
-	//  Merlin Job
-	// Command: createprocess
-	// Arguments:
-	// 1. File contents as Base64 string
-	// 2. SpawnTo executable file path on host where the Agent is running
-	// 3. SpawnTo arguments
 
 	job := jobs.Shellcode{
 		Method: strings.ToLower(method),

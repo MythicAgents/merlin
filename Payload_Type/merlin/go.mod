@@ -1,4 +1,4 @@
-module MyContainer
+module github.com/MythicAgents/merlin/Payload_Type/merlin
 
 go 1.19
 

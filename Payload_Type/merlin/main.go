@@ -17,23 +17,21 @@ package main
 
 import (
 	// Standard
-	"fmt"
-	"log"
 	"os"
 	"path/filepath"
-	"time"
 
-	// 3rd Party
+	// Mythic
 	"github.com/MythicMeta/MythicContainer"
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Internal
-	"MyContainer/mythic/container/commands"
-	"MyContainer/mythic/container/payload/build"
+	"github.com/MythicAgents/merlin/Payload_Type/merlin/mythic/container/commands"
+	"github.com/MythicAgents/merlin/Payload_Type/merlin/mythic/container/payload/build"
 )
 
 func main() {
-	fmt.Printf("%s Starting Merlin container\n", time.Now().UTC().Format(time.RFC3339))
+	logging.LogInfo("Starting Merlin container")
 
 	// Create a service for this Merlin container
 	payloadService := structs.AllPayloadData.Get("merlin")
@@ -42,7 +40,7 @@ func main() {
 	// If running as standalone, locally, outside Mythic: export MYTHIC_SERVER_HOST=127.0.0.1
 	payload, err := build.NewPayload()
 	if err != nil {
-		log.Fatal(err)
+		logging.LogError(err, "quitting")
 		os.Exit(2)
 	}
 	payloadService.AddPayloadDefinition(payload)
