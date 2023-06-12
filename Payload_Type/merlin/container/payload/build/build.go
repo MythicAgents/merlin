@@ -31,7 +31,7 @@ import (
 	"github.com/MythicMeta/MythicContainer/mythicrpc"
 
 	// Internal
-	"github.com/MythicAgents/merlin/Payload_Type/merlin/mythic/container/pkg/srdi"
+	"github.com/MythicAgents/merlin/Payload_Type/merlin/container/pkg/srdi"
 )
 
 var debugInfo = false
@@ -286,13 +286,10 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		goArgs = append(goArgs, []string{"main.a", "-buildmode=c-archive", "-ldflags", ldflags}...)
 		args := []string{"-tags=mythic", "main.go", "dll.go"}
 		goArgs = append(goArgs, args...)
-		//goCMD += fmt.Sprintf("build -buildmode=c-archive -o main -ldflags %s -tags=mythic main.go dll.go;", ldflags)
-		//goCMD += fmt.Sprintf("x86_64-w64-mingw32-gcc -shared -pthread -o merlin.bin merlin.c main.a -lwinmm -lntdll -lws2_32")
 	} else if mode == "shared" {
 		//goCMD += fmt.Sprintf("build -buildmode=c-shared -o merlin.bin -ldflags %s -tags=mythic,shared main.go shared.go", ldflags)
 	} else {
 		goArgs = append(goArgs, []string{"merlin.bin", "-buildmode=default", "-ldflags", ldflags, "-tags=mythic", "main.go"}...)
-		//goCMD += fmt.Sprintf("build -buildmode=default -o merlin.bin -ldflags %s -tags=mythic main.go", ldflags)
 	}
 
 	bin := "go"
@@ -367,6 +364,12 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	// CGO and CC
 	if msg.SelectedOS == "windows" && (mode == "shared" || mode == "raw") {
 		err = os.Setenv("CGO_ENABLED", "1")
+		defer func() {
+			err = os.Unsetenv("CGO_ENABLED")
+			if err != nil {
+				logging.LogError(err, "there was an error unsetting the 'CGO_ENABLED' environment variable")
+			}
+		}()
 		if err != nil {
 			response.BuildMessage = "there was an error compiling the agent"
 			response.BuildStdErr = fmt.Sprintf("there was an error setting the 'CGO_ENABLED' environment variable to '1': %s", err)
@@ -389,6 +392,12 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 
 		// https://pkg.go.dev/cmd/cgo
 		err = os.Setenv("CC", "x86_64-w64-mingw32-gcc")
+		defer func() {
+			err = os.Unsetenv("CC")
+			if err != nil {
+				logging.LogError(err, "there was an error unsetting the 'CC' environment variable")
+			}
+		}()
 		if err != nil {
 			response.BuildMessage = "there was an error compiling the agent"
 			response.BuildStdErr = fmt.Sprintf("there was an error setting the 'CC' environment variable to 'x86_64-w64-mingw32-gcc\"': %s", err)
@@ -412,7 +421,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 
 	// Use Go and build the payload
 	cmd := exec.Command(bin, goArgs...)
-	cmd.Dir = filepath.Join(".", "merlin", "agent_code")
+	cmd.Dir = filepath.Join("/", "Mythic", "agent")
 	stdOut, err := cmd.CombinedOutput()
 	response.BuildStdOut = fmt.Sprintf("%s\nBuild: %s", string(stdOut), bin)
 	for _, v = range goArgs {
@@ -459,7 +468,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	if msg.SelectedOS == "windows" && (mode == "shared" || mode == "raw") {
 		gccArgs := []string{"-shared", "-pthread", "-o", "merlin.bin", "merlin.c", "main.a", "-lwinmm", "-lntdll", "-lws2_32"}
 		cmd = exec.Command("x86_64-w64-mingw32-gcc", gccArgs...)
-		cmd.Dir = filepath.Join(".", "merlin", "agent_code")
+		cmd.Dir = filepath.Join("/", "Mythic", "agent")
 		stdOut, err = cmd.CombinedOutput()
 		response.BuildStdOut += fmt.Sprintf("%s\nCompile DLL: %s", string(stdOut), "x86_64-w64-mingw32-gcc")
 		for _, v = range gccArgs {
@@ -504,7 +513,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 
 	// Read the payload file into memory
-	payload, err := os.ReadFile(filepath.Join(".", "merlin", "agent_code", "merlin.bin"))
+	payload, err := os.ReadFile(filepath.Join("/", "Mythic", "agent", "merlin.bin"))
 	if err != nil {
 		response.BuildMessage = "Failed to find final payload"
 		response.BuildStdErr = err.Error()

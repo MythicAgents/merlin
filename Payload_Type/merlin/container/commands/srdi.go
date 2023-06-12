@@ -30,7 +30,7 @@ import (
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 
 	// Internal
-	"github.com/MythicAgents/merlin/Payload_Type/merlin/mythic/container/pkg/srdi"
+	"github.com/MythicAgents/merlin/Payload_Type/merlin/container/pkg/srdi"
 )
 
 // srdiCmd creates and returns a Mythic Command structure that is registered with the Mythic server
@@ -45,8 +45,8 @@ func srdiCmd() structs.Command {
 		CLIName:                                 "filename",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
 		Description:                             "DLL to convert to shellcode",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
+		Choices:                                 []string{""},
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -94,7 +94,7 @@ func srdiCmd() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "The function to call after DllMain",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -103,13 +103,13 @@ func srdiCmd() structs.Command {
 		DynamicQueryFunction:                    nil,
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
-				ParameterIsRequired:   false,
+				ParameterIsRequired:   true,
 				GroupName:             "Default",
 				UIModalPosition:       1,
 				AdditionalInformation: nil,
 			},
 			{
-				ParameterIsRequired:   false,
+				ParameterIsRequired:   true,
 				GroupName:             "New File",
 				UIModalPosition:       1,
 				AdditionalInformation: nil,
@@ -274,7 +274,7 @@ func srdiCmd() structs.Command {
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "arguments to create the spawnto process with, if any",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,

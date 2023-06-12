@@ -16,30 +16,33 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	"bytes"
+	// Standard
 	"encoding/base64"
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	"encoding/json"
+	"fmt"
+	"strings"
 
 	// Mythic
-	"fmt"
-	"github.com/Binject/go-donut/donut"
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+
+	// Merlin
+	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// executePE returns a Mythic Command structure that is registered with the Mythic server
-func executePE() structs.Command {
+// executeShellcode returns a Mythic Command structure that is registered with the Mythic server
+func executeShellcode() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},
 	}
 
 	filename := structs.CommandParameter{
 		Name:                                    "filename",
-		ModalDisplayName:                        "Executable",
-		CLIName:                                 "executable",
+		ModalDisplayName:                        "Shellcode File",
+		CLIName:                                 "shellcode",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             "The Windows executable (PE file) you want to run",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
+		Description:                             "The binary file that contains the shellcode",
+		Choices:                                 []string{""},
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -58,10 +61,10 @@ func executePE() structs.Command {
 
 	file := structs.CommandParameter{
 		Name:                                    "file",
-		ModalDisplayName:                        "Executable",
+		ModalDisplayName:                        "Shellcode File",
 		CLIName:                                 "file",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "The Windows executable (PE file) you want to run",
+		Description:                             "The binary file that contains the shellcode",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -80,13 +83,13 @@ func executePE() structs.Command {
 		},
 	}
 
-	arguments := structs.CommandParameter{
-		Name:                                    "arguments",
-		ModalDisplayName:                        "Executable Arguments",
-		CLIName:                                 "args",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "Arguments to execute the PE with",
-		Choices:                                 nil,
+	method := structs.CommandParameter{
+		Name:                                    "method",
+		ModalDisplayName:                        "Process Injection Method",
+		CLIName:                                 "method",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
+		Description:                             "The shellcode injection method to use",
+		Choices:                                 []string{"self", "remote", "RtlCreateUserThread", "userapc"},
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
@@ -96,13 +99,13 @@ func executePE() structs.Command {
 		DynamicQueryFunction:                    nil,
 		ParameterGroupInformation: []structs.ParameterGroupInfo{
 			{
-				ParameterIsRequired:   false,
+				ParameterIsRequired:   true,
 				GroupName:             "Default",
 				UIModalPosition:       1,
 				AdditionalInformation: nil,
 			},
 			{
-				ParameterIsRequired:   false,
+				ParameterIsRequired:   true,
 				GroupName:             "New File",
 				UIModalPosition:       1,
 				AdditionalInformation: nil,
@@ -110,14 +113,14 @@ func executePE() structs.Command {
 		},
 	}
 
-	spawnto := structs.CommandParameter{
-		Name:                                    "spawnto",
-		ModalDisplayName:                        "SpawnTo",
-		CLIName:                                 "spawnto",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The child process that will be started to execute the shellcode in",
+	pid := structs.CommandParameter{
+		Name:                                    "pid",
+		ModalDisplayName:                        "Target Process ID",
+		CLIName:                                 "pid",
+		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_NUMBER,
+		Description:                             "The Process ID (PID) to inject the shellcode into. Not used with the 'self' method",
 		Choices:                                 nil,
-		DefaultValue:                            "C:\\Windows\\System32\\WerFault.exe",
+		DefaultValue:                            0,
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -135,43 +138,13 @@ func executePE() structs.Command {
 				ParameterIsRequired:   true,
 				GroupName:             "New File",
 				UIModalPosition:       2,
-				AdditionalInformation: nil,
-			},
-		},
-	}
-
-	spawntoArgs := structs.CommandParameter{
-		Name:                                    "spawntoargs",
-		ModalDisplayName:                        "SpawnTo Agruments",
-		CLIName:                                 "spawntoargs",
-		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "arguments to create the spawnto process with, if any",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
-		SupportedAgents:                         nil,
-		SupportedAgentBuildParameters:           nil,
-		ChoicesAreAllCommands:                   false,
-		ChoicesAreLoadedCommands:                false,
-		FilterCommandChoicesByCommandAttributes: nil,
-		DynamicQueryFunction:                    nil,
-		ParameterGroupInformation: []structs.ParameterGroupInfo{
-			{
-				ParameterIsRequired:   false,
-				GroupName:             "Default",
-				UIModalPosition:       3,
-				AdditionalInformation: nil,
-			},
-			{
-				ParameterIsRequired:   false,
-				GroupName:             "New File",
-				UIModalPosition:       3,
 				AdditionalInformation: nil,
 			},
 		},
 	}
 
 	command := structs.Command{
-		Name:                  "execute-pe",
+		Name:                  "execute-shellcode",
 		NeedsAdminPermissions: false,
 		HelpString:            "execute-pe <executable name> <executable args> <spawnto> <spawnto-args>",
 		Description: "Convert a Windows PE into shellcode with Donut, execute it in the SpawnTo process, and return " +
@@ -183,10 +156,10 @@ func executePE() structs.Command {
 		MitreAttackMappings:            []string{"T1055"},
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{file, filename, arguments, spawnto, spawntoArgs},
+		CommandParameters:              []structs.CommandParameter{file, filename, method, pid},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      executePECreateTasking,
+		TaskFunctionCreateTasking:      executeShellcodeCreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -197,8 +170,8 @@ func executePE() structs.Command {
 	return command
 }
 
-func executePECreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/executePE/executePECreateTask()"
+func executeShellcodeCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/executeShellcode/executeShellcodeCreateTask()"
 	resp.TaskID = task.Task.ID
 
 	// Get the file as a byte array, its name, and any errors
@@ -209,74 +182,51 @@ func executePECreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PT
 		return
 	}
 
-	// Arguments
-	var arguments string
-	arguments, err = task.Args.GetStringArg("arguments")
+	// method
+	var method string
+	method, err = task.Args.GetStringArg("method")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"arguments\" command argument: %s", err)
+		resp.Error = fmt.Sprintf("there was an error getting the \"method\" command argument: %s", err)
 		resp.Success = false
 		return
 	}
 
-	// SpawnTo
-	var spawnto string
-	spawnto, err = task.Args.GetStringArg("spawnto")
+	// Process ID
+	var pid float64
+	pid, err = task.Args.GetNumberArg("pid")
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawnto\" command argument: %s", err)
+		resp.Error = fmt.Sprintf("there was an error getting the \"pid\" command argument: %s", err)
 		resp.Success = false
 		return
 	}
 
-	// SpawnTo Args
-	var spawntoargs string
-	spawntoargs, err = task.Args.GetStringArg("spawntoargs")
+	job := jobs.Shellcode{
+		Method: strings.ToLower(method),
+		Bytes:  base64.StdEncoding.EncodeToString(data),
+		PID:    uint32(pid),
+	}
+
+	jobBytes, err := json.Marshal(job)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error getting the \"spawntoargs\" command argument: %s", err)
+		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Shellcode structure: %s", err)
 		resp.Success = false
 		return
 	}
 
-	// Donut Config
-	config := donut.DefaultConfig()
-	config.Arch = donut.X84
-	config.Type = donut.DONUT_MODULE_EXE
-	config.ExitOpt = 2
-	config.Entropy = 3
-	config.Parameters = arguments
-	config.Verbose = false
-
-	// Get the PE and turn it into a *bytes.buffer
-	buff := bytes.NewBuffer(data)
-	var shellcode *bytes.Buffer
-	shellcode, err = donut.ShellcodeFromBytes(buff, config)
+	mythicJob := Job{
+		Type:    jobs.SHELLCODE,
+		Payload: string(jobBytes),
+	}
+	mythicJobBytes, err := json.Marshal(mythicJob)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error generating the shellcode from Donut: %s", err)
+		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
 		resp.Success = false
 		return
 	}
 
-	//  Merlin Job
-	// Command: createprocess
-	// Arguments:
-	// 1. File contents as Base64 string
-	// 2. SpawnTo executable file path on host where the Agent is running
-	// 3. SpawnTo arguments
+	task.Args.SetManualArgs(string(mythicJobBytes))
 
-	job := jobs.Command{
-		Command: "createprocess",
-		Args:    []string{base64.StdEncoding.EncodeToString(shellcode.Bytes()), spawnto, spawntoargs},
-	}
-
-	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
-	if err != nil {
-		resp.Error = fmt.Sprintf("mythic/container/commands/executePE/executPECreateTasking(): %s", err)
-		resp.Success = false
-		return
-	}
-
-	task.Args.SetManualArgs(mythicJob)
-
-	disp := fmt.Sprintf("%s %s, SpawnTo: %s, SpawnTo Arguments: %s", filename, arguments, spawnto, spawntoargs)
+	disp := fmt.Sprintf("Filename: %s, Method: %s, PID: %d", filename, method, int(pid))
 	resp.DisplayParams = &disp
 	resp.Success = true
 	return

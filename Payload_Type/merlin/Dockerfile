@@ -1,4 +1,7 @@
-FROM itsafeaturemythic/mythic_base_image:0.0.1
+FROM ne0nd0g/merlin-base:v1.4.0
+
+# FROM itsafeaturemythic/mythic_go_base:1.0.4-rc08
+# https://github.com/MythicMeta/Mythic_Docker_Templates/blob/master/mythic_go_base/Dockerfile
 
 WORKDIR /Mythic
 
@@ -6,6 +9,9 @@ WORKDIR /Mythic
 COPY [".", "."]
 
 # Download all the Go modules ahead of time, before compiling
+WORKDIR /Mythic/agent
+RUN go mod download
+WORKDIR /Mythic/container
 RUN go mod download
 
 # Build the Merlin container and save in the /usr/local/bin directory because it is in the PATH environment variable

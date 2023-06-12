@@ -16,36 +16,30 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	// Standard
 	"bytes"
 	"encoding/base64"
-	"fmt"
-
-	// 3rd Party
-	"github.com/Binject/go-donut/donut"
+	"github.com/Ne0nd0g/merlin/pkg/jobs"
 
 	// Mythic
+	"fmt"
+	"github.com/Binject/go-donut/donut"
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
-	"github.com/MythicMeta/MythicContainer/logging"
-
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// executeAssembly returns a Mythic Command structure that is registered with the Mythic server
-func executeAssembly() structs.Command {
+// executePE returns a Mythic Command structure that is registered with the Mythic server
+func executePE() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},
 	}
 
 	filename := structs.CommandParameter{
 		Name:                                    "filename",
-		ModalDisplayName:                        ".NET Assembly",
-		CLIName:                                 "assembly",
+		ModalDisplayName:                        "Executable",
+		CLIName:                                 "executable",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             ".NET assembly, EXE, DLL, VBS, JS or XSL file to execute in-memory",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
+		Description:                             "The Windows executable (PE file) you want to run",
+		Choices:                                 []string{""},
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -64,10 +58,10 @@ func executeAssembly() structs.Command {
 
 	file := structs.CommandParameter{
 		Name:                                    "file",
-		ModalDisplayName:                        ".NET Assembly",
+		ModalDisplayName:                        "Executable",
 		CLIName:                                 "file",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "Upload a new .NET assembly you want to execute",
+		Description:                             "The Windows executable (PE file) you want to run",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -88,10 +82,10 @@ func executeAssembly() structs.Command {
 
 	arguments := structs.CommandParameter{
 		Name:                                    "arguments",
-		ModalDisplayName:                        ".NET Assembly Arguments",
+		ModalDisplayName:                        "Executable Arguments",
 		CLIName:                                 "args",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "Arguments to execute the .NET assembly with",
+		Description:                             "Arguments to execute the PE with",
 		Choices:                                 nil,
 		DefaultValue:                            "",
 		SupportedAgents:                         nil,
@@ -177,12 +171,12 @@ func executeAssembly() structs.Command {
 	}
 
 	command := structs.Command{
-		Name:                  "execute-assembly",
+		Name:                  "execute-pe",
 		NeedsAdminPermissions: false,
-		HelpString:            "execute-assembly <assembly name> <spawnto> <spawnto arguments>",
-		Description: "Convert a .NET assembly into shellcode with Donut, execute it in the SpawnTo " +
-			"process, and return the output. Change the Parameter Group to \"Default\" to use a file that was " +
-			"previously registered with Mythic and \"New File\" to register and use a new file from your host OS.",
+		HelpString:            "execute-pe <executable name> <executable args> <spawnto> <spawnto-args>",
+		Description: "Convert a Windows PE into shellcode with Donut, execute it in the SpawnTo process, and return " +
+			"the output Change the Parameter Group to \"Default\" to use a file that was previously registered with " +
+			"Mythic and \"New File\" to register and use a new file from your host OS.",
 		Version:                        0,
 		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
@@ -192,7 +186,7 @@ func executeAssembly() structs.Command {
 		CommandParameters:              []structs.CommandParameter{file, filename, arguments, spawnto, spawntoArgs},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      executeAssemblyCreateTasking,
+		TaskFunctionCreateTasking:      executePECreateTasking,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -203,99 +197,61 @@ func executeAssembly() structs.Command {
 	return command
 }
 
-func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/executeAssembly/executeAssemblyCreateTask()"
+func executePECreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/executePE/executePECreateTask()"
 	resp.TaskID = task.Task.ID
 
 	// Get the file as a byte array, its name, and any errors
 	data, filename, err := GetFile(task)
 	if err != nil {
-		err = fmt.Errorf("%s: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// Arguments
-	arguments, err := task.Args.GetStringArg("arguments")
+	var arguments string
+	arguments, err = task.Args.GetStringArg("arguments")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'arguments' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("there was an error getting the \"arguments\" command argument: %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// SpawnTo
-	spawnto, err := task.Args.GetStringArg("spawnto")
+	var spawnto string
+	spawnto, err = task.Args.GetStringArg("spawnto")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'spawnto' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("there was an error getting the \"spawnto\" command argument: %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// SpawnTo Args
-	spawntoargs, err := task.Args.GetStringArg("spawntoargs")
+	var spawntoargs string
+	spawntoargs, err = task.Args.GetStringArg("spawntoargs")
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error getting the 'spawntoargs' argument: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("there was an error getting the \"spawntoargs\" command argument: %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
 	// Donut Config
 	config := donut.DefaultConfig()
 	config.Arch = donut.X84
-	config.Type = donut.DONUT_MODULE_NET_EXE
-	config.Runtime = "v4.0.30319"
+	config.Type = donut.DONUT_MODULE_EXE
 	config.ExitOpt = 2
 	config.Entropy = 3
+	config.Parameters = arguments
 	config.Verbose = false
-	if arguments != "" {
-		config.Parameters = arguments
-	}
 
-	/*
-		config := donut.DonutConfig{
-			Arch:       donut.X84,
-			Type:       2,
-			InstType:   1,
-			Parameters: arguments,
-			Entropy:    3,
-			Thread:     0,
-			Compress:   1,
-			Unicode:    0,
-			OEP:        0,
-			ExitOpt:    2,
-			Format:     1, // 1=Binary (default), 2=Base64, 3=C, 4=Ruby, 5=Python, 6=PowerShell, 7=C#, 8=Hexadecimal
-			Domain:     "",
-			Class:      "",
-			Method:     "",
-			Runtime:    "",
-			Bypass:     3,
-			Module:     nil,
-			ModuleName: "",
-			URL:        "",
-			ModuleMac:  0,
-			ModuleData: nil,
-			Verbose:    false,
-		}
-
-	*/
-
-	// Get the assembly and turn it into a *bytes.buffer
+	// Get the PE and turn it into a *bytes.buffer
 	buff := bytes.NewBuffer(data)
 	var shellcode *bytes.Buffer
 	shellcode, err = donut.ShellcodeFromBytes(buff, config)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error generating the shellcode from Donut: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("there was an error generating the shellcode from Donut: %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 
@@ -313,10 +269,8 @@ func executeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp stru
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		err = fmt.Errorf("%s: there was an error converting the Merlin job to a Mythic task: %s", pkg, err)
-		resp.Error = err.Error()
+		resp.Error = fmt.Sprintf("mythic/container/commands/executePE/executPECreateTasking(): %s", err)
 		resp.Success = false
-		logging.LogError(err, "returning with error")
 		return
 	}
 

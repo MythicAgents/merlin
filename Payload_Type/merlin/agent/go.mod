@@ -1,4 +1,4 @@
-module github.com/MythicAgents/merlin/Payload_Type/merlin/agent_code
+module github.com/MythicAgents/merlin/Payload_Type/agent
 
 go 1.19
 

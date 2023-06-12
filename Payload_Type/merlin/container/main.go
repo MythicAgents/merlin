@@ -26,8 +26,8 @@ import (
 	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Internal
-	"github.com/MythicAgents/merlin/Payload_Type/merlin/mythic/container/commands"
-	"github.com/MythicAgents/merlin/Payload_Type/merlin/mythic/container/payload/build"
+	"github.com/MythicAgents/merlin/Payload_Type/merlin/container/commands"
+	"github.com/MythicAgents/merlin/Payload_Type/merlin/container/payload/build"
 )
 
 func main() {
@@ -54,7 +54,7 @@ func main() {
 	}
 
 	// Get the Merlin icon and add it
-	payloadService.AddIcon(filepath.Join(".", "mythic", "merlin.svg"))
+	payloadService.AddIcon(filepath.Join(".", "..", "merlin.svg"))
 
 	// Start the container
 	MythicContainer.StartAndRunForever([]MythicContainer.MythicServices{MythicContainer.MythicServicePayload})

@@ -1,9 +1,9 @@
-module github.com/MythicAgents/merlin/Payload_Type/merlin
+module github.com/MythicAgents/merlin/Payload_Type/merlin/container
 
 go 1.19
 
 require (
-	github.com/MythicMeta/MythicContainer v1.0.9-rc03
+	github.com/MythicMeta/MythicContainer v1.0.9-rc09
 	github.com/Ne0nd0g/merlin v1.5.1
 )
 

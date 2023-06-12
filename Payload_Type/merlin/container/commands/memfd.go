@@ -16,33 +16,32 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
-	"encoding/base64"
-	"encoding/json"
-
 	// Standard
+	"encoding/base64"
 	"fmt"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin
 	"github.com/Ne0nd0g/merlin/pkg/jobs"
 )
 
-// upload creates and return a Mythic Command structure that is registered with the Mythic server
-func upload() structs.Command {
+// memfd creates and return a Mythic Command structure that is registered with the Mythic server
+func memfd() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
+		SupportedOS: []string{structs.SUPPORTED_OS_LINUX, "Debian"},
 	}
 
 	filename := structs.CommandParameter{
 		Name:                                    "filename",
-		ModalDisplayName:                        "Filename",
+		ModalDisplayName:                        "Executable",
 		CLIName:                                 "filename",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_CHOOSE_ONE,
-		Description:                             "The file to upload to the host where the agent is running",
-		Choices:                                 nil,
-		DefaultValue:                            nil,
+		Description:                             "The Linux executable file you want to run in memory",
+		Choices:                                 []string{""},
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -61,10 +60,10 @@ func upload() structs.Command {
 
 	file := structs.CommandParameter{
 		Name:                                    "file",
-		ModalDisplayName:                        "File",
+		ModalDisplayName:                        "Executable",
 		CLIName:                                 "file",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_FILE,
-		Description:                             "The file to upload to the host where the agent is running",
+		Description:                             "The Linux executable file you want to run in memory",
 		Choices:                                 nil,
 		DefaultValue:                            nil,
 		SupportedAgents:                         nil,
@@ -83,14 +82,14 @@ func upload() structs.Command {
 		},
 	}
 
-	path := structs.CommandParameter{
-		Name:                                    "path",
-		ModalDisplayName:                        "Destination Path",
-		CLIName:                                 "path",
+	args := structs.CommandParameter{
+		Name:                                    "args",
+		ModalDisplayName:                        "Arguments",
+		CLIName:                                 "args",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "The file path on the host where the agent is running that the file will be written to",
+		Description:                             "Arguments to start the executable with",
 		Choices:                                 nil,
-		DefaultValue:                            nil,
+		DefaultValue:                            "",
 		SupportedAgents:                         nil,
 		SupportedAgentBuildParameters:           nil,
 		ChoicesAreAllCommands:                   false,
@@ -105,32 +104,33 @@ func upload() structs.Command {
 				AdditionalInformation: nil,
 			},
 			{
-				ParameterIsRequired:   true,
+				ParameterIsRequired:   false,
 				GroupName:             "New File",
-				UIModalPosition:       2,
+				UIModalPosition:       1,
 				AdditionalInformation: nil,
 			},
 		},
 	}
 
-	params := []structs.CommandParameter{file, filename, path}
+	params := []structs.CommandParameter{file, filename, args}
 	command := structs.Command{
-		Name:                  "upload",
+		Name:                  "memfd",
 		NeedsAdminPermissions: false,
-		HelpString:            "upload <source file> <destination file path>",
-		Description: "Upload a file to the host where the agent is running. Change the Parameter " +
-			"Group to \"Default\" to use a file that was previously registered with Mythic and \"New File\" to " +
-			"register and use a new file from your host OS.",
+		HelpString:            "memfd <executable name> <args>",
+		Description: "Load a Linux executable file into memory (RAM) as an anonymous file using the" +
+			" memfd_create API call, execute it, and returns the results. Change the Parameter Group to \\\"Default\\\"" +
+			" to use a file that was previously registered with Mythic and \\\"New File\\\" to register and use a new " +
+			"file from your host OS.",
 		Version:                        0,
-		SupportedUIFeatures:            []string{"file_browser:upload"},
+		SupportedUIFeatures:            nil,
 		Author:                         "@Ne0nd0g",
-		MitreAttackMappings:            []string{},
+		MitreAttackMappings:            []string{"T1055"},
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
 		CommandParameters:              params,
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
-		TaskFunctionCreateTasking:      uploadCreateTask,
+		TaskFunctionCreateTasking:      memfdCreateTask,
 		TaskFunctionProcessResponse:    nil,
 		TaskFunctionOPSECPost:          nil,
 		TaskFunctionParseArgString:     taskFunctionParseArgString,
@@ -141,53 +141,50 @@ func upload() structs.Command {
 	return command
 }
 
-// uploadCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
-func uploadCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
-	pkg := "mythic/container/commands/upload/uploadCreateTask()"
+// memfdCreateTask takes a Mythic Task and converts into a Merlin Job that is encoded into JSON and subsequently sent to the Merlin Agent
+func memfdCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
+	pkg := "mythic/container/commands/memfd/memfdCreateTask()"
 	resp.TaskID = task.Task.ID
 
 	// Get the file as a byte array, its name, and any errors
 	data, filename, err := GetFile(task)
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	path, err := task.Args.GetStringArg("path")
+	args, err := task.Args.GetStringArg("args")
 	if err != nil {
-		resp.Error = fmt.Sprintf("%s: %s", pkg, err)
+		err = fmt.Errorf("%s: there was an error getting the 'args' argument: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	job := jobs.FileTransfer{
-		FileLocation: path,
-		FileBlob:     base64.StdEncoding.EncodeToString(data),
-		IsDownload:   true,
+	job := jobs.Command{
+		Command: "memfd",
+		Args:    []string{base64.StdEncoding.EncodeToString(data)},
+	}
+	if args != "" {
+		job.Args = append(job.Args, args)
 	}
 
-	jobBytes, err := json.Marshal(job)
+	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
 	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
+		err = fmt.Errorf("%s: there was an error converting the job to a Mythic task: %s", pkg, err)
+		resp.Error = err.Error()
 		resp.Success = false
+		logging.LogError(err, "returning with error")
 		return
 	}
 
-	mythicJob := Job{
-		Type:    jobs.FILETRANSFER,
-		Payload: string(jobBytes),
-	}
+	task.Args.SetManualArgs(mythicJob)
 
-	mythicJobBytes, err := json.Marshal(mythicJob)
-	if err != nil {
-		resp.Error = fmt.Sprintf("there was an error JSON marshalling the Job structure: %s", err)
-		resp.Success = false
-		return
-	}
-	task.Args.SetManualArgs(string(mythicJobBytes))
-
-	disp := fmt.Sprintf("%s %s", filename, path)
+	disp := fmt.Sprintf("%s %s", filename, args)
 	resp.DisplayParams = &disp
 	resp.Success = true
 
