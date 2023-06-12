@@ -28,18 +28,29 @@ This code snippet will execute most of the getting started steps:
 cd ~/
 git clone https://github.com/its-a-feature/Mythic
 cd Mythic/
-./mythic-cli install github https://github.com/MythicC2Profiles/http
-./mythic-cli install github https://github.com/MythicAgents/merlin
-sudo ./mythic-cli mythic start
+sudo make
+sudo ./mythic-cli install github https://github.com/MythicC2Profiles/http
+sudo ./mythic-cli install github https://github.com/MythicAgents/merlin
+sudo ./mythic-cli start
 sudo cat .env | grep MYTHIC_ADMIN_PASSWORD
 ```
 
+Use the following commands to run the Merlin container from the command line without using Docker:
+
+> **NOTE: Replace the RabbitMQ password with the one from the `.env` file in the root Mythic folder**
+
+```bash
+cd merlin/Payload_Type/merlin/container
+export MYTHIC_SERVER_HOST="127.0.0.1"
+export RABBITMQ_HOST="127.0.0.1"
+export RABBITMQ_PASSWORD="K5SHkn1fk2pcT0YkQxTTMgO5gFwjiQ"
+go run main.go
+```
+
 ## Known Limitations
-This implementation of Merlin on the Mythic Framework is incomplete and is still in development. Here are some known limitations:
+The table captures known limitations of the Merlin agent on the Mythic framework.
 
 | Feature       | Status          | Notes         |
 |---------------|-----------------|---------------|
 | MiniDump      | Not Implemented |               |
-| Padding       | Implemented     | Merlin v1.3.0 |
 | File Chunking | Not Implemented |               |
-| Windows DLL   | Not Implemented |               |
