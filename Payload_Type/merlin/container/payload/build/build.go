@@ -245,7 +245,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		msg.SelectedOS = strings.ToLower(msg.SelectedOS)
 	}
 
-	// Golang LDFLAGS
+	// Golang LDFLAGS https://pkg.go.dev/cmd/link
 	ldflags := "-s -w"
 	ldflags += fmt.Sprintf(" -X \"main.payloadID=%s\"", msg.PayloadUUID)
 	ldflags += fmt.Sprintf(" -X \"main.profile=%s\"", msg.C2Profiles[0].Name)
@@ -281,15 +281,13 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	ldflags += " -buildid="
 
 	// Setup Go command
-	goArgs := []string{"build", "-o"}
-	if msg.SelectedOS == "windows" && (mode == "shared" || mode == "raw") {
-		goArgs = append(goArgs, []string{"main.a", "-buildmode=c-archive", "-ldflags", ldflags}...)
-		args := []string{"-tags=mythic", "main.go", "dll.go"}
-		goArgs = append(goArgs, args...)
-	} else if mode == "shared" {
-		//goCMD += fmt.Sprintf("build -buildmode=c-shared -o merlin.bin -ldflags %s -tags=mythic,shared main.go shared.go", ldflags)
+	goArgs := []string{"build", "-o", "merlin.bin"}
+	if mode == "shared" || mode == "raw" {
+		// https://man7.org/linux/man-pages/man1/gcc.1.html
+		// ldflags += " -linkmode external -extldflags=-static -extldflags=-shared"
+		goArgs = append(goArgs, []string{"-buildmode=c-shared", "-ldflags", ldflags, "-tags=mythic,shared", "."}...)
 	} else {
-		goArgs = append(goArgs, []string{"merlin.bin", "-buildmode=default", "-ldflags", ldflags, "-tags=mythic", "main.go"}...)
+		goArgs = append(goArgs, []string{"-buildmode=default", "-ldflags", ldflags, "-tags=mythic", "main.go"}...)
 	}
 
 	bin := "go"
@@ -362,7 +360,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 
 	// CGO and CC
-	if msg.SelectedOS == "windows" && (mode == "shared" || mode == "raw") {
+	if mode == "shared" || mode == "raw" {
 		err = os.Setenv("CGO_ENABLED", "1")
 		defer func() {
 			err = os.Unsetenv("CGO_ENABLED")
@@ -391,31 +389,33 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		}
 
 		// https://pkg.go.dev/cmd/cgo
-		err = os.Setenv("CC", "x86_64-w64-mingw32-gcc")
-		defer func() {
-			err = os.Unsetenv("CC")
+		if msg.SelectedOS == "windows" {
+			err = os.Setenv("CC", "x86_64-w64-mingw32-gcc")
+			defer func() {
+				err = os.Unsetenv("CC")
+				if err != nil {
+					logging.LogError(err, "there was an error unsetting the 'CC' environment variable")
+				}
+			}()
 			if err != nil {
-				logging.LogError(err, "there was an error unsetting the 'CC' environment variable")
+				response.BuildMessage = "there was an error compiling the agent"
+				response.BuildStdErr = fmt.Sprintf("there was an error setting the 'CC' environment variable to 'x86_64-w64-mingw32-gcc\"': %s", err)
+				resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
+					mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
+						PayloadUUID: msg.PayloadUUID,
+						StepName:    "Compiling",
+						StepStdout:  "",
+						StepStderr:  fmt.Sprintf("there was an error setting the 'CC' environment variable to 'x86_64-w64-mingw32-gcc\"': %s", err),
+						StepSuccess: false,
+					},
+				)
+				if err != nil {
+					err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
+					logging.LogError(err, "returning with error")
+					// Do not return, keep going
+				}
+				return
 			}
-		}()
-		if err != nil {
-			response.BuildMessage = "there was an error compiling the agent"
-			response.BuildStdErr = fmt.Sprintf("there was an error setting the 'CC' environment variable to 'x86_64-w64-mingw32-gcc\"': %s", err)
-			resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
-				mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
-					PayloadUUID: msg.PayloadUUID,
-					StepName:    "Compiling",
-					StepStdout:  "",
-					StepStderr:  fmt.Sprintf("there was an error setting the 'CC' environment variable to 'x86_64-w64-mingw32-gcc\"': %s", err),
-					StepSuccess: false,
-				},
-			)
-			if err != nil {
-				err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
-				logging.LogError(err, "returning with error")
-				// Do not return, keep going
-			}
-			return
 		}
 	}
 
@@ -462,54 +462,6 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
 		logging.LogError(err, "continuing")
 		// Do not return, keep going
-	}
-
-	// Build Windows DLL
-	if msg.SelectedOS == "windows" && (mode == "shared" || mode == "raw") {
-		gccArgs := []string{"-shared", "-pthread", "-o", "merlin.bin", "merlin.c", "main.a", "-lwinmm", "-lntdll", "-lws2_32"}
-		cmd = exec.Command("x86_64-w64-mingw32-gcc", gccArgs...)
-		cmd.Dir = filepath.Join("/", "Mythic", "agent")
-		stdOut, err = cmd.CombinedOutput()
-		response.BuildStdOut += fmt.Sprintf("%s\nCompile DLL: %s", string(stdOut), "x86_64-w64-mingw32-gcc")
-		for _, v = range gccArgs {
-			response.BuildStdOut += fmt.Sprintf(" %s", v)
-		}
-		response.BuildStdOut += "\n\n"
-		logging.LogInfo(response.BuildStdOut)
-		if err != nil {
-			response.BuildMessage += "there was an error compiling the agent DLL"
-			response.BuildStdErr = err.Error()
-			logging.LogError(err, "returning with error")
-			resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
-				mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
-					PayloadUUID: msg.PayloadUUID,
-					StepName:    "Compiling DLL",
-					StepStdout:  string(stdOut),
-					StepStderr:  err.Error(),
-					StepSuccess: false,
-				},
-			)
-			if err != nil {
-				err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
-				logging.LogError(err, "returning with error")
-				// Do not return, keep going
-			}
-			return
-		}
-		resp, err = mythicrpc.SendMythicRPCPayloadUpdateBuildStep(
-			mythicrpc.MythicRPCPayloadUpdateBuildStepMessage{
-				PayloadUUID: msg.PayloadUUID,
-				StepName:    "Compiling DLL",
-				StepStdout:  fmt.Sprintf("DLL STDOUT: %s\nDLL Command: %s", stdOut, gccArgs),
-				StepStderr:  fmt.Sprintf("%s", err),
-				StepSuccess: true,
-			},
-		)
-		if err != nil {
-			err = fmt.Errorf("%s: there was an error sending the MythicRPCPayloadUpdateBuildStepMessage RPC message: %s, %s", pkg, err, resp.Error)
-			logging.LogError(err, "continuing")
-			// Do not return, keep going
-		}
 	}
 
 	// Read the payload file into memory

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.1.0 - 2023-08-02
+
+### Fixed
+
+- [Issue 11](https://github.com/MythicAgents/merlin/issues/11) - Enabled linux shared object payload generation
+
+### Changed
+
+- Renamed `dll.go` from the `agent` directory to `shared_windows.go`
+- Updated `merlin.c` to contain the source for both Windows and Linux shared object payloads (DLLs and .so files)
+- Replaced two-step Windows DLL build using c-archive and x86_64-w64-mingw32-gcc with a single step using go's c-shared buildmode
+
 ## 2.0.1 - 2023-07-12
 
 ### Fixed
