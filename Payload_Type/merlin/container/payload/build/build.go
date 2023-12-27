@@ -206,7 +206,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	max, err := msg.BuildParameters.GetStringArg("maxretry")
+	maxArg, err := msg.BuildParameters.GetStringArg("maxretry")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'maxretry' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -264,7 +264,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	ldflags += fmt.Sprintf(" -X \"main.sleep=%ds\"", int(sleep))
 	ldflags += fmt.Sprintf(" -X \"main.skew=%d\"", int(skew))
 	ldflags += fmt.Sprintf(" -X \"main.killdate=%d\"", kill.Unix())
-	ldflags += fmt.Sprintf(" -X \"main.maxretry=%s\"", max)
+	ldflags += fmt.Sprintf(" -X \"main.maxretry=%s\"", maxArg)
 	ldflags += fmt.Sprintf(" -X \"main.padding=%s\"", padding)
 	ldflags += fmt.Sprintf(" -X \"main.verbose=%t\"", verbose)
 	ldflags += fmt.Sprintf(" -X \"main.debug=%t\"", debug)

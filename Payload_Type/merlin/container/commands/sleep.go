@@ -33,7 +33,7 @@ func sleep() structs.Command {
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	time := structs.CommandParameter{
+	timeParam := structs.CommandParameter{
 		Name:             "time",
 		ModalDisplayName: "Sleep Time",
 		CLIName:          "time",
@@ -58,7 +58,7 @@ func sleep() structs.Command {
 		},
 	}
 
-	params := []structs.CommandParameter{time}
+	params := []structs.CommandParameter{timeParam}
 	command := structs.Command{
 		Name:                           "sleep",
 		NeedsAdminPermissions:          false,

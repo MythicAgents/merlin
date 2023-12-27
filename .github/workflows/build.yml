@@ -71,10 +71,10 @@ jobs:
         id: build_agent
         working-directory: ./Payload_Type/merlin/agent
         run: |
-        export GOOS=windows
-        export CGO_ENABLED=1
-        export CC=x86_64-w64-mingw32-gcc
-        go build -o merlin.dll -buildmode=c-shared -tags=mythic,shared .
+          export GOOS=windows
+          export CGO_ENABLED=1
+          export CC=x86_64-w64-mingw32-gcc
+          go build -o merlin.dll -buildmode=c-shared -tags=mythic,shared .
 
       - name: 'Build Merlin Mythic Payload Container'
         id: build_container

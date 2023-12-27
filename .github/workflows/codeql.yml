@@ -105,7 +105,7 @@ jobs:
           args: './Payload_Type/merlin/container/...'
 
       - name: "Gosec Security Scanner: Agent"
-        id: gosec_container
+        id: gosec_agent
         uses: securego/gosec@master
         with:
           args: './Payload_Type/merlin/agent/...'

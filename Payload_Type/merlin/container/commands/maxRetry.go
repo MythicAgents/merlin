@@ -32,7 +32,7 @@ func maxRetry() structs.Command {
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},
 	}
 
-	max := structs.CommandParameter{
+	maxParams := structs.CommandParameter{
 		Name:                                    "maxretry",
 		ModalDisplayName:                        "Max Retry",
 		CLIName:                                 "maxretry",
@@ -67,7 +67,7 @@ func maxRetry() structs.Command {
 		MitreAttackMappings:            nil,
 		ScriptOnlyCommand:              false,
 		CommandAttributes:              attr,
-		CommandParameters:              []structs.CommandParameter{max},
+		CommandParameters:              []structs.CommandParameter{maxParams},
 		AssociatedBrowserScript:        nil,
 		TaskFunctionOPSECPre:           nil,
 		TaskFunctionCreateTasking:      maxRetryCreateTasking,
@@ -85,7 +85,7 @@ func maxRetry() structs.Command {
 func maxRetryCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreateTaskingMessageResponse) {
 	resp.TaskID = task.Task.ID
 
-	max, err := task.Args.GetNumberArg("maxretry")
+	maxArg, err := task.Args.GetNumberArg("maxretry")
 	if err != nil {
 		resp.Error = fmt.Sprintf("mythic/container/commands/maxRetry/maxRetryCreateTask(): %s", err)
 		resp.Success = false
@@ -94,7 +94,7 @@ func maxRetryCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTT
 
 	job := jobs.Command{
 		Command: "maxretry",
-		Args:    []string{fmt.Sprintf("%d", int(max))},
+		Args:    []string{fmt.Sprintf("%d", int(maxArg))},
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.CONTROL)
@@ -105,7 +105,7 @@ func maxRetryCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTT
 	}
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%d", int(max))
+	disp := fmt.Sprintf("%d", int(maxArg))
 	resp.DisplayParams = &disp
 	resp.Success = true
 
