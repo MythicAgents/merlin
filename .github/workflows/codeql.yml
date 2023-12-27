@@ -100,8 +100,7 @@ jobs:
         # Need to install Gosec manually because the securego/gosec action does not let you change directories
       - name: "Install Gosec"
         id: gosec_install
-        run: |
-          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin vX.Y.Z
+        run: curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s vX.Y.Z
 
       - name: "Gosec Security Scanner: Container"
         id: gosec_container
