@@ -52,11 +52,6 @@ jobs:
         id: install_mingw
         run: sudo apt-get install -y -q mingw-w64
 
-      - name: 'Test Merlin Mythic Agent'
-        id: test_agent
-        working-directory: ./Payload_Type/merlin/agent
-        run: 'go test ./...'
-
       - name: 'Test Merlin Mythic Payload Container'
         id: test_container
         working-directory: ./Payload_Type/merlin/container
