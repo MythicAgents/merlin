@@ -101,14 +101,14 @@ jobs:
         id: gosec_container
         uses: securego/gosec@master
         with:
-          work-dir: './Payload_Type/merlin/container'
+          entryPoint: './Payload_Type/merlin/container'
           args: './...'
 
       - name: "Gosec Security Scanner: Agent"
         id: gosec_agent
         uses: securego/gosec@master
         with:
-          work-dir: './Payload_Type/merlin/agent'
+          entryPoint: './Payload_Type/merlin/agent'
           args: './...'
 
       - name: Go Report Card - Install
