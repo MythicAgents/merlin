@@ -17,6 +17,7 @@ on:
   workflow_dispatch:
   push:
     paths-ignore:
+      - '.github/**'
       - '.qodana/**'
       - '.gitattributes'
       - '.gitignore'

@@ -38,7 +38,7 @@ func nslookup() structs.Command {
 		ModalDisplayName:                        "Hostname",
 		CLIName:                                 "host",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "A space seperated list of hostnames or IP addresses to lookup and resolve",
+		Description:                             "A space separated list of hostnames or IP addresses to lookup and resolve",
 		Choices:                                 nil,
 		DefaultValue:                            "google.com",
 		SupportedAgents:                         nil,

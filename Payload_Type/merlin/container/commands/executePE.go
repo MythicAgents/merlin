@@ -147,7 +147,7 @@ func executePE() structs.Command {
 
 	spawntoArgs := structs.CommandParameter{
 		Name:                                    "spawntoargs",
-		ModalDisplayName:                        "SpawnTo Agruments",
+		ModalDisplayName:                        "SpawnTo Arguments",
 		CLIName:                                 "spawntoargs",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "arguments to create the spawnto process with, if any",

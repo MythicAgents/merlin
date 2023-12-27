@@ -30,7 +30,7 @@ func mimikatz() structs.Command {
 		ModalDisplayName:                        "arguments",
 		CLIName:                                 "arguments",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
-		Description:                             "A space seperated list of Mimikatz arguments to execute. 'exit' will automatically be appended to the command",
+		Description:                             "A space separated list of Mimikatz arguments to execute. 'exit' will automatically be appended to the command",
 		Choices:                                 nil,
 		DefaultValue:                            "token::whoami",
 		SupportedAgents:                         nil,
@@ -75,7 +75,7 @@ func mimikatz() structs.Command {
 
 	spawntoArgs := structs.CommandParameter{
 		Name:                                    "spawntoargs",
-		ModalDisplayName:                        "SpawnTo Agruments",
+		ModalDisplayName:                        "SpawnTo Arguments",
 		CLIName:                                 "spawntoargs",
 		ParameterType:                           structs.COMMAND_PARAMETER_TYPE_STRING,
 		Description:                             "arguments to create the spawnto process with, if any",
