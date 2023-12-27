@@ -1,0 +1,14 @@
+{
+  "mythic_version": "3.6",
+  "agent_version": "2.0.17",
+  "os": ["FreeBSD","macOS", "Linux", "OpenBSD","Solaris","Windows"],
+  "c2": ["http"],
+  "payload_output": ["dll", "dylib","elf","exe","macho", "shellcode","so"],
+  "architectures": ["x86","x86_64", "arm","arm_64","mips", "mips64"],
+  "features": {
+    "mythic": ["artifacts","alerts", "socks"],
+    "custom": ["key exchange", "killdate"]
+  },
+  "languages": ["go"],
+  "supported_wrappers": ["service_wrapper", "scarecrow_wrapper"]
+}

@@ -26,8 +26,8 @@ import (
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 	"github.com/MythicMeta/MythicContainer/mythicrpc"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
 type Command interface {
@@ -228,7 +228,7 @@ func GetFileName(fileID string) (name string, err error) {
 }
 
 // ConvertMerlinJobToMythicTask takes in a Merlin jobs.Job structure and converts it to a Mythic Job structure
-func ConvertMerlinJobToMythicTask(job jobs.Command, jobType int) (bytes string, err error) {
+func ConvertMerlinJobToMythicTask(job jobs.Command, jobType jobs.Type) (bytes string, err error) {
 	jobBytes, err := json.Marshal(job)
 	if err != nil {
 		err = fmt.Errorf("mythic/container/commands/ConvertMerlinJobToMythicTask: there was an error JSON marshalling the Merlin jobs.Job structure: %s", err)
@@ -236,7 +236,7 @@ func ConvertMerlinJobToMythicTask(job jobs.Command, jobType int) (bytes string, 
 	}
 
 	mythicJob := Job{
-		Type:    jobType,
+		Type:    int(jobType),
 		Payload: string(jobBytes),
 	}
 	mythicJobBytes, err := json.Marshal(mythicJob)

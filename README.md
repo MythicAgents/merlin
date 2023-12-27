@@ -44,6 +44,7 @@ cd merlin/Payload_Type/merlin/container
 export MYTHIC_SERVER_HOST="127.0.0.1"
 export RABBITMQ_HOST="127.0.0.1"
 export RABBITMQ_PASSWORD="K5SHkn1fk2pcT0YkQxTTMgO5gFwjiQ"
+export DEBUG_LEVEL=debug
 go run main.go
 ```
 

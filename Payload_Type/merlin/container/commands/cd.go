@@ -23,12 +23,12 @@ import (
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 	"github.com/MythicMeta/MythicContainer/logging"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
 // cd creates and return a Mythic Command structure that is registered with the Mythic server
-// This command is instructs the Merlin Agent to change it's current working directory to the one provided
+// This command instructs the Merlin Agent to change it's current working directory to the one provided
 func cd() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},

@@ -1,0 +1,82 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: "Merlin Mythic Build & Test"
+
+on:
+  workflow_dispatch:
+  push:
+    paths-ignore:
+      - '.github/**'
+      - '.qodana/**'
+      - '.gitattributes'
+      - '.gitignore'
+      - 'agent_icons/**'
+      - 'documentation-payload/**'
+      - 'agent_capabilities.json'
+      - 'config.json'
+      - 'LICENSE'
+      - 'qodana.yaml'
+      - 'README.MD'
+  pull_request:
+    paths-ignore:
+      - '.github/**'
+      - '.qodana/**'
+      - '.gitattributes'
+      - '.gitignore'
+      - 'agent_icons/**'
+      - 'documentation-payload/**'
+      - 'agent_capabilities.json'
+      - 'config.json'
+      - 'LICENSE'
+      - 'qodana.yaml'
+      - 'README.MD'
+
+jobs:
+  build:
+    name: 'Build Job'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        id: checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          check-latest: true
+
+        # Need MingGW installed to build the Agent DLL
+      - name: Install MingGW
+        id: install_mingw
+        run: sudo apt-get install -y -q mingw-w64
+
+      - name: 'Test Merlin Mythic Agent'
+        id: test_agent
+        working-directory: ./Payload_Type/merlin/agent
+        run: 'go test ./...'
+
+      - name: 'Test Merlin Mythic Payload Container'
+        id: test_container
+        working-directory: ./Payload_Type/merlin/container
+        run: 'go test ./...'
+
+      - name: 'Build Merlin Mythic Agent: Linux'
+        id: build_agent
+        working-directory: ./Payload_Type/merlin/agent
+        run: 'go build -o merlin.bin -tags=mythic main.go'
+
+      - name: 'Build Merlin Mythic Agent: Windows DLL'
+        id: build_agent
+        working-directory: ./Payload_Type/merlin/agent
+        run: |
+        export GOOS=windows
+        export CGO_ENABLED=1
+        export CC=x86_64-w64-mingw32-gcc
+        go build -o merlin.dll -buildmode=c-shared -tags=mythic,shared .
+
+      - name: 'Build Merlin Mythic Payload Container'
+        id: build_container
+        working-directory: ./Payload_Type/merlin/container
+        run: 'go build -o MerlinContainer.bin'

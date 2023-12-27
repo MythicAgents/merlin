@@ -21,8 +21,8 @@ import (
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
 // ifconfig creates and return a Mythic Command structure that is registered with the Mythic server that subsequently

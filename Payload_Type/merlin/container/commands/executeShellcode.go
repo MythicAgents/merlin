@@ -25,8 +25,8 @@ import (
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
 // executeShellcode returns a Mythic Command structure that is registered with the Mythic server
@@ -214,7 +214,7 @@ func executeShellcodeCreateTasking(task *structs.PTTaskMessageAllData) (resp str
 	}
 
 	mythicJob := Job{
-		Type:    jobs.SHELLCODE,
+		Type:    int(jobs.SHELLCODE),
 		Payload: string(jobBytes),
 	}
 	mythicJobBytes, err := json.Marshal(mythicJob)

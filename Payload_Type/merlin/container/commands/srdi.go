@@ -26,8 +26,8 @@ import (
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 	"github.com/MythicMeta/MythicContainer/logging"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 
 	// Internal
 	"github.com/MythicAgents/merlin/Payload_Type/merlin/container/pkg/srdi"
@@ -480,7 +480,7 @@ func sRDICreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTaskC
 		}
 
 		mJob := Job{
-			Type:    jobs.SHELLCODE,
+			Type:    int(jobs.SHELLCODE),
 			Payload: string(jobBytes),
 		}
 

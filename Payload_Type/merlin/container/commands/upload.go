@@ -25,8 +25,8 @@ import (
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
 // upload creates and return a Mythic Command structure that is registered with the Mythic server
@@ -175,7 +175,7 @@ func uploadCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 	}
 
 	mythicJob := Job{
-		Type:    jobs.FILETRANSFER,
+		Type:    int(jobs.FILETRANSFER),
 		Payload: string(jobBytes),
 	}
 

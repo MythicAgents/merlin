@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.2.0 - 2023-12-27
+
+### Added
+
+- Added `agent_capabilities.json` for [Mythic Community Agent Feature Matrix](https://mythicmeta.github.io/overview/agent_matrix.html)
+- Added GitHub workflow Actions for automated testing and building
+- Added `github.com/Ne0nd0g/merlin-agent/v2` features to `main.go` for agent builds
+  - `auth` variable with a static `rsa` value to use the RSA authenticator
+  - `secure` variable with a static `false` value to NOT require valid TLS certificates
+  - `transforms` variable with a static `mythic,aes` value to use the AES encrypter and Mythic data encoder
+
+### Changed
+
+- Upgraded `github.com/Ne0nd0g/merlin-agent` to v2.3.0
+- Upgraded `github.com/MythicMeta/MythicContainer` to v1.2.1
+- Swapped `github.com/Ne0nd0g/merlin-agent/pkg/jobs` to `github.com/Ne0nd0g/merlin-message/jobs`
+- Upgraded ne0nd0g/merlin-base Docker image to v1.5.0
+
 ## 2.1.1 - 2023-08-11
 
 ### Fixed

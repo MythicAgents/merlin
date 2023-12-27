@@ -16,17 +16,22 @@ You should have received a copy of the GNU General Public License along with Mer
 package commands
 
 import (
+	// Standard
 	"bytes"
 	"encoding/base64"
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	"fmt"
+
+	// 3rd Party
+	"github.com/Binject/go-donut/donut"
 
 	// Mythic
-	"fmt"
-	"github.com/Binject/go-donut/donut"
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
-// executePE returns a Mythic Command structure that is registered with the Mythic server
+// executePE returns a Mythic Command structure registered with the Mythic server
 func executePE() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS},

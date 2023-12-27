@@ -18,14 +18,14 @@ package commands
 import (
 	// Standard
 	"fmt"
-	"github.com/MythicMeta/MythicContainer/mythicrpc"
-	"github.com/MythicMeta/MythicContainer/rabbitmq"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/mythicrpc"
+	"github.com/MythicMeta/MythicContainer/rabbitmq"
 )
 
-// socks creates and return a Mythic Command structure that is registered with the Mythic server
+// socks creates and returns a Mythic Command structure registered with the Mythic server
 func socks() structs.Command {
 	attr := structs.CommandAttribute{
 		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "Debian"},

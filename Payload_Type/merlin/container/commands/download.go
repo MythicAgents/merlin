@@ -23,8 +23,8 @@ import (
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
 
-	// Merlin
-	"github.com/Ne0nd0g/merlin/pkg/jobs"
+	// Merlin Message
+	"github.com/Ne0nd0g/merlin-message/jobs"
 )
 
 // download creates and return a Mythic Command structure that is registered with the Mythic server and subsequently
@@ -105,7 +105,7 @@ func downloadCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTT
 	}
 
 	mythicJob := Job{
-		Type:    jobs.FILETRANSFER,
+		Type:    int(jobs.FILETRANSFER),
 		Payload: string(jobBytes),
 	}
 
