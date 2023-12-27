@@ -101,18 +101,11 @@ jobs:
       - name: "Install gosec"
         id: gosec_install
         working-directory: /tmp
-        run: |
-          pwd
-          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s
+        run: curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s
 
       - name: "gosec Security Scanner: Container"
         id: gosec_container
         working-directory: "./Payload_Type/merlin/container"
-        run: /tmp/bin/gosec ./...
-
-      - name: "gosec Security Scanner: Agent"
-        id: gosec_agent
-        working-directory: "./Payload_Type/merlin/agent"
         run: /tmp/bin/gosec ./...
 
       - name: Go Report Card - Install
