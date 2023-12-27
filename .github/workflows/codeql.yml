@@ -100,9 +100,8 @@ jobs:
       - name: "Gosec Security Scanner: Container"
         id: gosec_container
         uses: securego/gosec@master
-        with:
-          entryPoint: './Payload_Type/merlin/container'
-          args: './...'
+        working-directory: "./Payload_Type/merlin/container"
+        run: /bin/gosec ./...
 
       - name: "Gosec Security Scanner: Agent"
         id: gosec_agent
