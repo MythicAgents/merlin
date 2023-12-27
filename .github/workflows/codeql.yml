@@ -97,18 +97,21 @@ jobs:
           work-dir: './Payload_Type/merlin/container'
           go-package: './...'
 
+        # Need to install Gosec manually because the securego/gosec action does not let you change directories
+      - name: "Install Gosec"
+        id: gosec_install
+        run: |
+          curl -sfL https://raw.githubusercontent.com/securego/gosec/master/install.sh | sh -s -- -b $(go env GOPATH)/bin vX.Y.Z
+
       - name: "Gosec Security Scanner: Container"
         id: gosec_container
-        uses: securego/gosec@master
         working-directory: "./Payload_Type/merlin/container"
         run: /bin/gosec ./...
 
       - name: "Gosec Security Scanner: Agent"
         id: gosec_agent
-        uses: securego/gosec@master
-        with:
-          entryPoint: './Payload_Type/merlin/agent'
-          args: './...'
+        working-directory: "./Payload_Type/merlin/agent"
+        run: /bin/gosec ./...
 
       - name: Go Report Card - Install
         id: goreportcard_install
