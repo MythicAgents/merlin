@@ -84,7 +84,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	// The headers key provides a value of map[string]interface{}
+	// The 'headers' key provides a value of map[string]interface{}
 	// The key is the name of the header (e.g., Host, User-Agent)
 	v, ok := msg.C2Profiles[0].Parameters["headers"]
 	if !ok {
@@ -595,7 +595,7 @@ func NewPayload() (structs.PayloadType, error) {
 }
 
 func newBuildParameter(name string, description string, required bool, verifierRegex string, defaultValue interface{}, paramType structs.BuildParameterType, formatString string, randomize bool, isCryptType bool, choices []string, dictionaryChoices []structs.BuildParameterDictionary) (param structs.BuildParameter, err error) {
-	// Ensure name is not empty
+	// Ensure the name argument is not empty
 	if name == "" {
 		err = fmt.Errorf("newBuildParameter: the \"name\" argument must not be empty")
 		return

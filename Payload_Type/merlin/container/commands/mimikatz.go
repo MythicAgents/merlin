@@ -127,7 +127,7 @@ func mimikatzCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 	resp.TaskID = task.Task.ID
 
 	filePath := path.Join("/", "opt", "merlin", "data", "src", "mimikatz", "x64", "mimikatz.exe")
-	data, err := os.ReadFile(filePath)
+	data, err := os.ReadFile(filePath) // #nosec G304 - this is a static filepath that does not take user input
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error reading the file from %s: %s", pkg, filePath, err)
 		resp.Error = err.Error()
