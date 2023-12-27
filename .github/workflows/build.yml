@@ -68,7 +68,7 @@ jobs:
         run: 'go build -o merlin.bin -tags=mythic main.go'
 
       - name: 'Build Merlin Mythic Agent: Windows DLL'
-        id: build_agent
+        id: build_agent_dll
         working-directory: ./Payload_Type/merlin/agent
         run: |
           export GOOS=windows
