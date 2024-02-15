@@ -51,6 +51,9 @@ var debug = "false"
 // host a specific HTTP header used with HTTP communications; notably used for domain fronting
 var host string
 
+// httpClient is a string that represents what type of HTTP client the Agent should use (e.g., winhttp, go)
+var httpClient = "go"
+
 // ja3 a string that represents how the Agent should configure it TLS client
 var ja3 string
 
@@ -149,6 +152,7 @@ func main() {
 			Padding:      padding,
 			InsecureTLS:  !verify,
 			Transformers: transforms,
+			ClientType:   httpClient,
 		}
 
 		// Parse http or https

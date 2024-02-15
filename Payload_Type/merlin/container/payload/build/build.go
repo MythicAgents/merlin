@@ -206,6 +206,14 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
+	httpClient, err := msg.BuildParameters.GetStringArg("httpClient")
+	if !ok {
+		err = fmt.Errorf("%s: there was an error getting the 'httpClient' key from the BuildParameter's map: %s", pkg, err)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
+
 	maxArg, err := msg.BuildParameters.GetStringArg("maxretry")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'maxretry' key from the BuildParameter's map: %s", pkg, err)
@@ -245,10 +253,19 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		msg.SelectedOS = strings.ToLower(msg.SelectedOS)
 	}
 
+	// The winhttp and wininet HTTP clients are only available on Windows
+	if msg.SelectedOS != "windows" && httpClient != "go" {
+		err = fmt.Errorf("%s: the '%s' HTTP client is only available for Windows agents. Use the 'go' HTTP client", pkg, httpClient)
+		response.BuildStdErr = err.Error()
+		logging.LogError(err, "returning with error")
+		return
+	}
+
 	// Golang LDFLAGS https://pkg.go.dev/cmd/link
 	ldflags := "-s -w"
 	ldflags += fmt.Sprintf(" -X \"main.payloadID=%s\"", msg.PayloadUUID)
 	ldflags += fmt.Sprintf(" -X \"main.profile=%s\"", msg.C2Profiles[0].Name)
+	ldflags += fmt.Sprintf(" -X \"main.httpClient=%s\"", httpClient)
 	ldflags += fmt.Sprintf(" -X \"main.url=%s:%d/%s\"", host, int(port), post)
 	ldflags += fmt.Sprintf(" -X \"main.psk=%s\"", psk)
 	for header, data := range headers {
@@ -280,14 +297,22 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 	ldflags += " -buildid="
 
+	// Determine build tags
+	tags := "-tags=mythic"
+	// The "go" HTTP client is always included, so there is no tag to add for it
+	if strings.ToLower(httpClient) == "winhttp" {
+		tags += ",winhttp"
+	}
+
 	// Setup Go command
 	goArgs := []string{"build", "-o", "merlin.bin"}
 	if mode == "shared" || mode == "raw" {
+		tags += ",shared"
 		// https://man7.org/linux/man-pages/man1/gcc.1.html
 		// ldflags += " -linkmode external -extldflags=-static -extldflags=-shared"
-		goArgs = append(goArgs, []string{"-buildmode=c-shared", "-ldflags", ldflags, "-tags=mythic,shared", "."}...)
+		goArgs = append(goArgs, []string{"-buildmode=c-shared", "-ldflags", ldflags, tags, "."}...)
 	} else {
-		goArgs = append(goArgs, []string{"-buildmode=default", "-ldflags", ldflags, "-tags=mythic", "main.go"}...)
+		goArgs = append(goArgs, []string{"-buildmode=default", "-ldflags", ldflags, tags, "main.go"}...)
 	}
 
 	bin := "go"
@@ -568,6 +593,14 @@ func NewPayload() (structs.PayloadType, error) {
 		return structs.PayloadType{}, fmt.Errorf("NewPayload(): %s", err)
 	}
 	payload.BuildParameters = append(payload.BuildParameters, mode)
+
+	// HTTP CLIENT
+	httpClient := "HTTP client provider to use for the agent"
+	client, err := newBuildParameterChooseOneQuick("httpClient", httpClient, false, []string{"go", "winhttp"}, "go")
+	if err != nil {
+		return structs.PayloadType{}, fmt.Errorf("NewPayload(): %s", err)
+	}
+	payload.BuildParameters = append(payload.BuildParameters, client)
 
 	// PARROT
 	choices := []string{"", "HelloGolang", "HelloRandomized", "HelloRandomizedALPN", "HelloRandomizedNoALPN", "HelloFirefox_Auto",
