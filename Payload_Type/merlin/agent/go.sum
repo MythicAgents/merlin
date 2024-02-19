@@ -5,8 +5,8 @@ github.com/C-Sto/BananaPhone v0.0.0-20220220002628-6585e5913761 h1:0144WWUvo86bV
 github.com/C-Sto/BananaPhone v0.0.0-20220220002628-6585e5913761/go.mod h1:QsEPWHZooj8uXL2YEdpQX+hDr00Plw7myenTiduBHRA=
 github.com/Ne0nd0g/go-clr v1.0.3 h1:xt92wwuqY23ZSC7RuHD3mKu3K22Bk5NNbxI803vojK4=
 github.com/Ne0nd0g/go-clr v1.0.3/go.mod h1:TKYSQ/5xT25EvBUttAlUrzpR8yHuI0qTRK495I5xG/I=
-github.com/Ne0nd0g/merlin-agent/v2 v2.3.1-0.20240219192128-2c1dd86d1c79 h1:ME2E2MnPFWgp2773iY8kf4ae88SaSnD14UU4LoH8AcI=
-github.com/Ne0nd0g/merlin-agent/v2 v2.3.1-0.20240219192128-2c1dd86d1c79/go.mod h1:kmtcQwTua7/+j5XKbE6SI8w+6O0FnkvmHLNZEQaffA8=
+github.com/Ne0nd0g/merlin-agent/v2 v2.3.1-0.20240219195728-e3529f307cf7 h1:PyGiJMk9ITGkD4dbdURMXjB2J7f2ns7zNfZ4WD3PUtw=
+github.com/Ne0nd0g/merlin-agent/v2 v2.3.1-0.20240219195728-e3529f307cf7/go.mod h1:kmtcQwTua7/+j5XKbE6SI8w+6O0FnkvmHLNZEQaffA8=
 github.com/Ne0nd0g/merlin-message v1.3.0 h1:HelXwN6Gtk80C2ted0+PAprq+zRiQRGLG6s6phyFY5o=
 github.com/Ne0nd0g/merlin-message v1.3.0/go.mod h1:6eAh2KI4XrOAF+y4W2DN0qfRVWiAGzYlq148iKe3sSA=
 github.com/Ne0nd0g/npipe v1.1.0 h1:oTDJfD8yrr2BLGZpKEllCmeGpcbmx6LW1uuS2bxIBoM=
