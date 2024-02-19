@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.6
 
 require (
-	github.com/Ne0nd0g/merlin-agent/v2 v2.3.1-0.20240219171725-f680f43f44ce
+	github.com/Ne0nd0g/merlin-agent/v2 v2.3.1-0.20240219192128-2c1dd86d1c79
 	github.com/fatih/color v1.16.0
 )
 
