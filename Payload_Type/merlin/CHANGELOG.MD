@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.3.0 - 2024-03-27
+
+### Added
+
+- Added an HTTP client provider build parameter for Windows agents
+  - Use `go` for the default Go HTTP client
+  - Use `winhttp` to use the Windows winhttp API to facilitate automatic proxy authentication
+
+### Changed
+
+- Upgraded `github.com/Ne0nd0g/merlin-agent` to v2.4.0
+- Upgraded `github.com/Ne0nd0g/merlin-docker` to v1.6.0
+  - Upgraded `https://github.com/burrowers/garble` to v0.12.1 
+
 ## 2.2.0 - 2023-12-27
 
 ### Added
