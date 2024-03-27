@@ -268,6 +268,8 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	ldflags += fmt.Sprintf(" -X \"main.httpClient=%s\"", httpClient)
 	ldflags += fmt.Sprintf(" -X \"main.url=%s:%d/%s\"", host, int(port), post)
 	ldflags += fmt.Sprintf(" -X \"main.psk=%s\"", psk)
+
+	var customHeaders string
 	for header, data := range headers {
 		switch strings.ToLower(header) {
 		case host:
@@ -276,8 +278,13 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 			ldflags += fmt.Sprintf(" -X \"main.useragent=%s\"", data)
 		default:
 			// Do nothing the Merlin agent used with Mythic is not programmed to take extra headers at this time
+			customHeaders += fmt.Sprintf("%s: %s\n", header, data)
 		}
 	}
+	if customHeaders != "" {
+		ldflags += fmt.Sprintf(" -X \"main.headers=%s\"", customHeaders)
+	}
+
 	ldflags += fmt.Sprintf(" -X \"main.sleep=%ds\"", int(sleep))
 	ldflags += fmt.Sprintf(" -X \"main.skew=%d\"", int(skew))
 	ldflags += fmt.Sprintf(" -X \"main.killdate=%d\"", kill.Unix())

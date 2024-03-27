@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Upgraded `github.com/Ne0nd0g/merlin-docker` to v1.6.0
   - Upgraded `https://github.com/burrowers/garble` to v0.12.1 
 
+### Fixed
+
+- [Issue 15](https://github.com/MythicAgents/merlin/issues/15) - Parse and use multiple HTTP headers
+
 ## 2.2.0 - 2023-12-27
 
 ### Added

