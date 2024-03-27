@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Upgraded `github.com/Ne0nd0g/merlin-agent` to v2.4.0
 - Upgraded `github.com/Ne0nd0g/merlin-docker` to v1.6.0
   - Upgraded `https://github.com/burrowers/garble` to v0.12.1 
+- Upgraded github.com/MythicMeta/MythicContainer v1.2.1 => v1.3.12
 
 ### Fixed
 
