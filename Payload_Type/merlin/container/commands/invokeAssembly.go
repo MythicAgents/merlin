@@ -137,7 +137,13 @@ func invokeAssemblyCreateTasking(task *structs.PTTaskMessageAllData) (resp struc
 	}
 
 	if args != "" {
-		job.Args = append(job.Args, strings.Split(args, " ")...)
+		quoted := false
+		job.Args = append(job.Args, strings.FieldsFunc(args, func(r rune) bool {
+			if r == '"' {
+				quoted = !quoted
+			}
+			return !quoted && r == ' '
+		})...)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
