@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.3.1 - 2024-04-23
+
+### Changed
+
+- Upgraded github.com/MythicMeta/MythicContainer v1.3.12 => v1.3.13
+- Upgraded github.com/pelletier/go-toml/v2 v2.2.0 => v2.2.1
+- Upgraded golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8 => v0.0.0-20240416160154-fe59bbe5cc7f
+- Upgraded golang.org/x/net v0.22.0 => v0.24.0
+- Upgraded golang.org/x/sys v0.18.0 => v0.19.0
+- Upgraded google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa => v0.0.0-20240415180920-8c6c420018be
+- Upgraded google.golang.org/grpc v1.62.1 => v1.63.2
+- Upgraded github.com/Ne0nd0g/merlin-agent/v2 v2.4.0 => v2.4.1
+- Upgraded github.com/google/pprof v0.0.0-20240320155624-b11c3daa6f07 => v0.0.0-20240422182052-72c8669ad3e7
+- Upgraded github.com/klauspost/compress v1.17.7 => v1.17.8
+- Upgraded github.com/onsi/ginkgo/v2 v2.17.0 => v2.17.1
+- Upgraded github.com/refraction-networking/utls v1.6.3 => v1.6.4
+- Upgraded golang.org/x/crypto v0.21.0 => v0.22.0
+- Upgraded golang.org/x/mod v0.16.0 => v0.17.0
+- upgraded golang.org/x/tools v0.19.0 => v0.20.0
+
+### Fixed
+
+- Fixed 3 `Incorrect conversion between integer types` issues in `donut.go`
+
+### Security
+
+- [GO-2024-2687](https://pkg.go.dev/vuln/GO-2024-2687) - Upgraded `golang.org/x/net` to v0.23.0 to address CVE-2024-2687
+
 ## 2.3.0 - 2024-03-28
 
 ### Added

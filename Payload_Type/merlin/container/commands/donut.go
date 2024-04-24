@@ -704,7 +704,7 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 		logging.LogError(err, "returning with error")
 		return
 	}
-	entropy, err := strconv.Atoi(e)
+	entropy, err := strconv.ParseUint(e, 10, 32)
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error converting the 'entropy' command argument to an integer: %s", pkg, err)
 		resp.Error = err.Error()
@@ -811,7 +811,7 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 		resp.Success = false
 		logging.LogError(err, "returning with error")
 	}
-	exit, err := strconv.Atoi(ex)
+	exit, err := strconv.ParseUint(ex, 10, 32)
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error converting the 'exit' command argument to an integer: %s", pkg, err)
 		resp.Error = err.Error()
@@ -904,7 +904,7 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 		resp.Success = false
 		logging.LogError(err, "returning with error")
 	}
-	compress, err := strconv.Atoi(comp)
+	compress, err := strconv.ParseUint(comp, 10, 32)
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error converting the 'compress' command argument to an integer: %s", pkg, err)
 		resp.Error = err.Error()
