@@ -6,15 +6,13 @@ toolchain go1.22.5
 
 require (
 	github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d
-	github.com/MythicMeta/MythicContainer v1.4.2
+	github.com/MythicMeta/MythicContainer v1.4.3
 	github.com/Ne0nd0g/merlin-message v1.3.0
 )
 
 require (
 	github.com/Binject/debug v0.0.0-20201228082058-60012895f187 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/go-logr/logr v1.4.2 // indirect
-	github.com/go-logr/zerologr v1.2.3 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect

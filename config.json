@@ -4,5 +4,8 @@
 	"exclude_documentation_payload": false,
 	"exclude_documentation_wrapper": true,
 	"exclude_documentation_c2": true,
-	"exclude_agent_icons": false
+	"exclude_agent_icons": false,
+	"remote_images": {
+		"merlin": "docker.io/ne0nd0g/merlin-mythic:v1.0.0"
+	}
 }

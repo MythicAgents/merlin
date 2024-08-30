@@ -2,8 +2,8 @@ github.com/Binject/debug v0.0.0-20201228082058-60012895f187 h1:1X9jYT7Hq1fhPIv6a
 github.com/Binject/debug v0.0.0-20201228082058-60012895f187/go.mod h1:QzgxDLY/qdKlvnbnb65eqTedhvQPbaSP2NqIbcuKvsQ=
 github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d h1:p1nbUZVkTna5JW0jUpmnXaLc9enF3CwcRisYwUuNiz4=
 github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d/go.mod h1:+HPTw2E7tpmDKnls6np/4DMINtku9rw3TgLtKoydgMI=
-github.com/MythicMeta/MythicContainer v1.4.2 h1:HvVG8QbRAVmvEE1o78lqV98pDIClTa0GUB+GusQWYxs=
-github.com/MythicMeta/MythicContainer v1.4.2/go.mod h1:EZqZAa+ZdZhhfLICL4RhnlBydMxZC4wi5vr95WRgdbY=
+github.com/MythicMeta/MythicContainer v1.4.3 h1:Gpt6k810u4RxtCp6I0OXemGRB1lunz9e7WX5d7tWpY0=
+github.com/MythicMeta/MythicContainer v1.4.3/go.mod h1:f9nIBe8teDUW+NP/jYw9Otor1RZHXpC/4cxMv88+KQE=
 github.com/Ne0nd0g/merlin-message v1.3.0 h1:HelXwN6Gtk80C2ted0+PAprq+zRiQRGLG6s6phyFY5o=
 github.com/Ne0nd0g/merlin-message v1.3.0/go.mod h1:6eAh2KI4XrOAF+y4W2DN0qfRVWiAGzYlq148iKe3sSA=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
@@ -14,10 +14,6 @@ github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHk
 github.com/frankban/quicktest v1.14.6/go.mod h1:4ptaffx2x8+WTWXmUCuVU6aPUX1/Mz7zb5vbUoiM6w0=
 github.com/fsnotify/fsnotify v1.7.0 h1:8JEhPFa5W2WU7YfeZzPNqzMP6Lwt7L2715Ggo0nosvA=
 github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyTJwOpGvigM=
-github.com/go-logr/logr v1.4.2 h1:6pFjapn8bFcIbiKo3XT4j/BhANplGihG6tvd+8rYgrY=
-github.com/go-logr/logr v1.4.2/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
-github.com/go-logr/zerologr v1.2.3 h1:up5N9vcH9Xck3jJkXzgyOxozT14R47IyDODz8LM1KSs=
-github.com/go-logr/zerologr v1.2.3/go.mod h1:BxwGo7y5zgSHYR1BjbnHPyF/5ZjVKfKxAZANVu6E8Ho=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=

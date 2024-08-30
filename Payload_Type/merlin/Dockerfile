@@ -1,4 +1,4 @@
-FROM ne0nd0g/merlin-base:v1.6.1
+FROM ne0nd0g/merlin-base:v1.7.0
 
 # FROM itsafeaturemythic/mythic_go_base:1.0.4-rc08
 # https://github.com/MythicMeta/Mythic_Docker_Templates/blob/master/mythic_go_base/Dockerfile
