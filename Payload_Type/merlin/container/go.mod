@@ -6,7 +6,7 @@ toolchain go1.22.5
 
 require (
 	github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d
-	github.com/MythicMeta/MythicContainer v1.4.3
+	github.com/MythicMeta/MythicContainer v1.4.4
 	github.com/Ne0nd0g/merlin-message v1.3.0
 )
 

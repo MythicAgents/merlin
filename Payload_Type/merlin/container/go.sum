@@ -2,8 +2,8 @@ github.com/Binject/debug v0.0.0-20201228082058-60012895f187 h1:1X9jYT7Hq1fhPIv6a
 github.com/Binject/debug v0.0.0-20201228082058-60012895f187/go.mod h1:QzgxDLY/qdKlvnbnb65eqTedhvQPbaSP2NqIbcuKvsQ=
 github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d h1:p1nbUZVkTna5JW0jUpmnXaLc9enF3CwcRisYwUuNiz4=
 github.com/Binject/go-donut v0.0.0-20201215224200-d947cf4d090d/go.mod h1:+HPTw2E7tpmDKnls6np/4DMINtku9rw3TgLtKoydgMI=
-github.com/MythicMeta/MythicContainer v1.4.3 h1:Gpt6k810u4RxtCp6I0OXemGRB1lunz9e7WX5d7tWpY0=
-github.com/MythicMeta/MythicContainer v1.4.3/go.mod h1:f9nIBe8teDUW+NP/jYw9Otor1RZHXpC/4cxMv88+KQE=
+github.com/MythicMeta/MythicContainer v1.4.4 h1:8HoRmsnP1oiJr+4GWTCCatBYTWB+sHYSgmMwPJa8iy0=
+github.com/MythicMeta/MythicContainer v1.4.4/go.mod h1:f9nIBe8teDUW+NP/jYw9Otor1RZHXpC/4cxMv88+KQE=
 github.com/Ne0nd0g/merlin-message v1.3.0 h1:HelXwN6Gtk80C2ted0+PAprq+zRiQRGLG6s6phyFY5o=
 github.com/Ne0nd0g/merlin-message v1.3.0/go.mod h1:6eAh2KI4XrOAF+y4W2DN0qfRVWiAGzYlq148iKe3sSA=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=

@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
-- Upgraded github.com/MythicMeta/MythicContainer v1.3.13 => v1.4.3 to support Mythic v3.3
+- Upgraded github.com/MythicMeta/MythicContainer v1.3.13 => v1.4.4 to support Mythic v3.3
 - Minimum supported version of Go is v1.21
 - Upgraded Dockerfile image from ne0nd0g/merlin-base:v1.6.0 to v1.7.0 significantly reducing the image size
 - Modified the mimikatz command to point to the updated location of Mimikatz executable in the image
