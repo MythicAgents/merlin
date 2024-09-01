@@ -6,6 +6,6 @@
 	"exclude_documentation_c2": true,
 	"exclude_agent_icons": false,
 	"remote_images": {
-		"merlin": "docker.io/ne0nd0g/merlin-mythic:v1.0.1"
+		"merlin": "docker.io/ne0nd0g/merlin-mythic:v1.0.2"
 	}
 }
