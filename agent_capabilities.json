@@ -1,14 +1,14 @@
 {
-  "mythic_version": "3.2",
-  "agent_version": "2.3.1",
+  "mythic_version": "3.3",
+  "agent_version": "2.3.2",
   "os": ["FreeBSD","macOS", "Linux", "OpenBSD","Solaris","Windows"],
   "c2": ["http"],
   "payload_output": ["dll", "dylib","elf","exe","macho", "shellcode","so"],
   "architectures": ["x86","x86_64", "arm","arm_64","mips", "mips64"],
   "supported_wrappers": ["service_wrapper", "scarecrow_wrapper"],
   "features": {
-    "mythic": ["artifacts","alerts", "docker","socks"],
-    "custom": ["donut", "execute assembly", "execute pe", "inline assembly","key exchange", "killdate", "mimikatz", "sRDI", "SharpGen", "obfuscation", "shellcode execution"]
+    "mythic": ["artifacts","alerts","docker","socks"],
+    "custom": ["donut", "execute assembly", "execute pe", "inline assembly","key exchange", "killdate", "mimikatz", "sRDI", "obfuscation", "shellcode execution", "shellcode injection"]
   },
   "languages": ["go"]
 }
