@@ -1,7 +1,7 @@
-FROM ne0nd0g/merlin-base:v1.6.1
+FROM ne0nd0g/merlin-base:v1.7.1
 
-# FROM itsafeaturemythic/mythic_go_base:1.0.4-rc08
-# https://github.com/MythicMeta/Mythic_Docker_Templates/blob/master/mythic_go_base/Dockerfile
+# Build multi-arch Docker image and push tagged version to Docker Hub
+# > sudo docker buildx build --push --platform linux/amd64,linux/arm64 --tag ne0nd0g/merlin-mythic:v1.0.2 --tag ne0nd0g/merlin-mythic:latest .
 
 WORKDIR /Mythic
 
