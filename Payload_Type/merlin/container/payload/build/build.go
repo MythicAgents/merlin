@@ -75,13 +75,19 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
+	// Encryption Type
+	encType := crypto.(map[string]interface{})["value"].(string)
+
 	// Encryption Key
-	psk, ok := crypto.(map[string]interface{})["enc_key"]
-	if !ok {
-		err := fmt.Errorf("%s: the 'enc_key' key was not found in the C2Profiles' parameters AESPSK map", pkg)
-		response.BuildStdErr = err.Error()
-		logging.LogError(err, "returning with error")
-		return
+	var psk interface{}
+	if encType == "aes256_hmac" {
+		psk, ok = crypto.(map[string]interface{})["enc_key"]
+		if !ok {
+			err := fmt.Errorf("%s: the 'enc_key' key was not found in the C2Profiles' parameters AESPSK map", pkg)
+			response.BuildStdErr = err.Error()
+			logging.LogError(err, "returning with error")
+			return
+		}
 	}
 
 	// The 'headers' key provides a value of map[string]interface{}
@@ -267,7 +273,12 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	ldflags += fmt.Sprintf(" -X \"main.profile=%s\"", msg.C2Profiles[0].Name)
 	ldflags += fmt.Sprintf(" -X \"main.httpClient=%s\"", httpClient)
 	ldflags += fmt.Sprintf(" -X \"main.url=%s:%d/%s\"", host, int(port), post)
-	ldflags += fmt.Sprintf(" -X \"main.psk=%s\"", psk)
+	if encType == "aes256_hmac" {
+		ldflags += fmt.Sprintf(" -X \"main.psk=%s\"", psk)
+		ldflags += " -X \"main.transforms=mythic,aes\""
+	} else if encType == "none" {
+		ldflags += " -X \"main.transforms=mythic\""
+	}
 
 	var customHeaders string
 	for header, data := range headers {

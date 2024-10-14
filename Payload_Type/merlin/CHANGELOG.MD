@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.4.0 - 2024-10-09
+
+### Fixed
+
+- Fixed [Issue 20](https://github.com/MythicAgents/merlin/issues/20) by explicitly setting the transforms (e.g., AES) at build time with Go's `ldflags`
+  - Check if `aes256_hmac` is provided when using the http C2 profile
+
+### Changed
+
+- Upgraded github.com/fatih/color v1.16.0 => v1.17.1
+- Upgraded github.com/Ne0nd0g/merlin-agent/v2 v2.4.1 => v2.4.2
+
 ## 2.3.2 - 2024-08-30
 
 ### Added
