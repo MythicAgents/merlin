@@ -31,7 +31,7 @@ import (
 // memfd creates and return a Mythic Command structure that is registered with the Mythic server
 func memfd() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_LINUX, "Debian"},
+		SupportedOS: []string{structs.SUPPORTED_OS_LINUX, "freebsd", "openbsd", "solaris"},
 	}
 
 	filename := structs.CommandParameter{

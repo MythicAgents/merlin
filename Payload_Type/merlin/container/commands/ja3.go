@@ -29,7 +29,7 @@ import (
 // ja3 is a command to instruct the Merlin Agent to use a TLS client derived from the input JA3 string to communicate with the server.
 func ja3() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "freebsd", "openbsd", "solaris"},
 	}
 
 	ja3string := structs.CommandParameter{

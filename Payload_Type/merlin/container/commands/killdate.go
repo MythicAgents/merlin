@@ -32,7 +32,7 @@ import (
 // Merlin Agent to the exact date and time, as an epoch timestamp, it should stop running
 func killdate() structs.Command {
 	attr := structs.CommandAttribute{
-		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS},
+		SupportedOS: []string{structs.SUPPORTED_OS_WINDOWS, structs.SUPPORTED_OS_LINUX, structs.SUPPORTED_OS_MACOS, "freebsd", "openbsd", "solaris"},
 	}
 	date := structs.CommandParameter{
 		Name:                                    "date",
