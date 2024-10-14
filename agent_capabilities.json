@@ -1,6 +1,6 @@
 {
   "mythic_version": "3.3",
-  "agent_version": "2.3.3",
+  "agent_version": "2.4.0",
   "os": ["FreeBSD","macOS", "Linux", "OpenBSD","Solaris","Windows"],
   "c2": ["http"],
   "payload_output": ["dll", "dylib","elf","exe","macho", "shellcode","so"],
