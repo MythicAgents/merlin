@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## 2.3.3 - 2024-10-14
 
+### Added
+
+- Added `memfd` command documentation page
+
 ### Fixed
 
 - Fixed [Issue 20](https://github.com/MythicAgents/merlin/issues/20) by explicitly setting the transforms (e.g., AES) at build time with Go's `ldflags`
@@ -15,6 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Upgraded github.com/fatih/color v1.16.0 => v1.17.1
 - Upgraded github.com/Ne0nd0g/merlin-agent/v2 v2.4.1 => v2.4.2
+- Upgraded Docker image from ne0nd0g/merlin-base:v1.7.0 to v1.8.0
+  - Upgraded from golang:1.21-bullseye to golang:1.22-bullseye
+  - Upgraded Garble to v0.13.0
 
 ## 2.3.2 - 2024-08-30
 

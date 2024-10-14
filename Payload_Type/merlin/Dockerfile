@@ -1,4 +1,4 @@
-FROM ne0nd0g/merlin-base:v1.7.1
+FROM ne0nd0g/merlin-base:v1.8.0
 
 # Build multi-arch Docker image and push tagged version to Docker Hub
 # > sudo docker buildx build --push --platform linux/amd64,linux/arm64 --tag ne0nd0g/merlin-mythic:v1.0.2 --tag ne0nd0g/merlin-mythic:latest .
