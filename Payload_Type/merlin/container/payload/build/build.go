@@ -433,7 +433,11 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 
 		// https://pkg.go.dev/cmd/cgo
 		if msg.SelectedOS == "windows" {
-			err = os.Setenv("CC", "x86_64-w64-mingw32-gcc")
+			cc := "x86_64-w64-mingw32-gcc"
+			if arch == "386" {
+				cc = "i686-w64-mingw32-gcc"
+			}
+			err = os.Setenv("CC", cc)
 			defer func() {
 				err = os.Unsetenv("CC")
 				if err != nil {
