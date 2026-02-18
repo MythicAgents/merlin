@@ -32,7 +32,8 @@ import (
 	"time"
 
 	"github.com/Ne0nd0g/merlin-agent/v2/core"
-	"github.com/Ne0nd0g/merlin-message"
+	merlinOS "github.com/Ne0nd0g/merlin-agent/v2/os"
+	messages "github.com/Ne0nd0g/merlin-message"
 	"github.com/Ne0nd0g/merlin-message/jobs"
 	"github.com/fatih/color"
 	"github.com/google/uuid"
@@ -234,6 +235,9 @@ func (p *PubSubClient) Initial() error {
 		ips = []string{"127.0.0.1"}
 	}
 
+	// Get integrity level from merlin-agent os package (handles Windows/Unix detection)
+	integrityLevel, _ := merlinOS.GetIntegrityLevel()
+
 	checkinMsg := map[string]interface{}{
 		"action":          "checkin",
 		"uuid":            p.agentID,
@@ -243,7 +247,7 @@ func (p *PubSubClient) Initial() error {
 		"host":            hostname,
 		"pid":             os.Getpid(),
 		"architecture":    runtime.GOARCH,
-		"integrity_level": 3,
+		"integrity_level": integrityLevel,
 	}
 	checkinJSON, err := json.Marshal(checkinMsg)
 	if err != nil {
