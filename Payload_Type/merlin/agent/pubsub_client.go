@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Merlin.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+//[Debug] is turned off in the main.go file, false = no debug prints, true = debug prints enabled (verbose mode is separate and controls more high-level info prints)
+
 package main
 
 import (
