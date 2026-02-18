@@ -169,7 +169,7 @@ func (p *PubSubClient) Initial() error {
 		go func() {
 			err := p.transport.Listen(func(task map[string]interface{}) map[string]interface{} {
 				if core.Debug {
-					color.Yellow(fmt.Sprintf("[DEBUG] Received message: %v", task))
+					color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Received message: %v", task))
 				}
 				if !p.checkinDone {
 					p.initialChan <- task
@@ -308,7 +308,7 @@ func (p *PubSubClient) Initial() error {
 	if p.encryptionMode == "none" {
 		plaintext = body
 		if core.Debug {
-			color.Yellow(fmt.Sprintf("[DEBUG] Plaintext checkin response: %s", string(plaintext)))
+			color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Plaintext checkin response: %s", string(plaintext)))
 		}
 	} else {
 		plaintext, err = aesDecrypt(p.psk, body)
@@ -316,7 +316,7 @@ func (p *PubSubClient) Initial() error {
 			return fmt.Errorf("failed to AES-decrypt checkin response: %w", err)
 		}
 		if core.Debug {
-			color.Yellow(fmt.Sprintf("[DEBUG] Decrypted checkin response: %s", string(plaintext)))
+			color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Decrypted checkin response: %s", string(plaintext)))
 		}
 	}
 
@@ -363,7 +363,7 @@ func (p *PubSubClient) performRSAStaging() error {
 	}
 
 	if core.Debug {
-		color.Yellow(fmt.Sprintf("[DEBUG] Generated RSA key pair, public key size: %d bytes", len(pubKeyDER)))
+		color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Generated RSA key pair, public key size: %d bytes", len(pubKeyDER)))
 	}
 
 	// Build staging_rsa message
@@ -412,7 +412,7 @@ func (p *PubSubClient) performRSAStaging() error {
 	}
 
 	if core.Debug {
-		color.Yellow(fmt.Sprintf("[DEBUG] Received staging_rsa response, body size: %d bytes", len(body)))
+		color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Received staging_rsa response, body size: %d bytes", len(body)))
 	}
 
 	// Mythic returns JSON with session_key field containing base64-encoded RSA-encrypted key
@@ -441,7 +441,7 @@ func (p *PubSubClient) performRSAStaging() error {
 	}
 
 	if core.Debug {
-		color.Yellow(fmt.Sprintf("[DEBUG] Decoded session_key, encrypted size: %d bytes", len(encryptedKey)))
+		color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Decoded session_key, encrypted size: %d bytes", len(encryptedKey)))
 	}
 
 	// RSA decrypt to get the AES key
@@ -562,12 +562,12 @@ func (p *PubSubClient) convertMythicTasksToMerlin(taskData map[string]interface{
 		merlinJobs = append(merlinJobs, job)
 
 		if core.Debug {
-			color.Yellow(fmt.Sprintf("[DEBUG] Created job: ID=%s, Command=%s, Args=%v", job.ID, cmd.Command, cmd.Args))
+			color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Created job: ID=%s, Command=%s, Args=%v", job.ID, cmd.Command, cmd.Args))
 		}
 	}
 
 	if core.Debug {
-		color.Yellow(fmt.Sprintf("[DEBUG] Total jobs created: %d", len(merlinJobs)))
+		color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Total jobs created: %d", len(merlinJobs)))
 	}
 
 	base.Payload = merlinJobs
@@ -644,7 +644,7 @@ func (p *PubSubClient) Listen() ([]messages.Base, error) {
 				}
 
 				if core.Debug {
-					color.Yellow(fmt.Sprintf("[DEBUG] Decrypted task data: %v", taskData))
+					color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Decrypted task data: %v", taskData))
 				}
 
 				// Convert to Merlin messages.Base
@@ -672,7 +672,7 @@ func (p *PubSubClient) Listen() ([]messages.Base, error) {
 	p.mu.Unlock()
 
 	if core.Debug && len(pendingJobs) > 0 {
-		color.Yellow(fmt.Sprintf("[DEBUG] Returning %d jobs from pending queue", len(pendingJobs)))
+		color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Returning %d jobs from pending queue", len(pendingJobs)))
 	}
 
 	if len(pendingJobs) == 0 {
@@ -685,7 +685,7 @@ func (p *PubSubClient) Listen() ([]messages.Base, error) {
 // Send sends a Merlin message to Mythic, encrypted (or plaintext) and framed.
 func (p *PubSubClient) Send(message messages.Base) ([]messages.Base, error) {
 	if core.Debug {
-		color.Yellow(fmt.Sprintf("[DEBUG] Sending message: %v", message))
+		color.Yellow(fmt.Sprintf("[PubSub_client][DEBUG] Sending message: %v", message))
 	}
 
 	// Convert Merlin format to Mythic API format
