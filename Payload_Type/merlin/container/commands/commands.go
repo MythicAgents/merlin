@@ -182,7 +182,7 @@ func GetFileByName(name string, callback int) (contents []byte, err error) {
 
 	for _, file := range resp.Files {
 		if file.Filename == name {
-			contents, err = GetFileContents(file.AgentFileId)
+			contents, err = GetFileContents(file.AgentFileID)
 		}
 	}
 	return
@@ -233,7 +233,7 @@ func GetFileName(fileID string) (name string, err error) {
 	}
 
 	for _, file := range resp.Files {
-		if file.AgentFileId == fileID {
+		if file.AgentFileID == fileID {
 			name = file.Filename
 			return
 		}
