@@ -76,10 +76,18 @@ func taskFunctionParseArgString(args *structs.PTTaskMessageArgsData, input strin
 // The "filename" command argument references a file that has already been uploaded to Mythic.
 // The "file" command argument reference is used when a new file was uploaded as part of the Mythic task.
 func GetFile(task *structs.PTTaskMessageAllData) (data []byte, filename string, err error) {
+	fmt.Printf("@@@ GetFile called for parameter group: %s\n", strings.ToLower(task.Task.ParameterGroupName))
 	pkg := "merlin/Payload_Type/merlin/mythic/container/commands/commands.go/GetFile():"
 	// Determine if a "filename" or "file" Mythic command argument was provided
-	switch strings.ToLower(task.Task.ParameterGroupName) {
+	paramGroup, err := task.Args.GetParameterGroupName()
+	if err != nil {
+		err = fmt.Errorf("%s there was an error getting the parameter group name for task %d: %s", pkg, task.Task.ID, err)
+		return
+	}
+	fmt.Printf("@@@ GetFile using parameter group: %s\n", strings.ToLower(paramGroup))
+	switch strings.ToLower(paramGroup) {
 	case "default":
+		fmt.Println("@@@ GetFile using DEFAULT parameter group")
 		filename, err = task.Args.GetStringArg("filename")
 		if err != nil {
 			err = fmt.Errorf("%s there was an error getting the \"filename\" command argument for task %d: %s", pkg, task.Task.ID, err)
@@ -111,6 +119,7 @@ func GetFile(task *structs.PTTaskMessageAllData) (data []byte, filename string, 
 		err = fmt.Errorf("%s unknown parameter group: %s", pkg, task.Task.ParameterGroupName)
 		return
 	}
+	fmt.Printf("@@@ Get file returning filename: %s, error: %v, data length: %d\n", filename, err, len(data))
 	return
 }
 
@@ -181,6 +190,7 @@ func GetFileByName(name string, callback int) (contents []byte, err error) {
 
 // GetFileContents retrieves the file content as bytes for the provided fileID string
 func GetFileContents(fileID string) (contents []byte, err error) {
+	fmt.Println("@@@ GetFileContents called with fileID:", fileID)
 	msg := mythicrpc.MythicRPCFileGetContentMessage{
 		AgentFileID: fileID,
 	}
@@ -189,12 +199,14 @@ func GetFileContents(fileID string) (contents []byte, err error) {
 		err = fmt.Errorf("Payload_Type/merlin/mythic/container/commands/GetFileContents(): the SendMythicRPCFileGetContent function returned an error: %s", resp.Error)
 		return
 	}
+	fmt.Printf("@@@ GetFileContents received content of length: %d\n", len(resp.Content))
 	contents = resp.Content
 	return
 }
 
 // GetFileName retrieves the file name for the provided fileID string
 func GetFileName(fileID string) (name string, err error) {
+	fmt.Println("@@@ GetFileName called with fileID:", fileID)
 	search := mythicrpc.MythicRPCFileSearchMessage{
 		TaskID:              0,
 		CallbackID:          0,
@@ -210,11 +222,13 @@ func GetFileName(fileID string) (name string, err error) {
 	resp, err := mythicrpc.SendMythicRPCFileSearch(search)
 	if err != nil {
 		err = fmt.Errorf("Payload_Type/merlin/mythic/container/commands/GetFileName(): there was an error calling the SendMythicRPCFileSearch function: %s", err)
+		fmt.Println("@@@ GetFileName error:", err)
 		return
 	}
 
 	if len(resp.Files) <= 0 {
 		err = fmt.Errorf("Payload_Type/merlin/mythic/container/commands/GetFileName(): %d files were returned", len(resp.Files))
+		fmt.Println("@@@ GetFileName error:", err)
 		return
 	}
 
@@ -224,6 +238,7 @@ func GetFileName(fileID string) (name string, err error) {
 			return
 		}
 	}
+	fmt.Println("@@@ GetFileName returning name:", name)
 	return
 }
 

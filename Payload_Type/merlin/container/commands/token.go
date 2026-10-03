@@ -277,7 +277,15 @@ func tokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 		disp = fmt.Sprintf("%s", method)
 		job.Args = append(job.Args, method)
 		if args != "" {
-			job.Args = append(job.Args, strings.Split(args, " ")...)
+			parsedArgs, err := splitCommandLineArguments(args)
+			if err != nil {
+				err = fmt.Errorf("%s: there was an error parsing the \"arguments\" argument %s", pkg, err)
+				resp.Error = err.Error()
+				resp.Success = false
+				logging.LogError(err, "returning with error")
+				return
+			}
+			job.Args = append(job.Args, parsedArgs...)
 			disp += fmt.Sprintf(" %s", args)
 		}
 	case "make token":

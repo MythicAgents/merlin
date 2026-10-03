@@ -24,6 +24,7 @@ import (
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
+	"github.com/MythicMeta/MythicContainer/logging"
 
 	// Merlin Message
 	"github.com/Ne0nd0g/merlin-message/jobs"
@@ -147,6 +148,7 @@ func uploadCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 	resp.TaskID = task.Task.ID
 
 	// Get the file as a byte array, its name, and any errors
+	logging.LogDebug(fmt.Sprintf("Payload_Type/merlin/mythic/container/commands/upload/upload.go/uploadCreateTask(): called for task %d", task.Task.ID))
 	data, filename, err := GetFile(task)
 	if err != nil {
 		resp.Error = fmt.Sprintf("%s: %s", pkg, err)

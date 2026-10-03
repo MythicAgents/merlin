@@ -18,7 +18,6 @@ package commands
 import (
 	// Standard
 	"fmt"
-	"strings"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
@@ -135,7 +134,15 @@ func envCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreat
 	}
 
 	if args != "" {
-		job.Args = append(job.Args, strings.Split(args, " ")...)
+		parsedArgs, err := splitCommandLineArguments(args)
+		if err != nil {
+			err = fmt.Errorf("%s: there was an error parsing the \"arguments\" argument's value for the \"env\" command: %s", pkg, err)
+			resp.Error = err.Error()
+			resp.Success = false
+			logging.LogError(err, "returning with error")
+			return
+		}
+		job.Args = append(job.Args, parsedArgs...)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.NATIVE)

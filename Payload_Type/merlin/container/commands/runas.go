@@ -18,7 +18,6 @@ package commands
 import (
 	// Standard
 	"fmt"
-	"strings"
 
 	// Mythic
 	structs "github.com/MythicMeta/MythicContainer/agent_structs"
@@ -204,7 +203,15 @@ func runasCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 	}
 
 	if args != "" {
-		job.Args = append(job.Args, strings.Split(args, " ")...)
+		parsedArgs, err := splitCommandLineArguments(args)
+		if err != nil {
+			err = fmt.Errorf("%s: there was an error parsing the 'arguments' argument: %s", pkg, err)
+			resp.Error = err.Error()
+			resp.Success = false
+			logging.LogError(err, "returning with error")
+			return
+		}
+		job.Args = append(job.Args, parsedArgs...)
 	}
 
 	mythicJob, err := ConvertMerlinJobToMythicTask(job, jobs.MODULE)
