@@ -1,8 +1,6 @@
 module github.com/MythicAgents/merlin/Payload_Type/agent
 
-go 1.22.0
-
-toolchain go1.23.2
+go 1.27.0
 
 require (
 	github.com/Ne0nd0g/merlin-agent/v2 v2.4.2
