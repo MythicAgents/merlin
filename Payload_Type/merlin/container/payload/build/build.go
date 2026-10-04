@@ -205,7 +205,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 
 	mode, err := msg.GetStringArg("buildmode")
-	if !ok {
+	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'buildmode' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
 		logging.LogError(err, "returning with error")
@@ -213,7 +213,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 
 	httpClient, err := msg.GetStringArg("httpClient")
-	if !ok {
+	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'httpClient' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
 		logging.LogError(err, "returning with error")
