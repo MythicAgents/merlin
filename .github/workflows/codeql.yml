@@ -48,16 +48,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # build-mode: none (no autobuild). This repo has two modules under Payload_Type/merlin/
-      # and the agent module is a cgo c-shared wrapper that needs MinGW and specific build tags,
-      # so autobuild cannot cover both. Build-mode none extracts all Go sources without building,
-      # giving CodeQL coverage of both the container and agent modules.
+      # build-mode: manual. CodeQL's Go extractor does NOT support build-mode: none
+      # (it fails database init with "Go does not support the none build mode"), so we
+      # drive the build ourselves. This repo has two modules under Payload_Type/merlin/:
+      #   * container/ - a normal Go module; we build it here so CodeQL extracts it.
+      #   * agent/     - a cgo c-shared wrapper that needs MinGW, build tags, and a
+      #                  release-gated merlin-agent require. It is therefore NOT analyzed
+      #                  by CodeQL (same reason golangci-lint/govulncheck skip it in go.yml);
+      #                  it stays build-checked + gosec'd by go.yml's agent job.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          build-mode: none
+          build-mode: manual
           # queries: security-extended,security-and-quality
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          # Single source of truth for the Go version: the container module's go directive.
+          go-version-file: Payload_Type/merlin/container/go.mod
+          check-latest: true
+
+      - name: Build container module (manual build-mode)
+        working-directory: ./Payload_Type/merlin/container
+        run: go build ./...
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
