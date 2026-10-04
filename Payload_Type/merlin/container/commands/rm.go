@@ -108,7 +108,7 @@ func rmCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCreate
 
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%s", path)
+	disp := path
 	resp.DisplayParams = &disp
 	resp.Success = true
 

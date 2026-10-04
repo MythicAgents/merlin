@@ -892,7 +892,7 @@ func donutCreateTasking(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 		logging.LogError(err, "returning with error")
 	}
 	var thread uint32
-	if t == true {
+	if t {
 		thread = 1
 	}
 

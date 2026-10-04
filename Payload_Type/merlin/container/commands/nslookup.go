@@ -109,7 +109,7 @@ func nslookupCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTask
 
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%s", hosts)
+	disp := hosts
 	resp.DisplayParams = &disp
 	resp.Success = true
 

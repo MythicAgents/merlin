@@ -45,7 +45,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	if debugInfo {
 		fmt.Printf("[DEBUG] Build(): Input Payload Build Message: %+v\n", msg)
 		fmt.Printf("[DEBUG] Build(): Input Build Parameters: %+v\n", msg.BuildParameters)
-		for key, param := range msg.BuildParameters.Parameters {
+		for key, param := range msg.Parameters {
 			fmt.Printf("\tKey: %s, Param: %+v (%T)\n", key, param, param)
 		}
 		fmt.Printf("[DEBUG] Build(): Input C2 Profiles: %d\n", len(msg.C2Profiles))
@@ -180,7 +180,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	}
 
 	// Validate BuildParameters
-	verbose, err := msg.BuildParameters.GetBooleanArg("verbose")
+	verbose, err := msg.GetBooleanArg("verbose")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'verbose' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -188,7 +188,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	debug, err := msg.BuildParameters.GetBooleanArg("debug")
+	debug, err := msg.GetBooleanArg("debug")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'debug' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -196,7 +196,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	arch, err := msg.BuildParameters.GetStringArg("arch")
+	arch, err := msg.GetStringArg("arch")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'arch' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -204,7 +204,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	mode, err := msg.BuildParameters.GetStringArg("buildmode")
+	mode, err := msg.GetStringArg("buildmode")
 	if !ok {
 		err = fmt.Errorf("%s: there was an error getting the 'buildmode' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -212,7 +212,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	httpClient, err := msg.BuildParameters.GetStringArg("httpClient")
+	httpClient, err := msg.GetStringArg("httpClient")
 	if !ok {
 		err = fmt.Errorf("%s: there was an error getting the 'httpClient' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -220,7 +220,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	maxArg, err := msg.BuildParameters.GetStringArg("maxretry")
+	maxArg, err := msg.GetStringArg("maxretry")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'maxretry' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -228,7 +228,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	padding, err := msg.BuildParameters.GetStringArg("padding")
+	padding, err := msg.GetStringArg("padding")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'padding' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -236,7 +236,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	ja3, err := msg.BuildParameters.GetStringArg("ja3")
+	ja3, err := msg.GetStringArg("ja3")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'ja3' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -244,7 +244,7 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 		return
 	}
 
-	garble, err := msg.BuildParameters.GetBooleanArg("garble")
+	garble, err := msg.GetBooleanArg("garble")
 	if err != nil {
 		err = fmt.Errorf("%s: there was an error getting the 'garble' key from the BuildParameter's map: %s", pkg, err)
 		response.BuildStdErr = err.Error()
@@ -273,10 +273,11 @@ func Build(msg structs.PayloadBuildMessage) (response structs.PayloadBuildRespon
 	ldflags += fmt.Sprintf(" -X \"main.profile=%s\"", msg.C2Profiles[0].Name)
 	ldflags += fmt.Sprintf(" -X \"main.httpClient=%s\"", httpClient)
 	ldflags += fmt.Sprintf(" -X \"main.url=%s:%d/%s\"", host, int(port), post)
-	if encType == "aes256_hmac" {
+	switch encType {
+	case "aes256_hmac":
 		ldflags += fmt.Sprintf(" -X \"main.psk=%s\"", psk)
 		ldflags += " -X \"main.transforms=mythic,aes\""
-	} else if encType == "none" {
+	case "none":
 		ldflags += " -X \"main.transforms=mythic\""
 	}
 

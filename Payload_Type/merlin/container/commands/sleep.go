@@ -118,7 +118,7 @@ func sleepCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%s", duration)
+	disp := duration
 	resp.DisplayParams = &disp
 	resp.Success = true
 

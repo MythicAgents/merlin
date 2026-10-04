@@ -110,7 +110,7 @@ func parrotCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCr
 
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%s", client)
+	disp := client
 	resp.DisplayParams = &disp
 	resp.Success = true
 

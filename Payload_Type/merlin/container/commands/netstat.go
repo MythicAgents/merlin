@@ -114,7 +114,7 @@ func netstatCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskC
 
 	task.Args.SetManualArgs(mythicJob)
 
-	disp := fmt.Sprintf("%s", proto)
+	disp := proto
 	resp.DisplayParams = &disp
 	resp.Success = true
 

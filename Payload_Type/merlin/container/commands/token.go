@@ -274,7 +274,7 @@ func tokenCreateTask(task *structs.PTTaskMessageAllData) (resp structs.PTTaskCre
 	var disp string
 	switch strings.ToLower(task.Task.ParameterGroupName) {
 	case "default":
-		disp = fmt.Sprintf("%s", method)
+		disp = method
 		job.Args = append(job.Args, method)
 		if args != "" {
 			parsedArgs, err := splitCommandLineArguments(args)
