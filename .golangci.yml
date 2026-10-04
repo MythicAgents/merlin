@@ -4,3 +4,13 @@
 # are a sensible baseline for the Merlin repos. Tighten per repo as the code
 # is cleaned up. Only the container module is linted (see .github/workflows/go.yml).
 version: "2"
+
+linters:
+  exclusions:
+    rules:
+      # commands/template.go is an intentional copy-me scaffold for authoring new
+      # Mythic commands; its template()/templateCreateTask() are deliberately not
+      # registered, so the "unused" linter should not flag them.
+      - path: commands/template\.go
+        linters:
+          - unused
