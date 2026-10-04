@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.5.0 - 2026-10-04
+
+### Changed
+
+- Bumped the Merlin agent to v2.5.0 (Go 1.27 + refreshed dependencies) and `agent_version` to 2.5.0
+- Upgraded the container to Go 1.27 and MythicContainer from v1.4.6 to v1.6.4
+- Upgraded the `ne0nd0g/merlin-base` Docker image from v1.9.0 to v1.10.0
+- Upgraded `amqp091-go` to v1.15.0 (resolves a critical CVE) and pinned `google.golang.org/grpc` to v1.83.2 (avoids the GO-2026-6443 regression in v1.84.0)
+
+### Added
+
+- Quoted-argument parser for command arguments (handles quoted args and Windows backslash-before-quote argv semantics)
+
 ## 2.4.2 - 2025-04-16
 
 ### Fixed
