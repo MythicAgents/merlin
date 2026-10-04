@@ -48,6 +48,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
+      # Set up Go BEFORE codeql-action/init. In manual build-mode CodeQL's Go extractor
+      # works by wrapping the `go` on PATH with a tracing shim at init time; if setup-go
+      # ran after init it would prepend its own Go and shadow that shim, so the build runs
+      # untraced and CodeQL sees no code ("didn't build any of it").
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          # Single source of truth for the Go version: the container module's go directive.
+          go-version-file: Payload_Type/merlin/container/go.mod
+          check-latest: true
+
       # build-mode: manual. CodeQL's Go extractor does NOT support build-mode: none
       # (it fails database init with "Go does not support the none build mode"), so we
       # drive the build ourselves. This repo has two modules under Payload_Type/merlin/:
@@ -63,14 +74,7 @@ jobs:
           build-mode: manual
           # queries: security-extended,security-and-quality
 
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          # Single source of truth for the Go version: the container module's go directive.
-          go-version-file: Payload_Type/merlin/container/go.mod
-          check-latest: true
-
-      - name: Build container module (manual build-mode)
+      - name: Build container module (manual build-mode, traced by CodeQL)
         working-directory: ./Payload_Type/merlin/container
         run: go build ./...
 
