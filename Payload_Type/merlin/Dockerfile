@@ -1,5 +1,9 @@
 FROM ne0nd0g/merlin-base:v1.10.0
 
+# The base image inherits GOTOOLCHAIN=local from golang:1.27-bookworm and ships go1.27.x < 1.27.2;
+# allow fetching the go1.27.2 toolchain the modules now require so `go mod download`/`go build` work.
+ENV GOTOOLCHAIN=auto
+
 # Build multi-arch Docker image and push tagged version to Docker Hub
 # > sudo docker buildx build --push --platform linux/amd64,linux/arm64 --tag ne0nd0g/merlin-mythic:v1.0.2 --tag ne0nd0g/merlin-mythic:latest .
 

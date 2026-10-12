@@ -1,9 +1,9 @@
 module github.com/MythicAgents/merlin/Payload_Type/agent
 
-go 1.27.0
+go 1.27.2
 
 require (
-	github.com/Ne0nd0g/merlin-agent/v2 v2.5.0-rc1
+	github.com/Ne0nd0g/merlin-agent/v2 v2.5.0
 	github.com/fatih/color v1.19.0
 )
 
@@ -11,7 +11,7 @@ require (
 	github.com/Binject/debug v0.0.0-20260128230015-4e22595eaac6 // indirect
 	github.com/C-Sto/BananaPhone v0.0.0-20220220002628-6585e5913761 // indirect
 	github.com/Ne0nd0g/go-clr v1.0.4 // indirect
-	github.com/Ne0nd0g/merlin-message v1.4.0-rc1 // indirect
+	github.com/Ne0nd0g/merlin-message v1.4.0 // indirect
 	github.com/Ne0nd0g/npipe v1.1.1 // indirect
 	github.com/Ne0nd0g/winhttp v1.0.1 // indirect
 	github.com/andybalholm/brotli v1.2.6 // indirect
@@ -26,7 +26,7 @@ require (
 	github.com/quic-go/quic-go v0.63.0 // indirect
 	github.com/refraction-networking/utls v1.8.2 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 )

@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## 2.5.1 - 2026-10-12
+
+### Changed
+
+- Upgraded the container and agent modules to go v1.27.2 and `golang.org/x/net` to v0.60.0 (resolves the go1.27.2 standard-library and x/net advisories)
+- Published the payload image to GHCR as `ghcr.io/mythicagents/merlin`
+
+### Fixed
+
+- Fixed the payload container image build: pointed the Dockerfile at `ne0nd0g/merlin-base:v1.10.0` and allowed the go1.27.2 toolchain so the image compiles against the upgraded modules
+- Made the gosec CI job tolerate go1.27.2 (gosec v2.29.0 cannot build the SSA representation of a go1.27.2 module)
+
 ## 2.5.0 - 2026-10-04
 
 ### Changed
